@@ -272,16 +272,16 @@ Branch protection on `main` requires: `ci.yml` passing, at least one approving r
 
 ## 10. Team Engineering Conventions
 
-- **Commit messages**: Conventional Commits style — `type(scope): summary`, e.g. `feat(diagnosis-panel): add treatment selection UI`, `fix(backend/routes): correct 404 on missing patient case`, `test(patient-scene): add hit-testing unit tests`. Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`, `ci`. Scope is the feature/module folder name.
+- **Commit messages**: Conventional Commits style — `type(scope): summary`, e.g. `feat(diagnosis-panel): add treatment selection UI`, `fix(backend/routes): correct 404 on missing patient case`, `test(patient-scene): add hit-testing unit tests`. Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`, `ci`. Scope is the component/provider/view folder name (lower-cased in the commit scope is fine even though the folder itself is PascalCase — be consistent within a PR).
 - **Branch naming**: `type/short-description` mirroring commit type, e.g. `feat/shop-purchase-flow`, `fix/attention-point-hitbox`.
 - **PR size**: keep PRs reviewable — one feature/fix per PR. If a PR touches both `src/frontend` and `src/backend` for one API contract change, that's fine as one PR, but unrelated changes never get bundled together. If a PR is trending past roughly 400 lines of diff (excluding generated/lockfile changes), split it.
 - **No direct pushes to `main`** (restated from Section 1) — everything through PRs.
 - **CI must be green before merge.** No merging on red or skipped checks.
 - **No `--no-verify`, no disabling pre-commit/CI hooks** to force a merge (Section 1).
 - **Code review is mandatory** and should be done using the project's `code-review` skill rather than an ad hoc read-through — run it before requesting/finishing human review, and again after addressing feedback.
-- **No TypeScript** (Section 1) — plain JavaScript only; reviewers reject any PR introducing `.ts`/`.tsx` files or a TS toolchain dependency.
-- **Naming consistency** (restated from Section 6): PascalCase components/providers, camelCase `use`-prefixed hooks, kebab-case feature folders, PascalCase singular Prisma models, kebab-case plural backend route files.
-- **Ownership boundary**: `src/frontend` and `src/backend` are separate ownership domains. A PR changing the API contract between them must update `docs/api/` in the same PR. Frontend code reaches the backend only via the typed API client in `src/frontend/lib/`, never via direct DB/Prisma access or duplicated route logic.
+- **TypeScript is mandatory in `src/backend` and forbidden in `src/frontend`** (Section 1) — reviewers reject any `.ts`/`.tsx` file inside `src/frontend`, and reject any `.js` file (other than tooling config like `vite.config.js` or `jest.config.js`) inside `src/backend/src`.
+- **Naming consistency** (restated from Section 6): `PascalCase` view/component folders, `PascalCase` + `Provider` suffix for provider files, `camelCase` `use`-prefixed hooks, `PascalCase` singular Prisma models, `kebab-case` plural backend route files.
+- **Ownership boundary**: `src/frontend` and `src/backend` are separate ownership domains. A PR changing the API contract between them must update `docs/api/` in the same PR. Frontend code reaches the backend only via `useApi()` from `src/frontend/providers/Api/`, never via direct DB/Prisma access or duplicated route logic.
 - **Docs discipline**: architecture-affecting decisions (new domain provider, new external service, schema changes with migration implications) get a short note in `docs/architecture/`. This isn't bureaucracy for its own sake — it's what lets a new contributor or a future Claude session understand *why*, not just *what*.
 
 ---
