@@ -233,16 +233,16 @@ No frontend component/hook and no backend endpoint/service is written without a 
 
 ### Frontend (Jest + React Testing Library)
 
-1. **Red**: Write `Component.test.jsx` (or `useHook.test.js`) first, asserting the behavior you're about to add (render output, user interaction via `@testing-library/user-event`, hook return values via `@testing-library/react`'s `renderHook`). Run it, confirm it fails for the expected reason (not a typo/import error).
-2. **Green**: Write the minimal component/hook code to make that test pass. No extra behavior beyond what's tested.
+1. **Red**: Write the test first, in the mirrored `tests/` path (`tests/views/<Name>/<Name>.test.jsx`, `tests/components/<Name>/<Name>.test.jsx`, or `tests/providers/<Domain>/<Domain>Provider.test.jsx`), asserting the behavior you're about to add (render output, user interaction via `@testing-library/user-event`, hook return values via `@testing-library/react`'s `renderHook`). Import the unit under test via its `index.js` barrel. Run it, confirm it fails for the expected reason (not a typo/import error).
+2. **Green**: Write the minimal view/component/hook code, in its own `views/`, `components/`, or `providers/` folder, to make that test pass. No extra behavior beyond what's tested.
 3. **Refactor**: Clean up implementation and test code with the test suite green throughout. Re-run tests after every change.
 4. Domain providers/hooks (Section 5) are tested by rendering a small test consumer component wrapped in the provider — never by reaching into provider internals.
-5. Three.js scene logic (attention point hit-testing, coordinate mapping) is isolated into plain, framework-free functions wherever possible specifically so it's unit-testable without a WebGL context; only thin glue code touches the Three.js renderer directly.
+5. Three.js scene logic (attention point hit-testing, coordinate mapping) is isolated into plain, framework-free functions inside that component's own `internal/` folder wherever possible, specifically so it's unit-testable without a WebGL context; only thin glue code touches the Three.js renderer directly. Its test lives at the mirrored path (e.g. `tests/components/PatientScene/internal/hitTesting.test.js`), which is allowed to import the `internal/` file directly (Section 6).
 
-### Backend (Jest + supertest + Prisma/Postgres)
+### Backend (Jest + ts-jest + supertest + Prisma/Postgres)
 
-1. **Red**: Write a supertest-driven test against the route (e.g. `POST /diagnoses`) asserting status code and response shape for the case being added, run it, confirm it fails.
-2. **Green**: Implement the route/service/Prisma query needed to pass. Use a real test database (separate `DATABASE_URL` pointing at a disposable test Postgres instance, migrated via `prisma migrate deploy` in test setup/teardown) for integration-level endpoint tests. Use a mocked/injected Prisma client only for pure unit tests of service-layer logic that don't need real DB behavior (e.g. scoring rules, verification logic).
+1. **Red**: Write a supertest-driven test against the route (e.g. `POST /diagnoses`) in `src/backend/test/routes/diagnoses.test.ts`, asserting status code and response shape for the case being added, run it, confirm it fails.
+2. **Green**: Implement the route/service/Prisma query needed to pass, as TypeScript (`src/backend/src/routes/diagnoses.ts`, etc.). Use a real test database (separate `DATABASE_URL` pointing at a disposable test Postgres instance, migrated via `prisma migrate deploy` in test setup/teardown) for integration-level endpoint tests. Use a mocked/injected Prisma client only for pure unit tests of service-layer logic that don't need real DB behavior (e.g. scoring rules, verification logic).
 3. **Refactor**: Clean up service/route code with tests green throughout.
 4. Every new Prisma model or migration is accompanied by at least one test exercising a route or service that uses it — a migration with no corresponding test is incomplete work.
 5. `src/backend/test/setup/` owns the test-DB bootstrap (create schema, run migrations, truncate between tests) — new tests reuse this, they don't hand-roll their own DB setup.
