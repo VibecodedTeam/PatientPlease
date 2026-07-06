@@ -1,5 +1,7 @@
 module.exports = {
-  preset: 'ts-jest',
   testEnvironment: 'node',
   passWithNoTests: true,
+  transform: {
+    '^.+\\.ts$': ['ts-jest', { tsconfig: { types: ['jest'] } }],
+  },
 };

@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint, test, build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: game
+          POSTGRES_PASSWORD: game
+          POSTGRES_DB: skin_disease_game
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U game -d skin_disease_game"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://game:game@localhost:5432/skin_disease_game
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Generate Prisma client
+        run: pnpm --filter backend exec prisma generate
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  docker-smoke:
+    name: Docker Compose alive-check
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and start stack, wait for healthy
+        run: docker compose -p ci -f docker/docker-compose.yml up --build -d --wait --wait-timeout 180
+
+      - name: Verify database alive
+        run: docker compose -p ci -f docker/docker-compose.yml exec -T postgres pg_isready -U game -d skin_disease_game
+
+      - name: Verify backend alive
+        run: curl --fail --silent --show-error http://localhost:4000/health
+
+      - name: Verify frontend alive
+        run: curl --fail --silent --show-error http://localhost:4173/
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose -p ci -f docker/docker-compose.yml logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose -p ci -f docker/docker-compose.yml down -v
