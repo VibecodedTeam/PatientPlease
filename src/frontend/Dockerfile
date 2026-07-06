@@ -14,8 +14,8 @@ RUN pnpm --filter frontend build
 
 FROM node:20-alpine AS run
 WORKDIR /app/src/frontend
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 COPY --from=build /app /app
 ENV NODE_ENV=production
 EXPOSE 4173
-CMD ["pnpm", "start", "--", "--host", "0.0.0.0", "--port", "4173"]
+CMD ["pnpm", "start", "--host", "0.0.0.0", "--port", "4173"]
