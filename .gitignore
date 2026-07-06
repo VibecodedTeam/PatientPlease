@@ -1,4 +1,5 @@
 node_modules/
+.pnpm-store/
 dist/
 build/
 coverage/
@@ -7,3 +8,7 @@ coverage/
 .env.local
 *.log
 .DS_Store
+
+# pnpm only (CLAUDE.md Hard Constraint #9) — no npm/yarn lockfiles
+package-lock.json
+yarn.lock

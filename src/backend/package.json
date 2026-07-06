@@ -2,22 +2,48 @@
   "name": "backend",
   "version": "0.1.0",
   "private": true,
-  "main": "src/server.js",
+  "main": "dist/server.js",
+  "type": "module",
   "scripts": {
-    "dev": "node --watch src/server.js",
-    "start": "node src/server.js",
-    "build": "echo \"no build step for plain JS Fastify app\"",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest",
-    "lint": "eslint src"
+    "dev": "prisma generate && tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
+    "test": "prisma generate && node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "lint": "prisma generate && eslint src"
   },
   "dependencies": {
-    "fastify": "^4.28.1",
-    "fastify-plugin": "^4.5.1",
-    "@prisma/client": "^5.19.1"
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.10.0",
+    "pg": "^8.22.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "prisma": "^5.19.1",
-    "eslint": "^8.57.0"
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.1.0",
+    "@types/pg": "^8.20.0",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "globals": "^17.7.0",
+    "jest": "^30.4.2",
+    "prettier": "^3.9.4",
+    "prisma": "^7.8.0",
+    "ts-jest": "^29.4.11",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.1"
+  },
+  "jest": {
+    "extensionsToTreatAsEsm": [".ts"],
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {
+      "^.+\\.ts$": ["ts-jest", { "useESM": true, "tsconfig": "tsconfig.test.json" }]
+    }
   }
 }

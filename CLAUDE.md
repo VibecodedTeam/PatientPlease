@@ -13,7 +13,7 @@ These are never violated, no exceptions, no "just this once":
 3. **No file outside a feature folder imports that feature's internals.** Only the feature's `index.js` barrel export is a valid import path for outsiders (Section 6).
 4. **No production logic (frontend or backend) is written without a failing test first.** TDD red-green-refactor is mandatory (Section 8).
 5. **`frontend` never imports from `backend` (or vice versa) directly.** The only contract between them is the HTTP API (Section 3, Section 9).
-6. **JavaScript only — no TypeScript.** Document component/hook/function contracts with JSDoc comments (`@param`/`@returns`) where the shape isn't obvious from the name, and use runtime validation (e.g. PropTypes on components, explicit checks at API boundaries) instead of compile-time types.
+6. **Frontend is JavaScript only — no TypeScript.** Document component/hook/function contracts with JSDoc comments (`@param`/`@returns`) where the shape isn't obvious from the name, and use runtime validation (e.g. PropTypes on components, explicit checks at API boundaries) instead of compile-time types. **Backend (`src/backend`) is TypeScript** — see Section 3.
 7. **No direct pushes to `main`.** All work lands via PR, CI must be green, at least one review pass (see Section 10) is required before merge.
 8. **Never skip hooks or checks** (`--no-verify`, disabling lint-staged, commenting out CI steps, etc.) to get something to pass.
 9. **pnpm only.** No npm/yarn lockfiles, no mixing package managers.
@@ -45,11 +45,11 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 | Frontend tests | Jest + React Testing Library only. No Vitest, no Playwright, no Cypress. |
 | Backend runtime | Node.js API in `src/backend` |
 | ORM / DB | Prisma + PostgreSQL |
-| Backend tests | Jest + supertest (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. |
+| Backend tests | Jest + Fastify's built-in `inject()` (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. |
 | Package manager | pnpm, everywhere — root scripts, CI, Docker builds |
 | CI/CD | GitHub Actions (`.github/workflows`) |
 | Containerization | Docker for frontend, backend, and Postgres (via docker-compose for local/deploy stack) |
-| Language | JavaScript (ES2022+) everywhere — no TypeScript. JSDoc for non-obvious contracts, PropTypes for component props. |
+| Language | Frontend: JavaScript (ES2022+), no TypeScript — JSDoc for non-obvious contracts, PropTypes for component props. Backend: TypeScript (strict mode), run via `tsx` in dev, plain Node.js at runtime otherwise. |
 
 ---
 
@@ -98,7 +98,7 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 │       │   ├── routes/             # one file per resource (patients, cases, diagnoses, images, logs)
 │       │   ├── services/           # business logic, called by routes, testable in isolation
 │       │   ├── db/                 # Prisma client instance, seed scripts
-│       │   └── server.js           # app entrypoint, includes /health for alive-check
+│       │   └── server.ts           # app entrypoint, includes /health for alive-check
 │       └── test/
 │           └── setup/              # test-db bootstrap/teardown helpers
 ```
@@ -162,7 +162,7 @@ Rules:
   - Providers: `PascalCase.jsx` ending in `Provider` (`PatientSessionProvider.jsx`)
   - Feature folders: `kebab-case` (`patient-documents`)
   - Prisma models: `PascalCase` singular (`Patient`, `CaseDocument`, `DiagnosisAttempt`)
-  - Backend route files: `kebab-case` matching resource, plural (`patients.js`, `diagnoses.js`)
+  - Backend route files: `kebab-case` matching resource, plural (`patients.ts`, `diagnoses.ts`)
 
 ---
 
@@ -197,9 +197,9 @@ No frontend component/hook and no backend endpoint/service is written without a 
 4. Domain providers/hooks (Section 5) are tested by rendering a small test consumer component wrapped in the provider — never by reaching into provider internals.
 5. Three.js scene logic (attention point hit-testing, coordinate mapping) is isolated into plain, framework-free functions wherever possible specifically so it's unit-testable without a WebGL context; only thin glue code touches the Three.js renderer directly.
 
-### Backend (Jest + supertest + Prisma/Postgres)
+### Backend (Jest + Fastify `inject()` + Prisma/Postgres)
 
-1. **Red**: Write a supertest-driven test against the route (e.g. `POST /diagnoses`) asserting status code and response shape for the case being added, run it, confirm it fails.
+1. **Red**: Write a test against the route using Fastify's `app.inject()` (e.g. `POST /diagnoses`) asserting status code and response shape for the case being added, run it, confirm it fails.
 2. **Green**: Implement the route/service/Prisma query needed to pass. Use a real test database (separate `DATABASE_URL` pointing at a disposable test Postgres instance, migrated via `prisma migrate deploy` in test setup/teardown) for integration-level endpoint tests. Use a mocked/injected Prisma client only for pure unit tests of service-layer logic that don't need real DB behavior (e.g. scoring rules, verification logic).
 3. **Refactor**: Clean up service/route code with tests green throughout.
 4. Every new Prisma model or migration is accompanied by at least one test exercising a route or service that uses it — a migration with no corresponding test is incomplete work.
@@ -213,9 +213,9 @@ General rule: a PR that adds logic with no new/updated test is not reviewable �
 
 `.github/workflows/ci.yml` runs on every PR and must, in order, fail fast on:
 1. Install dependencies (`pnpm install --frozen-lockfile`)
-2. Lint (both `src/frontend` and `src/backend` — ESLint is what catches unused vars, bad imports, and prop-type violations in the absence of a type checker)
+2. Lint (both `src/frontend` and `src/backend` — ESLint catches unused vars, bad imports, and prop-type violations)
 3. Unit + integration tests (`pnpm test` at root, fanning out to both workspaces; backend tests run against a Postgres service container in the workflow)
-4. Build (`next build` for frontend; backend has no separate build step beyond install, since it ships plain JS)
+4. Build (`next build` for frontend; `tsc --noEmit` type-check for backend — the backend ships and runs via `tsx` rather than compiled output, so this step is the type-check gate, not a bundling step)
 
 `.github/workflows/deploy.yml` runs on merge to `main` and must:
 1. Re-run the same checks as `ci.yml` (never deploy unverified code)
@@ -237,7 +237,7 @@ Branch protection on `main` requires: `ci.yml` passing, at least one approving r
 - **CI must be green before merge.** No merging on red or skipped checks.
 - **No `--no-verify`, no disabling pre-commit/CI hooks** to force a merge (Section 1).
 - **Code review is mandatory** and should be done using the project's `code-review` skill rather than an ad hoc read-through — run it before requesting/finishing human review, and again after addressing feedback.
-- **No TypeScript** (Section 1) — plain JavaScript only; reviewers reject any PR introducing `.ts`/`.tsx` files or a TS toolchain dependency.
+- **No TypeScript on the frontend** (Section 1) — plain JavaScript only; reviewers reject any PR introducing `.ts`/`.tsx` files or a TS toolchain dependency under `src/frontend`. The backend (`src/backend`) is TypeScript by design; this restriction does not apply there.
 - **Naming consistency** (restated from Section 6): PascalCase components/providers, camelCase `use`-prefixed hooks, kebab-case feature folders, PascalCase singular Prisma models, kebab-case plural backend route files.
 - **Ownership boundary**: `src/frontend` and `src/backend` are separate ownership domains. A PR changing the API contract between them must update `docs/api/` in the same PR. Frontend code reaches the backend only via the typed API client in `src/frontend/lib/`, never via direct DB/Prisma access or duplicated route logic.
 - **Docs discipline**: architecture-affecting decisions (new domain provider, new external service, schema changes with migration implications) get a short note in `docs/architecture/`. This isn't bureaucracy for its own sake — it's what lets a new contributor or a future Claude session understand *why*, not just *what*.
