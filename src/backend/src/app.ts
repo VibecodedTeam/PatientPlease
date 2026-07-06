@@ -1,9 +1,8 @@
-import Fastify from 'fastify';
+import Fastify, { type FastifyInstance } from 'fastify';
+import healthRoutes from './routes/health.js';
 
-export function buildApp() {
-  const app = Fastify();
-
-  app.get('/health', () => ({ status: 'ok' }));
-
+export function buildApp(): FastifyInstance {
+  const app = Fastify({ logger: true });
+  app.register(healthRoutes);
   return app;
 }

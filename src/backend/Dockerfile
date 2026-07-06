@@ -24,6 +24,7 @@ RUN pnpm install --frozen-lockfile --filter backend --prod
 
 FROM node:22-alpine AS run
 WORKDIR /app/src/backend
+RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=prod-deps /app/src/backend/node_modules ./node_modules

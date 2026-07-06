@@ -1,4 +1,4 @@
-import { resolvePort } from './config.js';
+import { resolvePort } from '../src/config.js';
 
 describe('resolvePort', () => {
   it('returns the parsed value when PORT is set', () => {
