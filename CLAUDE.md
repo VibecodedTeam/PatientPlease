@@ -39,17 +39,17 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 | Layer | Choice |
 |---|---|
 | Monorepo tooling | pnpm workspaces (root `package.json` + `pnpm-workspace.yaml`). No Turborepo, no Nx. |
-| Frontend framework | React + Next.js (App Router) |
+| Frontend framework | React, bundled with Vite, routed with React Router (`react-router-dom`) as a client-rendered SPA. No Next.js, no server-side rendering. |
 | 3D rendering | Three.js (patient figure, attention points, zoom/click interaction) |
 | Frontend state | React Context + custom hooks only. No Redux, Zustand, MobX, Recoil, Jotai. |
-| Frontend tests | Jest + React Testing Library only. No Vitest, no Playwright, no Cypress. |
-| Backend runtime | Node.js API in `src/backend` |
+| Frontend tests | Jest + React Testing Library only. No Vitest, no Playwright, no Cypress. Tests live in `src/frontend/tests/`, mirroring the `views/`/`components/`/`providers/` tree (Section 6). |
+| Backend runtime | Node.js + Fastify API in `src/backend`, written in TypeScript. |
 | ORM / DB | Prisma + PostgreSQL |
-| Backend tests | Jest + supertest (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. |
+| Backend tests | Jest (`ts-jest`) + supertest (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. Tests live in `src/backend/test/`. |
 | Package manager | pnpm, everywhere — root scripts, CI, Docker builds |
 | CI/CD | GitHub Actions (`.github/workflows`) |
-| Containerization | Docker for frontend, backend, and Postgres (via docker-compose for local/deploy stack) |
-| Language | JavaScript (ES2022+) everywhere — no TypeScript. JSDoc for non-obvious contracts, PropTypes for component props. |
+| Containerization | Docker for frontend, backend, and Postgres (via docker-compose at `docker/docker-compose.yml` for local/deploy stack) |
+| Language | **Backend**: TypeScript (ES2022+ target), strict mode, compiled with `tsc`. **Frontend**: JavaScript (ES2022+) with JSX, no TypeScript — JSDoc for non-obvious contracts, PropTypes for component props. |
 
 ---
 
