@@ -6,3 +6,8 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// TODO: Replace with actual game models when added
+model Placeholder {
+  id Int @id @default(autoincrement())
+}
