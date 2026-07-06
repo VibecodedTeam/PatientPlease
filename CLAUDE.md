@@ -145,28 +145,29 @@ Rules tied to this structure:
 
 ## 5. State Management & Provider Isolation Contract
 
-**Rule**: Every cross-cutting domain of state gets **exactly one Provider + exactly one custom hook**, and that pair is the *only* legal way for anything outside that domain to read or mutate its state.
+**Rule**: Every cross-cutting domain of state gets **exactly one Provider + exactly one custom hook**, and that pair is the *only* legal way for anything outside that domain to read or mutate its state. Each domain lives in its own `providers/<Domain>/` folder (Section 6).
 
 Pattern (naming is mandatory, not a suggestion):
 
-- Domain `PatientSession` → `PatientSessionProvider` (component) + `usePatientSession()` (hook). Owns: current patient, current phase of the appointment, examined attention points.
-- Domain `Diagnosis` → `DiagnosisProvider` + `useDiagnosis()`. Owns: selected diagnosis, selected treatment, submission state, result (correct/incorrect, money delta).
-- Domain `Inventory` → `InventoryProvider` + `useInventory()`. Owns: owned handbooks/equipment, currently available hints unlocked by owned items.
-- Domain `DayNight` → `DayNightProvider` + `useDayNight()`. Owns: current phase (day/night), current day number, money balance, threshold/plotline progress.
-- Additional domains (e.g. `Shop`, `Chat`) follow the identical `<Domain>Provider` / `use<Domain>()` naming.
+- Domain `PatientSession` → `providers/PatientSession/PatientSessionProvider.jsx` (component) + `usePatientSession.js` (hook). Owns: current patient, current phase of the appointment, examined attention points.
+- Domain `Diagnosis` → `providers/Diagnosis/DiagnosisProvider.jsx` + `useDiagnosis.js`. Owns: selected diagnosis, selected treatment, submission state, result (correct/incorrect, money delta).
+- Domain `Inventory` → `providers/Inventory/InventoryProvider.jsx` + `useInventory.js`. Owns: owned handbooks/equipment, currently available hints unlocked by owned items.
+- Domain `DayNight` → `providers/DayNight/DayNightProvider.jsx` + `useDayNight.js`. Owns: current phase (day/night), current day number, money balance, threshold/plotline progress.
+- Domain `Api` → `providers/Api/ApiProvider.jsx` + `useApi.js`. Owns: the fetch wrapper to the backend HTTP API (base URL, JSON parsing, error normalization). This is the only place frontend code talks to `fetch` directly — every other provider/component that needs the backend consumes `useApi()` instead of writing its own request logic.
+- Additional domains (e.g. `Shop`, `Chat`) follow the identical `providers/<Domain>/<Domain>Provider.jsx` + `use<Domain>.js` naming.
 
 **What is forbidden:**
-- Importing another feature's local component or internal hook (anything not exported from that feature's `index.js`) to read its state.
+- Importing another component's or view's internal file or internal hook (anything not exported from that folder's `index.js`) to read its state.
 - Prop-drilling cross-cutting/global state (money, current patient, diagnosis result, unlocked inventory) through component trees instead of consuming it via the domain hook where it's needed.
 - Reading another component's local `useState`/`useReducer` from outside that component — there is no mechanism for this, and if you find yourself wanting it, that state belongs in a domain provider instead.
 - Two providers reaching into each other's internals directly. If domain A's logic needs domain B's data, A's component consumes `useB()` the same way any other consumer would — providers do not get backdoor access to each other's internal state shape.
 
 **What is allowed:**
-- Ordinary parent → child prop passing within the same feature's own component subtree, for that child's own rendering concerns (e.g. `<AttentionPoint x={..} y={..} onClick={..} />` inside `patient-scene`). This is not "shared state," it's normal composition and is fine.
-- A component consuming multiple domain hooks at once (e.g. the result popup consumes both `useDiagnosis()` and `useDayNight()` to show the result and update money) — that's the intended cross-domain integration point, and it only happens through hooks.
-- Providers being composed/nested at the app root (`app/layout.jsx` or a dedicated `providers/AppProviders.jsx`), which is allowed to know about all providers since its only job is composition, not logic.
+- Ordinary parent → child prop passing within the same component's own subtree, for that child's own rendering concerns (e.g. `<AttentionPoint x={..} y={..} onClick={..} />` inside `PatientScene`). This is not "shared state," it's normal composition and is fine.
+- A component consuming multiple domain hooks at once (e.g. `ResultPopup` consumes both `useDiagnosis()` and `useDayNight()` to show the result and update money) — that's the intended cross-domain integration point, and it only happens through hooks.
+- Providers being composed/nested at the app root (`src/frontend/src/App.jsx`, or a dedicated `providers/AppProviders/AppProviders.jsx`), which is allowed to know about all providers since its only job is composition, not logic.
 
-If a piece of state is only ever used inside one feature and never read by anything outside it, it does **not** need a provider — plain local `useState`/`useReducer` inside that feature is correct and preferred (don't create providers for everything by default).
+If a piece of state is only ever used inside one component and never read by anything outside it, it does **not** need a provider — plain local `useState`/`useReducer` inside that component is correct and preferred (don't create providers for everything by default).
 
 ---
 
