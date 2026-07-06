@@ -8,8 +8,8 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "docker:up": "docker compose up --build",
-    "docker:down": "docker compose down"
+    "docker:up": "docker compose -f docker/docker-compose.yml up --build",
+    "docker:down": "docker compose -f docker/docker-compose.yml down"
   },
   "engines": {
     "node": ">=22.13.0"
