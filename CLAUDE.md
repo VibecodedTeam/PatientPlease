@@ -213,17 +213,17 @@ Rules:
 **Default rule**: `position: absolute` (and `position: fixed` used for layout purposes) is **not allowed** anywhere in frontend styles. Use flexbox and grid for all layout, including seemingly "absolute-shaped" needs like the desk layout, shelf, attention-point hotspots over the 3D canvas, and popups.
 
 - Attention points over the Three.js canvas: position them via the Three.js/DOM overlay projection into a normal flow container (e.g. a grid cell or a wrapper sized to the canvas), not via manually-computed absolute coordinates, unless that computation is itself contained within the one exception mechanism below.
-- Popups/modals that visually "float" over content: use the **Overlay Portal exception** below, not ad hoc absolute positioning inline in the feature.
+- Popups/modals that visually "float" over content: use the **OverlayPortal component exception** below, not ad hoc absolute positioning inline in the component.
 
-### The one narrow exception: Overlay Portal
+### The one narrow exception: the `OverlayPortal` component
 
 If, and only if, a component must render visually detached from normal document flow (e.g. a modal, the settings/phone popup, a tooltip that must escape a clipping ancestor), it must go through a single shared mechanism:
 
-- Location: `src/frontend/lib/overlay-portal/` (a single shared module, not one per feature).
-- It is the *only* file in the frontend allowed to declare `position: fixed`/`position: absolute` for the purpose of layering above the page (a React portal rendering into a fixed full-viewport container, itself using flex/grid internally to position its children).
-- Any feature that needs an overlay imports and uses this shared portal component/hook — it does not declare its own `position: absolute`.
+- Location: `src/frontend/components/OverlayPortal/` (a single shared component, not one per feature).
+- It is the *only* folder in the frontend allowed to declare `position: fixed`/`position: absolute` for the purpose of layering above the page (a React portal rendering into the `#overlay-root` element declared in `index.html`, itself using flex/grid internally to position its children).
+- Any component that needs an overlay imports `OverlayPortal` from its `index.js` barrel (`import { OverlayPortal } from '@/components/OverlayPortal'`) — it does not declare its own `position: absolute`.
 - Every usage site must include a one-line comment directly above the JSX using it: `{/* overlay-portal: <why this must escape normal flow, e.g. "modal must render above 3D canvas and desk layout"> */}`.
-- Any PR introducing a *new* CSS declaration of `position: absolute` or `position: fixed` outside `lib/overlay-portal/` must be rejected in review — this is a lint/review gate, not a style preference. If a genuinely new case is found that the portal doesn't cover, the fix is to extend the shared portal mechanism, not to add a new one-off absolute rule.
+- Any PR introducing a *new* CSS declaration of `position: absolute` or `position: fixed` outside `components/OverlayPortal/` must be rejected in review — this is a lint/review gate, not a style preference. If a genuinely new case is found that the portal doesn't cover, the fix is to extend `OverlayPortal`, not to add a new one-off absolute rule.
 
 ---
 
