@@ -255,9 +255,9 @@ General rule: a PR that adds logic with no new/updated test is not reviewable �
 
 `.github/workflows/ci.yml` runs on every PR and must, in order, fail fast on:
 1. Install dependencies (`pnpm install --frozen-lockfile`)
-2. Lint (both `src/frontend` and `src/backend` — ESLint is what catches unused vars, bad imports, and prop-type violations in the absence of a type checker)
+2. Lint (both `src/frontend` and `src/backend` — ESLint is what catches unused vars and bad imports in the absence of a type checker on the frontend; on the backend, the TypeScript compiler itself catches type errors)
 3. Unit + integration tests (`pnpm test` at root, fanning out to both workspaces; backend tests run against a Postgres service container in the workflow)
-4. Build (`next build` for frontend; backend has no separate build step beyond install, since it ships plain JS)
+4. Build (`vite build` for frontend; `tsc` compiles backend TypeScript to `src/backend/dist/`)
 
 `.github/workflows/deploy.yml` runs on merge to `main` and must:
 1. Re-run the same checks as `ci.yml` (never deploy unverified code)
