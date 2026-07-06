@@ -61,52 +61,85 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 ├── README.md
 ├── package.json                 # root: pnpm workspace scripts (lint, test, build, dev, docker:*)
 ├── pnpm-workspace.yaml
-├── docker-compose.yml            # frontend + backend + postgres services
+├── docker/
+│   └── docker-compose.yml        # frontend + backend + postgres services
 ├── docs/
-│   ├── architecture/             # ADRs, diagrams, provider/domain map
-│   ├── game-design/               # case data design notes, medical content sourcing/review notes
-│   └── api/                       # REST API contract docs (endpoints, request/response shapes)
+│   ├── architecture/              # ADRs, diagrams, provider/domain map
+│   ├── game-design/                # case data design notes, medical content sourcing/review notes
+│   └── api/                        # REST API contract docs (endpoints, request/response shapes)
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                 # lint, typecheck, test, build (runs on every PR)
-│       └── deploy.yml             # build docker images, push, deploy, alive-check (runs on main)
+│       ├── ci.yml                  # lint, test, build (runs on every PR)
+│       └── deploy.yml              # build docker images, push, deploy, alive-check (runs on main)
 ├── src/
 │   ├── frontend/
 │   │   ├── package.json
 │   │   ├── Dockerfile
-│   │   ├── app/                   # Next.js App Router routes only — thin, composition-only
-│   │   ├── features/              # one folder per domain feature — see Section 5
-│   │   │   ├── patient-scene/      # Three.js figure + attention points
-│   │   │   ├── patient-documents/  # multi-frame document viewer
-│   │   │   ├── diagnosis-panel/
-│   │   │   ├── chat-dialogue/
-│   │   │   ├── shop/                # night phase purchase UI
-│   │   │   ├── inventory/           # shelf of owned books/equipment
-│   │   │   ├── day-night-cycle/
-│   │   │   ├── result-popup/
-│   │   │   └── info-board/
-│   │   ├── providers/              # one Provider + hook pair per domain (Section 5) — may re-export from features' index.js, this is the composition root
-│   │   ├── lib/                    # pure utilities, api client wrapper (fetch to backend), no state
-│   │   └── styles/                 # global tokens/reset only — never component-specific layout
+│   │   ├── vite.config.js
+│   │   ├── index.html
+│   │   ├── jest.config.js
+│   │   ├── src/
+│   │   │   ├── main.jsx            # Vite/React entry point
+│   │   │   └── App.jsx             # React Router route table — composition-only, wires views to routes, no view logic
+│   │   ├── views/                  # exactly two: MainView (day phase), NightView (night/shop phase)
+│   │   │   ├── MainView/
+│   │   │   │   ├── index.js
+│   │   │   │   ├── MainView.jsx
+│   │   │   │   └── MainView.module.css
+│   │   │   └── NightView/
+│   │   │       ├── index.js
+│   │   │       ├── NightView.jsx
+│   │   │       └── NightView.module.css
+│   │   ├── components/             # every reusable/domain UI unit, flat, one PascalCase folder per component
+│   │   │   ├── PatientScene/        # Three.js figure + attention points
+│   │   │   ├── PatientDocuments/    # multi-frame document viewer
+│   │   │   ├── DiagnosisPanel/
+│   │   │   ├── ChatDialogue/
+│   │   │   ├── Shop/                 # night phase purchase UI
+│   │   │   ├── Inventory/            # shelf of owned books/equipment
+│   │   │   ├── ResultPopup/
+│   │   │   ├── InfoBoard/
+│   │   │   └── OverlayPortal/         # the one component allowed to declare position:fixed/absolute (Section 7)
+│   │   ├── providers/               # one folder per state domain, Provider + hook pair (Section 5)
+│   │   │   ├── PatientSession/
+│   │   │   ├── Diagnosis/
+│   │   │   ├── Inventory/
+│   │   │   ├── DayNight/
+│   │   │   ├── Chat/
+│   │   │   └── Api/                  # fetch wrapper to the backend HTTP API, exposed via useApi()
+│   │   ├── styles/                  # global tokens/reset only — never component-specific layout
+│   │   └── tests/                   # every frontend test, mirroring views/ + components/ + providers/ exactly
+│   │       ├── views/
+│   │       │   ├── MainView/MainView.test.jsx
+│   │       │   └── NightView/NightView.test.jsx
+│   │       ├── components/
+│   │       │   └── OverlayPortal/OverlayPortal.test.jsx
+│   │       └── providers/
+│   │           └── Api/ApiProvider.test.jsx
 │   └── backend/
 │       ├── package.json
 │       ├── Dockerfile
+│       ├── tsconfig.json
+│       ├── jest.config.js
 │       ├── prisma/
 │       │   ├── schema.prisma
 │       │   └── migrations/
 │       ├── src/
-│       │   ├── routes/             # one file per resource (patients, cases, diagnoses, images, logs)
+│       │   ├── routes/             # one file per resource (patients.ts, cases.ts, diagnoses.ts, images.ts, logs.ts)
 │       │   ├── services/           # business logic, called by routes, testable in isolation
 │       │   ├── db/                 # Prisma client instance, seed scripts
-│       │   └── server.js           # app entrypoint, includes /health for alive-check
+│       │   ├── plugins/            # Fastify plugin registration
+│       │   ├── app.ts              # Fastify instance: plugin/route wiring, no server bootstrap
+│       │   └── server.ts           # app entrypoint, includes /health for alive-check
 │       └── test/
 │           └── setup/              # test-db bootstrap/teardown helpers
 ```
 
 Rules tied to this structure:
 - `src/frontend` and `src/backend` are **owned modules**. Frontend code never imports anything from `src/backend/**` and vice versa. The only contract is the HTTP API described in `docs/api/`.
-- `app/` (Next.js routes) is composition-only: it assembles features and providers, it does not contain feature business logic or its own state.
-- Anything reusable across 2+ features that is not global/cross-cutting state goes in `lib/`, not in a provider.
+- `src/frontend/src/App.jsx` is composition-only: it wires `views/` to routes via `react-router-dom`, it does not contain view business logic or its own state.
+- There is no `lib/` or `utils/` folder in `src/frontend`. Anything that would have gone there instead lives inside the single component/provider that owns it (e.g. the shared HTTP fetch wrapper is `providers/Api/`, not a lib function).
+- `src/frontend/views/` holds exactly two entries, `MainView` and `NightView`. Every other screen element (patient scene, documents, diagnosis panel, chat, shop, inventory, popups, info board) is a `components/` entry composed inside one of those two views — not its own view and not a `features/` folder.
 
 ---
 
