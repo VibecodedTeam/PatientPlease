@@ -1,23 +1,23 @@
 # CLAUDE.md
 
 This file governs how Claude Code (and any human contributor) works in this repository. It is the source of truth for architecture, workflow, and non-negotiable rules. If any instruction elsewhere conflicts with this file, this file wins. If this file conflicts with an explicit, current instruction from the user in a session, ask before deviating from either.
-Do not add nothing without be sure about the implementation, ask about everything you're unsure.
 ---
 
 ## 1. Hard Constraints (read this first)
 
 These are never violated, no exceptions, no "just this once":
 
-1. **No `position: absolute`** anywhere in frontend CSS/styles, except through the single documented Overlay Portal exception in Section 7. Every other layout problem is solved with flexbox/grid/normal flow.
-2. **No cross-component reach-through.** A component may only read/mutate another domain's state through that domain's Provider + hook pair (Section 5). No importing another feature's internal component, hook, or state directly.
-3. **No file outside a feature folder imports that feature's internals.** Only the feature's `index.js` barrel export is a valid import path for outsiders (Section 6).
-4. **No production logic (frontend or backend) is written without a failing test first.** TDD red-green-refactor is mandatory (Section 8).
+1. **No `position: absolute`** anywhere in frontend CSS/styles, except through the single documented `OverlayPortal` component exception in Section 7. Every other layout problem is solved with flexbox/grid/normal flow.
+2. **No cross-component reach-through.** A component may only read/mutate another domain's state through that domain's Provider + hook pair (Section 5). No importing another domain's internal component, hook, or state directly.
+3. **No file outside a `views/<Name>/`, `components/<Name>/`, or `providers/<Name>/` folder imports that folder's internals.** Only the folder's `index.js` barrel export is a valid import path for outsiders (Section 6). A unit's own test, in the mirrored `tests/` tree, is not an outsider and may import that unit's non-barrel files directly (Section 6).
+4. **No production logic (frontend or backend) is written without a failing test first.** TDD red-green-refactor is mandatory (Section 8). Frontend tests live in the separate, mirrored `src/frontend/tests/` tree — never co-located with the source they test.
 5. **`frontend` never imports from `backend` (or vice versa) directly.** The only contract between them is the HTTP API (Section 3, Section 9).
-6. **JavaScript only — no TypeScript.** Document component/hook/function contracts with JSDoc comments (`@param`/`@returns`) where the shape isn't obvious from the name, and use runtime validation (e.g. PropTypes on components, explicit checks at API boundaries) instead of compile-time types.
+6. **Backend is TypeScript only; frontend is JavaScript only.** `src/backend` contains no `.js` source files — everything is `.ts`, compiled with `tsc`. `src/frontend` contains no `.ts`/`.tsx` files — everything is `.js`/`.jsx`, documented with JSDoc (`@param`/`@returns`) where the shape isn't obvious from the name, using PropTypes on components and explicit runtime checks at API boundaries.
 7. **No direct pushes to `main`.** All work lands via PR, CI must be green, at least one review pass (see Section 10) is required before merge.
 8. **Never skip hooks or checks** (`--no-verify`, disabling lint-staged, commenting out CI steps, etc.) to get something to pass.
 9. **pnpm only.** No npm/yarn lockfiles, no mixing package managers.
-10. When a relevant skill exists (TDD, brainstorming, systematic-debugging, code-review, etc. from the `superpowers` plugin), **use it rather than re-deriving its process ad hoc.**
+10. **No `features/` folder and no `lib/`/`utils/` folder in frontend.** `src/frontend/` holds only its entry point (`src/`), `views/` (exactly `MainView` and `NightView`), `components/`, `providers/`, `tests/`, and `styles/`. Any logic that isn't itself a view, component, or provider is folded into whichever one of those owns it — there is no shared utility layer (Section 4, Section 6).
+11. When a relevant skill exists (TDD, brainstorming, systematic-debugging, code-review, etc. from the `superpowers` plugin), **use it rather than re-deriving its process ad hoc.**
 
 ---
 
