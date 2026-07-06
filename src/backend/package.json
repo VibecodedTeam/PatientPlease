@@ -1,0 +1,23 @@
+{
+  "name": "backend",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "build": "echo \"no build step for plain JS Fastify app\"",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "fastify-plugin": "^4.5.1",
+    "@prisma/client": "^5.19.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "prisma": "^5.19.1",
+    "eslint": "^8.57.0"
+  }
+}

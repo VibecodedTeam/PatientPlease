@@ -1,0 +1,10 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { MainView } from './MainView';
+
+describe('MainView', () => {
+  it('renders', () => {
+    render(<MainView />);
+    expect(screen.getByText('Main View')).toBeInTheDocument();
+  });
+});
