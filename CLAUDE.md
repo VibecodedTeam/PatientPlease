@@ -171,32 +171,40 @@ If a piece of state is only ever used inside one component and never read by any
 
 ---
 
-## 6. Component File-Layout Convention
+## 6. Component / View / Provider File-Layout Convention
 
-Every component/feature is a **self-contained, co-located unit**. For a feature `diagnosis-panel`:
+Every view, component, and provider is a **self-contained, co-located unit for its source files** — but its test lives separately, in the mirrored `tests/` tree, never next to the source.
+
+For a component `DiagnosisPanel`:
 
 ```
-features/diagnosis-panel/
+components/DiagnosisPanel/
 ├── index.js                  # barrel: exports ONLY the public surface (component + provider + hook, if any)
 ├── DiagnosisPanel.jsx         # the component
-├── DiagnosisPanel.test.jsx    # its test, co-located, not in a separate /tests tree
 ├── DiagnosisPanel.module.css  # its styles (CSS Modules), scoped to this component
-├── DiagnosisProvider.jsx      # if this feature owns a domain (Section 5)
-├── useDiagnosis.js            # the hook pairing with the provider above
-└── internal/                  # optional: private helper components/hooks used only inside this feature, never exported
+└── internal/                  # optional: private helper components/hooks used only inside this component, never exported
 ```
 
+Its test lives at the mirrored path, rooted under `src/frontend/tests/`:
+
+```
+tests/components/DiagnosisPanel/
+└── DiagnosisPanel.test.jsx
+```
+
+The identical pattern applies to `views/<ViewName>/` (e.g. `views/MainView/` ↔ `tests/views/MainView/`) and to `providers/<Domain>/` (e.g. `providers/Diagnosis/DiagnosisProvider.jsx` + `useDiagnosis.js` ↔ `tests/providers/Diagnosis/DiagnosisProvider.test.jsx`).
+
 Rules:
-- `index.js` is the *only* import path anything outside the feature folder is allowed to use (`import { DiagnosisPanel, useDiagnosis } from '@/features/diagnosis-panel'`). Deep-importing `features/diagnosis-panel/DiagnosisPanel.jsx` from outside the folder is forbidden — this is what makes the isolation rule in Section 5 enforceable, not just aspirational.
-- Test files sit next to the file they test (`Foo.jsx` + `Foo.test.jsx`), never in a parallel `__tests__` directory that mirrors the source tree.
-- Styles are co-located and scoped (CSS Modules) to the component they style. Global styles only live in `src/frontend/styles/` and are limited to resets/design tokens (colors, spacing scale, typography) — never component layout.
+- `index.js` is the *only* import path anything **outside** the folder is allowed to use (`import { DiagnosisPanel } from '@/components/DiagnosisPanel'`). Deep-importing `components/DiagnosisPanel/DiagnosisPanel.jsx` from another component/view/provider is forbidden — this is what makes the isolation rule in Section 5 enforceable, not just aspirational.
+- A unit's own test is not an "outsider": a test may import that unit's non-barrel files (including `internal/` helpers) directly, since verifying a unit's internals is not the same as another domain reaching through it. A test still imports the public component/hook itself via the barrel (`import { DiagnosisPanel } from '../../../components/DiagnosisPanel'`) unless it's specifically exercising an internal helper.
+- Tests are never co-located and there is no per-folder `__tests__` directory. `src/frontend/tests/` is the single frontend test tree, and its internal structure exactly mirrors `views/`, `components/`, and `providers/`.
+- Styles are co-located and scoped (CSS Modules) to the view/component they style. Global styles only live in `src/frontend/styles/` and are limited to resets/design tokens (colors, spacing scale, typography) — never component layout.
 - Naming conventions:
-  - Components: `PascalCase.jsx` (`AttentionPoint.jsx`)
-  - Hooks: `camelCase.js` starting with `use` (`usePatientSession.js`)
-  - Providers: `PascalCase.jsx` ending in `Provider` (`PatientSessionProvider.jsx`)
-  - Feature folders: `kebab-case` (`patient-documents`)
-  - Prisma models: `PascalCase` singular (`Patient`, `CaseDocument`, `DiagnosisAttempt`)
-  - Backend route files: `kebab-case` matching resource, plural (`patients.js`, `diagnoses.js`)
+  - Views: `PascalCase` folder + file, exactly `MainView` and `NightView` — no other view may be added without updating this document.
+  - Components: `PascalCase.jsx` (`PatientScene.jsx`), folder name matches exactly (`components/PatientScene/`).
+  - Providers: `PascalCase` domain folder (`providers/Diagnosis/`) containing `PascalCase` + `Provider` suffix (`DiagnosisProvider.jsx`) and its `camelCase` `use`-prefixed hook (`useDiagnosis.js`).
+  - Hooks: `camelCase.js` starting with `use` (`usePatientSession.js`).
+  - Backend: TypeScript files (`.ts`). Route files `kebab-case` matching resource, plural (`patients.ts`, `diagnoses.ts`). Prisma models `PascalCase` singular (`Patient`, `CaseDocument`, `DiagnosisAttempt`).
 
 ---
 
