@@ -1,0 +1,17 @@
+/// Generic gameplay/analytics event log. `eventType` is a plain String
+/// (validated against a TS const-union at the service layer) rather than a
+/// DB enum, since telemetry event vocabularies grow ad hoc and often.
+model GameplayLog {
+  id            String       @id @default(uuid(7)) @db.Uuid
+  gameSessionId String?      @db.Uuid
+  gameSession   GameSession? @relation(fields: [gameSessionId], references: [id])
+  caseId        String?      @db.Uuid
+  case          Case?        @relation(fields: [caseId], references: [id])
+  eventType     String
+  payload       Json
+  occurredAt    DateTime     @default(now())
+
+  @@index([gameSessionId, occurredAt])
+  @@index([caseId])
+  @@index([eventType])
+}

@@ -6,8 +6,3 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
-// TODO: Replace with actual game models when added
-model Placeholder {
-  id Int @id @default(autoincrement())
-}
