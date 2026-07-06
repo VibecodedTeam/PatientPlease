@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { MainView } from './MainView';
+import { MainView } from '../../../views/MainView';
 
 describe('MainView', () => {
   it('renders', () => {
