@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  min-width: 220px;
+  flex: 0 0 204px;
   box-sizing: border-box;
 }
 
@@ -10,7 +10,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 220px;
+  width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
   background-color: #eaf0f4;
@@ -23,7 +23,7 @@
   margin: 0;
   width: 100%;
   box-sizing: border-box;
-  padding: 14px 16px;
+  padding: 10px 12px;
   font-size: 1.3rem;
   font-weight: 700;
   color: #eaf0f4;
@@ -48,7 +48,7 @@
 }
 
 .symptomName {
-  padding: 8px 8px 8px 16px;
+  padding: 6px 6px 6px 12px;
   text-align: left;
   font-size: 0.85rem;
   font-weight: 600;
@@ -56,7 +56,7 @@
 }
 
 .symptomDuration {
-  padding: 8px 16px 8px 8px;
+  padding: 6px 12px 6px 6px;
   text-align: right;
   font-size: 0.85rem;
   color: #3f5d6b;
