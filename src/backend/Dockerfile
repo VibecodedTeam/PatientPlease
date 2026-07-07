@@ -36,4 +36,4 @@ COPY src/backend/package.json ./
 COPY src/backend/prisma ./prisma
 
 EXPOSE 4000
-CMD ["node", "dist/server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]

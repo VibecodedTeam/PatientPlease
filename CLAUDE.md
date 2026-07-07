@@ -42,7 +42,7 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 | Frontend framework | React, bundled with Vite, routed with React Router (`react-router-dom`) as a client-rendered SPA. No Next.js, no server-side rendering. |
 | 3D rendering | Three.js (patient figure, attention points, zoom/click interaction) |
 | Frontend state | React Context + custom hooks only. No Redux, Zustand, MobX, Recoil, Jotai. |
-| Frontend tests | Jest + React Testing Library only. No Vitest, no Playwright, no Cypress. Tests live in `src/frontend/tests/`, mirroring the `views/`/`components/`/`providers/` tree (Section 6). |
+| Frontend tests | Jest + React Testing Library for all component/view/provider tests. No Vitest, no Cypress. Tests live in `src/frontend/tests/`, mirroring the `views/`/`components/`/`providers/` tree (Section 6). Playwright is permitted, but scoped exclusively to a `src/frontend/e2e/` smoke-test layer that verifies the built app boots and serves — it is not an alternative to, or a replacement for, the Jest/RTL unit-test tree, and no component/view/provider logic is tested through it. |
 | Backend runtime | Node.js + Fastify API in `src/backend`, written in TypeScript. |
 | ORM / DB | Prisma + PostgreSQL |
 | Backend tests | Jest (`ts-jest`) + Fastify's built-in `inject()` (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. Tests live in `src/backend/test/`. |
