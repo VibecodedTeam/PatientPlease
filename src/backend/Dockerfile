@@ -10,11 +10,14 @@ RUN pnpm install --frozen-lockfile --prod=false
 
 FROM deps AS build
 COPY src/backend src/backend
+RUN pnpm --filter backend exec prisma generate
+RUN pnpm --filter backend build
 
 FROM node:20-alpine AS run
 WORKDIR /app/src/backend
 RUN corepack enable
+RUN apk add --no-cache openssl
 COPY --from=build /app /app
 ENV NODE_ENV=production
 EXPOSE 4000
-CMD ["node", "src/server.js"]
+CMD ["node", "dist/server.js"]
