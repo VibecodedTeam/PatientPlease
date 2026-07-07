@@ -1,3 +1,5 @@
+name: vibecoded-team
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -21,13 +23,16 @@ services:
       dockerfile: src/backend/Dockerfile
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-game}:${POSTGRES_PASSWORD:-game}@postgres:5432/${POSTGRES_DB:-skin_disease_game}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-test-client-id.apps.googleusercontent.com}
+      COOKIE_SECRET: ${COOKIE_SECRET:-dev-only-insecure-secret-change-me}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4173}
     ports:
       - "4000:4000"
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then((r) => r.json()).then((b) => process.exit(b.status === 'ok' ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 5s
       timeout: 5s
       retries: 10

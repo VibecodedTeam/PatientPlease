@@ -1,0 +1,28 @@
+/// A player account, authenticated exclusively via Google Sign-In (no passwords).
+model User {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  googleId  String   @unique
+  email     String   @unique
+  name      String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions     UserSession[]
+  gameSessions GameSession[]
+}
+
+/// A logged-in browser session for a User, created after a successful Google Sign-In.
+model UserSession {
+  id     String @id @default(uuid(7)) @db.Uuid
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+  /// SHA-256 hex digest of the opaque session token held in the client's cookie.
+  /// The raw token is never stored — only its hash, so a database leak doesn't hand out live sessions.
+  sessionToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}

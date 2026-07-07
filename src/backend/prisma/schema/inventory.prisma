@@ -1,0 +1,53 @@
+enum ShopItemType {
+  EQUIPMENT
+  HANDBOOK
+  PLOT_ITEM
+}
+
+/// Night-shop purchase catalog: equipment, handbooks, and plot items.
+model ShopItem {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  sku          String       @unique
+  name         String
+  description  String
+  itemType     ShopItemType
+  price        Int
+  unlockDay    Int?
+  isActive     Boolean      @default(true)
+  iconImageUrl String?
+
+  ownedBy       OwnedItem[]
+  requiredHints CaseHint[]
+
+  @@index([itemType])
+}
+
+/// A purchase made by a GameSession — join between GameSession and ShopItem.
+model OwnedItem {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  gameSessionId  String      @db.Uuid
+  gameSession    GameSession @relation(fields: [gameSessionId], references: [id])
+  shopItemId     String      @db.Uuid
+  shopItem       ShopItem    @relation(fields: [shopItemId], references: [id])
+  purchasePrice  Int
+  purchasedOnDay Int
+  purchasedAt    DateTime    @default(now())
+
+  @@unique([gameSessionId, shopItemId])
+  @@index([shopItemId])
+}
+
+/// A case-specific hint, unlockable by elapsed days and/or owning a ShopItem.
+model CaseHint {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  caseId             String    @db.Uuid
+  case               Case      @relation(fields: [caseId], references: [id])
+  content            String
+  sortOrder          Int
+  unlockAfterDay     Int?
+  requiredShopItemId String?   @db.Uuid
+  requiredShopItem   ShopItem? @relation(fields: [requiredShopItemId], references: [id])
+
+  @@index([caseId, sortOrder])
+  @@index([requiredShopItemId])
+}
