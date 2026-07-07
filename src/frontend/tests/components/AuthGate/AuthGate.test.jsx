@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ApiProvider } from '../../../providers/Api';
-import { AuthProvider } from '../../../providers/Auth';
+import { ApiProvider } from '../../../src/providers/Api';
+import { AuthProvider } from '../../../src/providers/Auth';
 import { AuthGate } from '../../../components/AuthGate';
 
 const USER = { id: '1', email: 'user@example.test', name: 'Test User', avatarUrl: null };
@@ -10,7 +10,7 @@ const USER = { id: '1', email: 'user@example.test', name: 'Test User', avatarUrl
 function renderGate(fetchImpl) {
   global.fetch = fetchImpl;
   return render(
-    <ApiProvider>
+    <ApiProvider baseUrl="http://api.test">
       <AuthProvider>
         <AuthGate googleClientId="test-client-id">
           <div>Protected content</div>
@@ -39,9 +39,7 @@ describe('AuthGate', () => {
   });
 
   it('shows Login when unauthenticated', async () => {
-    renderGate(() =>
-      Promise.resolve({ ok: false, status: 401, json: () => Promise.resolve({}) }),
-    );
+    renderGate(() => Promise.resolve(new Response('{}', { status: 401 })));
 
     await waitFor(() => expect(screen.getByText('Sign in')).toBeInTheDocument());
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
@@ -49,7 +47,7 @@ describe('AuthGate', () => {
 
   it('shows the header and children when authenticated', async () => {
     renderGate(() =>
-      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ user: USER }) }),
+      Promise.resolve(new Response(JSON.stringify({ user: USER }), { status: 200 })),
     );
 
     await waitFor(() => expect(screen.getByText('Protected content')).toBeInTheDocument());
@@ -61,11 +59,11 @@ describe('AuthGate', () => {
     const user = userEvent.setup();
     global.fetch = jest
       .fn()
-      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ user: USER }) })
-      .mockResolvedValueOnce({ ok: true, status: 204, json: () => Promise.reject(new Error()) });
+      .mockResolvedValueOnce(new Response(JSON.stringify({ user: USER }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     render(
-      <ApiProvider>
+      <ApiProvider baseUrl="http://api.test">
         <AuthProvider>
           <AuthGate googleClientId="test-client-id">
             <div>Protected content</div>

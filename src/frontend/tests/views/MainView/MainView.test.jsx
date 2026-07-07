@@ -1,10 +1,24 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MainView } from '../../../views/MainView';
 
 describe('MainView', () => {
-  it('renders', () => {
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify({ case: { documents: [] } }), { status: 200 }),
+    );
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('renders the patient documents desk', async () => {
     render(<MainView />);
-    expect(screen.getByText('Main View')).toBeInTheDocument();
+
+    await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
   });
 });

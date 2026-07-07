@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ApiProvider } from '../providers/Api';
-import { AuthProvider } from '../providers/Auth';
+import { ApiProvider } from './providers/Api';
+import { AuthProvider } from './providers/Auth';
 import { AuthGate } from '../components/AuthGate';
 import { MainView } from '../views/MainView';
 import { NightView } from '../views/NightView';

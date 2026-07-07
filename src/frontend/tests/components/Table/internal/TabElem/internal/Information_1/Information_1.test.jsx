@@ -5,41 +5,33 @@ import styles from '../../../../../../../components/Table/internal/TabElem/inter
 
 describe('Information_1', () => {
   it('renders the given title', () => {
-    render(<Information_1 title="Clinical Notes" items={[]} patientInfo={{}} />);
+    render(<Information_1 title="Clinical Notes" notes={[]} />);
 
     expect(screen.getByText('Clinical Notes')).toBeInTheDocument();
   });
 
-  it('renders each info item prefixed with a dash', () => {
+  it('renders each note item', () => {
     render(
       <Information_1
         title="Clinical Notes"
-        items={['Lesion on left forearm', 'Mild itching reported']}
-        patientInfo={{}}
-      />
+        notes={['Lesion on left forearm', 'Mild itching reported']}
+      />,
     );
 
-    expect(screen.getByText('- Lesion on left forearm')).toBeInTheDocument();
-    expect(screen.getByText('- Mild itching reported')).toBeInTheDocument();
+    expect(screen.getByText('Lesion on left forearm')).toBeInTheDocument();
+    expect(screen.getByText('Mild itching reported')).toBeInTheDocument();
   });
 
-  it('renders patient info labels and values next to the item list', () => {
-    render(
-      <Information_1
-        title="Clinical Notes"
-        items={[]}
-        patientInfo={{ Name: 'Jane Doe', Age: '42' }}
-      />
-    );
+  it('renders patient name and age next to the note list', () => {
+    render(<Information_1 title="Clinical Notes" patientName="Jane Doe" patientAge="42" notes={[]} />);
 
-    expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-    expect(screen.getByText('Age')).toBeInTheDocument();
-    expect(screen.getByText('42')).toBeInTheDocument();
+    expect(screen.getByText('Age', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('42', { exact: false })).toBeInTheDocument();
   });
 
   it('applies the card layout class to its root element', () => {
-    render(<Information_1 data-testid="card-root" title="t" items={[]} patientInfo={{}} />);
+    render(<Information_1 data-testid="card-root" title="t" notes={[]} />);
 
     expect(screen.getByTestId('card-root')).toHaveClass(styles.card);
   });
