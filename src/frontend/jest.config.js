@@ -7,5 +7,6 @@ module.exports = {
   transform: {
     '^.+\\.jsx?$': 'esbuild-jest',
   },
+  setupFiles: ['<rootDir>/jest.polyfills.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 };
