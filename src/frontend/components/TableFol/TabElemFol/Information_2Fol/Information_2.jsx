@@ -16,13 +16,15 @@ export function Information_2({
   className = '',
   ...rest
 }) {
-  const rootClassName = className ? `${styles.card} ${className}` : styles.card;
+  const cardClassName = className ? `${styles.card} ${className}` : styles.card;
 
   return (
-    <div className={rootClassName} {...rest}>
-      <div className={styles.content}>
-        <div className={styles.title}>{title}</div>
-        <div className={styles.body}>{story}</div>
+    <div className={styles.slot}>
+      <div className={cardClassName} {...rest}>
+        <div className={styles.content}>
+          <div className={styles.title}>{title}</div>
+          <div className={styles.body}>{story}</div>
+        </div>
       </div>
     </div>
   );

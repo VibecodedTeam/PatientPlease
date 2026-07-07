@@ -1,3 +1,11 @@
+.slot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 180px;
+  box-sizing: border-box;
+}
+
 .card {
   display: flex;
   flex-direction: column;
