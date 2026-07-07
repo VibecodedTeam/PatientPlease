@@ -5,6 +5,6 @@ import { MainView } from '../../../views/MainView';
 describe('MainView', () => {
   it('renders', () => {
     render(<MainView />);
-    expect(screen.getByText('Main View')).toBeInTheDocument();
+    expect(screen.getByText('Patient Information')).toBeInTheDocument();
   });
 });
