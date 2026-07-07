@@ -1,6 +1,9 @@
 import { prisma } from '../../src/db/prisma.js';
+import { truncateDatabase } from '../setup/truncate.js';
 
 describe('game schema', () => {
+  afterEach(truncateDatabase);
+
   afterAll(async () => {
     await prisma.$disconnect();
   });
@@ -159,21 +162,5 @@ describe('game schema', () => {
     });
     expect(loadedUser.sessions.map((s) => s.id)).toEqual([userSession.id]);
     expect(loadedUser.gameSessions.map((g) => g.id)).toEqual([gameSession.id]);
-
-    await prisma.gameplayLog.delete({ where: { id: gameplayLog.id } });
-    await prisma.chatMessage.delete({ where: { id: chatMessage.id } });
-    await prisma.caseHint.delete({ where: { id: caseHint.id } });
-    await prisma.ownedItem.delete({ where: { id: ownedItem.id } });
-    await prisma.shopItem.delete({ where: { id: shopItem.id } });
-    await prisma.diagnosisAttempt.delete({ where: { id: diagnosisAttempt.id } });
-    await prisma.gameSession.delete({ where: { id: gameSession.id } });
-    await prisma.userSession.delete({ where: { id: userSession.id } });
-    await prisma.user.delete({ where: { id: user.id } });
-    await prisma.caseDocument.delete({ where: { id: document.id } });
-    await prisma.attentionPoint.delete({ where: { id: attentionPoint.id } });
-    await prisma.case.delete({ where: { id: gameCase.id } });
-    await prisma.patient.delete({ where: { id: patient.id } });
-    await prisma.treatment.delete({ where: { id: treatment.id } });
-    await prisma.diagnosis.delete({ where: { id: diagnosis.id } });
   });
 });
