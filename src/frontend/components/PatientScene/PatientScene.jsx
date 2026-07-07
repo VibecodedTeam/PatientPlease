@@ -2,24 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { usePatientScene } from './usePatientScene';
-import { dodajKropke } from './internal/dodajKropke';
 import { screenToNdc } from './internal/screenToNdc';
 import { pickDot } from './internal/pickDot';
+import { dodajKropkeDlaRegionu } from './internal/dodajKropkeDlaRegionu';
+import { BodyRegion } from './internal/bodyRegions';
 import { MelanomaImagePopup } from '../MelanomaImagePopup';
 import styles from './PatientScene.module.css';
 
-// Demo attention points, in the model's own raw local coordinate space (before the
-// centering/scaling effect below runs) - dodajKropke snaps each onto the nearest
-// real surface point, so these only need to be roughly near the intended body part.
-// TEMPORARY until real case/attention-point data exists (see plan) - lets the click
-// detection be tested immediately without any other feature built first.
-const DEMO_DOTS = [
-  { x: 0, y: 19, z: 1, kolor: 0xffff00 }, // head
-  { x: 0, y: 13, z: 1.5, kolor: 0xffff00 }, // chest
-  { x: -5, y: 12, z: 0, kolor: 0xffff00 }, // left hand
-  { x: 5, y: 12, z: 0, kolor: 0xffff00 }, // right hand
-  { x: -1, y: 0.5, z: 1, kolor: 0xffff00 }, // foot
-];
+const DOT_COLOR = 0xffff00;
 
 export function PatientScene() {
   const containerRef = useRef(null);
@@ -107,6 +97,8 @@ export function PatientScene() {
       hit.material.color.set(0xff0000);
       activeDotRef.current = hit;
       setIsPopupOpen(true);
+      // eslint-disable-next-line no-console
+      console.log(hit.userData.bodyRegion);
     };
     renderer.domElement.addEventListener('click', handleClick);
 
@@ -158,8 +150,10 @@ export function PatientScene() {
       }
     });
 
-    DEMO_DOTS.forEach(({ x, y, z, kolor }) => {
-      dotsRef.current.push(dodajKropke(model, x, y, z, kolor));
+    // TEMPORARY until real case/attention-point data exists (see plan) - places one
+    // dot per BodyRegion so click detection can be tested immediately.
+    Object.values(BodyRegion).forEach((region) => {
+      dotsRef.current.push(dodajKropkeDlaRegionu(model, region, DOT_COLOR));
     });
 
     scene.add(model);

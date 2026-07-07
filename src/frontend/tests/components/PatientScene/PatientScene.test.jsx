@@ -148,4 +148,25 @@ describe('PatientScene', () => {
     expect(dot.material.color.getHex()).toBe(0x00ff00);
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
+
+  it('logs the clicked dot\'s BodyRegion to the console', () => {
+    const actualThree = jest.requireActual('three');
+    const model = new actualThree.Group();
+    model.add(new actualThree.Mesh(new actualThree.BoxGeometry(1, 1, 1)));
+    const dot = makeDot(actualThree);
+    dot.userData.bodyRegion = 'HEAD';
+    model.add(dot);
+
+    pickDot.mockReturnValue(dot);
+    const consoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    const { container } = renderWithSceneContext({ model, status: 'success', error: null });
+    const canvas = container.querySelector('canvas');
+    canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 300, height: 150 });
+
+    fireEvent.click(canvas, { clientX: 150, clientY: 75 });
+
+    expect(consoleLog).toHaveBeenCalledWith('HEAD');
+    consoleLog.mockRestore();
+  });
 });
