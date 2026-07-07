@@ -33,6 +33,7 @@ RUN target="$(dirname "$(dirname "$(readlink -f node_modules/@prisma/client)")")
   && cp -R /app/node_modules/.prisma "$target/.prisma"
 COPY --from=build /app/src/backend/dist ./dist
 COPY src/backend/package.json ./
+COPY src/backend/prisma.config.ts ./
 COPY src/backend/prisma ./prisma
 
 EXPOSE 4000
