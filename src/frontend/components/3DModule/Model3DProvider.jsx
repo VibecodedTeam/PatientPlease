@@ -1,12 +1,27 @@
 import React, { createContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import axios from 'axios';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-import { fetchObjModel } from '../../src/libs/model3DClient';
 
 export const Model3DContext = createContext(undefined);
 
 /**
- * Fetches a .obj model via the shared axios lib and parses it with three's OBJLoader,
+ * Fetches a raw .obj model file as plain text via axios.
+ * @param {string} url - path to the .obj file (e.g. a Vite public/ asset path)
+ * @returns {Promise<string>} raw .obj file contents
+ */
+function fetchObjModel(url) {
+  return axios
+    .get(url, {
+      responseType: 'text',
+      // Axios auto-parses text that looks like JSON; disable that since .obj files are plain text.
+      transformResponse: [(data) => data],
+    })
+    .then((response) => response.data);
+}
+
+/**
+ * Fetches a .obj model via axios and parses it with three's OBJLoader,
  * exposing the result to descendants via useModel3D().
  * @param {{ url: string, children: React.ReactNode }} props
  */

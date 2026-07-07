@@ -1,13 +1,13 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import axios from 'axios';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-import { fetchObjModel } from '../../src/libs/model3DClient';
-import { Model3DProvider } from './Model3DProvider';
-import { useModel3D } from './useModel3D';
+import { Model3DProvider } from '../../../components/3DModule/Model3DProvider';
+import { useModel3D } from '../../../components/3DModule';
 
 // esbuild-jest mishandles JSX hoisting in files that also call jest.mock(),
 // so this file uses React.createElement instead of JSX literals throughout.
-jest.mock('../../src/libs/model3DClient');
+jest.mock('axios');
 jest.mock('three/examples/jsm/loaders/OBJLoader.js');
 
 function TestConsumer() {
@@ -27,7 +27,7 @@ describe('Model3DProvider', () => {
   });
 
   it('exposes the parsed model on success', async () => {
-    fetchObjModel.mockResolvedValueOnce('o Cube\nv 0 0 0\n');
+    axios.get.mockResolvedValueOnce({ data: 'o Cube\nv 0 0 0\n' });
     const parsedGroup = { isGroup: true };
     OBJLoader.mockImplementation(() => ({
       parse: jest.fn().mockReturnValue(parsedGroup),
@@ -45,11 +45,17 @@ describe('Model3DProvider', () => {
 
     await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('success'));
     expect(screen.getByTestId('model').textContent).toBe('has-model');
-    expect(fetchObjModel).toHaveBeenCalledWith('/3DModels/FinalBaseMesh.obj');
+    expect(axios.get).toHaveBeenCalledWith(
+      '/3DModels/FinalBaseMesh.obj',
+      expect.objectContaining({
+        responseType: 'text',
+        transformResponse: [expect.any(Function)],
+      })
+    );
   });
 
   it('exposes an error when the fetch fails', async () => {
-    fetchObjModel.mockRejectedValueOnce(new Error('network error'));
+    axios.get.mockRejectedValueOnce(new Error('network error'));
 
     render(
       React.createElement(

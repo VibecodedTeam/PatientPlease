@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { Model3DContext } from './Model3DProvider';
-import { Model3D } from './Model3D';
+import { Model3DContext } from '../../../components/3DModule/Model3DProvider';
+import { Model3D } from '../../../components/3DModule';
 
 // esbuild-jest mishandles JSX hoisting in files that also call jest.mock(),
 // so this file uses React.createElement instead of JSX literals throughout.
