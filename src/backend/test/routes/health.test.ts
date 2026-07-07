@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import request from 'supertest';
-import { buildApp } from '../../src/app';
+import { buildApp } from '../../src/app.js';
+import { prisma } from '../../src/db/prisma.js';
 
 describe('GET /health', () => {
   let app: FastifyInstance;
@@ -12,11 +12,13 @@ describe('GET /health', () => {
 
   afterAll(async () => {
     await app.close();
+    await prisma.$disconnect();
   });
 
   it('returns 200 and status ok when the database is reachable', async () => {
-    const response = await request(app.server).get('/health');
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({ status: 'ok' });
+    const response = await app.inject({ method: 'GET', url: '/health' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ status: 'ok' });
   });
 });

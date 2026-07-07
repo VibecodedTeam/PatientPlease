@@ -42,10 +42,10 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 | Frontend framework | React, bundled with Vite, routed with React Router (`react-router-dom`) as a client-rendered SPA. No Next.js, no server-side rendering. |
 | 3D rendering | Three.js (patient figure, attention points, zoom/click interaction) |
 | Frontend state | React Context + custom hooks only. No Redux, Zustand, MobX, Recoil, Jotai. |
-| Frontend tests | Jest + React Testing Library only. No Vitest, no Playwright, no Cypress. Tests live in `src/frontend/tests/`, mirroring the `views/`/`components/`/`providers/` tree (Section 6). |
+| Frontend tests | Jest + React Testing Library for all component/view/provider tests. No Vitest, no Cypress. Tests live in `src/frontend/tests/`, mirroring the `views/`/`components/`/`providers/` tree (Section 6). Playwright is permitted, but scoped exclusively to a `src/frontend/e2e/` smoke-test layer that verifies the built app boots and serves — it is not an alternative to, or a replacement for, the Jest/RTL unit-test tree, and no component/view/provider logic is tested through it. |
 | Backend runtime | Node.js + Fastify API in `src/backend`, written in TypeScript. |
 | ORM / DB | Prisma + PostgreSQL |
-| Backend tests | Jest (`ts-jest`) + supertest (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. Tests live in `src/backend/test/`. |
+| Backend tests | Jest (`ts-jest`) + Fastify's built-in `inject()` (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. Tests live in `src/backend/test/`. |
 | Package manager | pnpm, everywhere — root scripts, CI, Docker builds |
 | CI/CD | GitHub Actions (`.github/workflows`) |
 | Containerization | Docker for frontend, backend, and Postgres (via docker-compose at `docker/docker-compose.yml` for local/deploy stack) |
@@ -117,10 +117,9 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 │   │       └── providers/
 │   │           └── Api/ApiProvider.test.jsx
 │   └── backend/
-│       ├── package.json
+│       ├── package.json             # jest config lives inline here, not in a separate jest.config.js
 │       ├── Dockerfile
 │       ├── tsconfig.json
-│       ├── jest.config.js
 │       ├── prisma/
 │       │   ├── schema.prisma
 │       │   └── migrations/
@@ -239,9 +238,9 @@ No frontend component/hook and no backend endpoint/service is written without a 
 4. Domain providers/hooks (Section 5) are tested by rendering a small test consumer component wrapped in the provider — never by reaching into provider internals.
 5. Three.js scene logic (attention point hit-testing, coordinate mapping) is isolated into plain, framework-free functions inside that component's own `internal/` folder wherever possible, specifically so it's unit-testable without a WebGL context; only thin glue code touches the Three.js renderer directly. Its test lives at the mirrored path (e.g. `tests/components/PatientScene/internal/hitTesting.test.js`), which is allowed to import the `internal/` file directly (Section 6).
 
-### Backend (Jest + ts-jest + supertest + Prisma/Postgres)
+### Backend (Jest + ts-jest + Fastify `inject()` + Prisma/Postgres)
 
-1. **Red**: Write a supertest-driven test against the route (e.g. `POST /diagnoses`) in `src/backend/test/routes/diagnoses.test.ts`, asserting status code and response shape for the case being added, run it, confirm it fails.
+1. **Red**: Write a test against the route using Fastify's `app.inject()` (e.g. `POST /diagnoses`) in `src/backend/test/routes/diagnoses.test.ts`, asserting status code and response shape for the case being added, run it, confirm it fails.
 2. **Green**: Implement the route/service/Prisma query needed to pass, as TypeScript (`src/backend/src/routes/diagnoses.ts`, etc.). Use a real test database (separate `DATABASE_URL` pointing at a disposable test Postgres instance, migrated via `prisma migrate deploy` in test setup/teardown) for integration-level endpoint tests. Use a mocked/injected Prisma client only for pure unit tests of service-layer logic that don't need real DB behavior (e.g. scoring rules, verification logic).
 3. **Refactor**: Clean up service/route code with tests green throughout.
 4. Every new Prisma model or migration is accompanied by at least one test exercising a route or service that uses it — a migration with no corresponding test is incomplete work.
