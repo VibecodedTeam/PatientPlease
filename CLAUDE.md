@@ -1,23 +1,23 @@
 # CLAUDE.md
 
 This file governs how Claude Code (and any human contributor) works in this repository. It is the source of truth for architecture, workflow, and non-negotiable rules. If any instruction elsewhere conflicts with this file, this file wins. If this file conflicts with an explicit, current instruction from the user in a session, ask before deviating from either.
-Do not add nothing without be sure about the implementation, ask about everything you're unsure.
 ---
 
 ## 1. Hard Constraints (read this first)
 
 These are never violated, no exceptions, no "just this once":
 
-1. **No `position: absolute`** anywhere in frontend CSS/styles, except through the single documented Overlay Portal exception in Section 7. Every other layout problem is solved with flexbox/grid/normal flow.
-2. **No cross-component reach-through.** A component may only read/mutate another domain's state through that domain's Provider + hook pair (Section 5). No importing another feature's internal component, hook, or state directly.
-3. **No file outside a feature folder imports that feature's internals.** Only the feature's `index.js` barrel export is a valid import path for outsiders (Section 6).
-4. **No production logic (frontend or backend) is written without a failing test first.** TDD red-green-refactor is mandatory (Section 8).
+1. **No `position: absolute`** anywhere in frontend CSS/styles, except through the single documented `OverlayPortal` component exception in Section 7. Every other layout problem is solved with flexbox/grid/normal flow.
+2. **No cross-component reach-through.** A component may only read/mutate another domain's state through that domain's Provider + hook pair (Section 5). No importing another domain's internal component, hook, or state directly.
+3. **No file outside a `views/<Name>/`, `components/<Name>/`, or `providers/<Name>/` folder imports that folder's internals.** Only the folder's `index.js` barrel export is a valid import path for outsiders (Section 6). A unit's own test, in the mirrored `tests/` tree, is not an outsider and may import that unit's non-barrel files directly (Section 6).
+4. **No production logic (frontend or backend) is written without a failing test first.** TDD red-green-refactor is mandatory (Section 8). Frontend tests live in the separate, mirrored `src/frontend/tests/` tree — never co-located with the source they test.
 5. **`frontend` never imports from `backend` (or vice versa) directly.** The only contract between them is the HTTP API (Section 3, Section 9).
-6. **JavaScript only — no TypeScript.** Document component/hook/function contracts with JSDoc comments (`@param`/`@returns`) where the shape isn't obvious from the name, and use runtime validation (e.g. PropTypes on components, explicit checks at API boundaries) instead of compile-time types.
+6. **Backend is TypeScript only; frontend is JavaScript only.** `src/backend` contains no `.js` source files — everything is `.ts`, compiled with `tsc`. `src/frontend` contains no `.ts`/`.tsx` files — everything is `.js`/`.jsx`, documented with JSDoc (`@param`/`@returns`) where the shape isn't obvious from the name, using PropTypes on components and explicit runtime checks at API boundaries.
 7. **No direct pushes to `main`.** All work lands via PR, CI must be green, at least one review pass (see Section 10) is required before merge.
 8. **Never skip hooks or checks** (`--no-verify`, disabling lint-staged, commenting out CI steps, etc.) to get something to pass.
 9. **pnpm only.** No npm/yarn lockfiles, no mixing package managers.
-10. When a relevant skill exists (TDD, brainstorming, systematic-debugging, code-review, etc. from the `superpowers` plugin), **use it rather than re-deriving its process ad hoc.**
+10. **No `features/` folder and no `lib/`/`utils/` folder in frontend.** `src/frontend/` holds only its entry point (`src/`), `views/` (exactly `MainView` and `NightView`), `components/`, `providers/`, `tests/`, and `styles/`. Any logic that isn't itself a view, component, or provider is folded into whichever one of those owns it — there is no shared utility layer (Section 4, Section 6).
+11. When a relevant skill exists (TDD, brainstorming, systematic-debugging, code-review, etc. from the `superpowers` plugin), **use it rather than re-deriving its process ad hoc.**
 
 ---
 
@@ -39,17 +39,17 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 | Layer | Choice |
 |---|---|
 | Monorepo tooling | pnpm workspaces (root `package.json` + `pnpm-workspace.yaml`). No Turborepo, no Nx. |
-| Frontend framework | React + Next.js (App Router) |
+| Frontend framework | React, bundled with Vite, routed with React Router (`react-router-dom`) as a client-rendered SPA. No Next.js, no server-side rendering. |
 | 3D rendering | Three.js (patient figure, attention points, zoom/click interaction) |
 | Frontend state | React Context + custom hooks only. No Redux, Zustand, MobX, Recoil, Jotai. |
-| Frontend tests | Jest + React Testing Library only. No Vitest, no Playwright, no Cypress. |
-| Backend runtime | Node.js API in `src/backend` |
+| Frontend tests | Jest + React Testing Library only. No Vitest, no Playwright, no Cypress. Tests live in `src/frontend/tests/`, mirroring the `views/`/`components/`/`providers/` tree (Section 6). |
+| Backend runtime | Node.js + Fastify API in `src/backend`, written in TypeScript. |
 | ORM / DB | Prisma + PostgreSQL |
-| Backend tests | Jest + supertest (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. |
+| Backend tests | Jest (`ts-jest`) + supertest (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. Tests live in `src/backend/test/`. |
 | Package manager | pnpm, everywhere — root scripts, CI, Docker builds |
 | CI/CD | GitHub Actions (`.github/workflows`) |
-| Containerization | Docker for frontend, backend, and Postgres (via docker-compose for local/deploy stack) |
-| Language | JavaScript (ES2022+) everywhere — no TypeScript. JSDoc for non-obvious contracts, PropTypes for component props. |
+| Containerization | Docker for frontend, backend, and Postgres (via docker-compose at `docker/docker-compose.yml` for local/deploy stack) |
+| Language | **Backend**: TypeScript (ES2022+ target), strict mode, compiled with `tsc`. **Frontend**: JavaScript (ES2022+) with JSX, no TypeScript — JSDoc for non-obvious contracts, PropTypes for component props. |
 
 ---
 
@@ -61,108 +61,150 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 ├── README.md
 ├── package.json                 # root: pnpm workspace scripts (lint, test, build, dev, docker:*)
 ├── pnpm-workspace.yaml
-├── docker-compose.yml            # frontend + backend + postgres services
+├── docker/
+│   └── docker-compose.yml        # frontend + backend + postgres services
 ├── docs/
-│   ├── architecture/             # ADRs, diagrams, provider/domain map
-│   ├── game-design/               # case data design notes, medical content sourcing/review notes
-│   └── api/                       # REST API contract docs (endpoints, request/response shapes)
+│   ├── architecture/              # ADRs, diagrams, provider/domain map
+│   ├── game-design/                # case data design notes, medical content sourcing/review notes
+│   └── api/                        # REST API contract docs (endpoints, request/response shapes)
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                 # lint, typecheck, test, build (runs on every PR)
-│       └── deploy.yml             # build docker images, push, deploy, alive-check (runs on main)
+│       ├── ci.yml                  # lint, test, build (runs on every PR)
+│       └── deploy.yml              # build docker images, push, deploy, alive-check (runs on main)
 ├── src/
 │   ├── frontend/
 │   │   ├── package.json
 │   │   ├── Dockerfile
-│   │   ├── app/                   # Next.js App Router routes only — thin, composition-only
-│   │   ├── features/              # one folder per domain feature — see Section 5
-│   │   │   ├── patient-scene/      # Three.js figure + attention points
-│   │   │   ├── patient-documents/  # multi-frame document viewer
-│   │   │   ├── diagnosis-panel/
-│   │   │   ├── chat-dialogue/
-│   │   │   ├── shop/                # night phase purchase UI
-│   │   │   ├── inventory/           # shelf of owned books/equipment
-│   │   │   ├── day-night-cycle/
-│   │   │   ├── result-popup/
-│   │   │   └── info-board/
-│   │   ├── providers/              # one Provider + hook pair per domain (Section 5) — may re-export from features' index.js, this is the composition root
-│   │   ├── lib/                    # pure utilities, api client wrapper (fetch to backend), no state
-│   │   └── styles/                 # global tokens/reset only — never component-specific layout
+│   │   ├── vite.config.js
+│   │   ├── index.html
+│   │   ├── jest.config.js
+│   │   ├── src/
+│   │   │   ├── main.jsx            # Vite/React entry point
+│   │   │   └── App.jsx             # React Router route table — composition-only, wires views to routes, no view logic
+│   │   ├── views/                  # exactly two: MainView (day phase), NightView (night/shop phase)
+│   │   │   ├── MainView/
+│   │   │   │   ├── index.js
+│   │   │   │   ├── MainView.jsx
+│   │   │   │   └── MainView.module.css
+│   │   │   └── NightView/
+│   │   │       ├── index.js
+│   │   │       ├── NightView.jsx
+│   │   │       └── NightView.module.css
+│   │   ├── components/             # every reusable/domain UI unit, flat, one PascalCase folder per component
+│   │   │   ├── PatientScene/        # Three.js figure + attention points
+│   │   │   ├── PatientDocuments/    # multi-frame document viewer
+│   │   │   ├── DiagnosisPanel/
+│   │   │   ├── ChatDialogue/
+│   │   │   ├── Shop/                 # night phase purchase UI
+│   │   │   ├── Inventory/            # shelf of owned books/equipment
+│   │   │   ├── ResultPopup/
+│   │   │   ├── InfoBoard/
+│   │   │   └── OverlayPortal/         # the one component allowed to declare position:fixed/absolute (Section 7)
+│   │   ├── providers/               # one folder per state domain, Provider + hook pair (Section 5)
+│   │   │   ├── PatientSession/
+│   │   │   ├── Diagnosis/
+│   │   │   ├── Inventory/
+│   │   │   ├── DayNight/
+│   │   │   ├── Chat/
+│   │   │   └── Api/                  # fetch wrapper to the backend HTTP API, exposed via useApi()
+│   │   ├── styles/                  # global tokens/reset only — never component-specific layout
+│   │   └── tests/                   # every frontend test, mirroring views/ + components/ + providers/ exactly
+│   │       ├── views/
+│   │       │   ├── MainView/MainView.test.jsx
+│   │       │   └── NightView/NightView.test.jsx
+│   │       ├── components/
+│   │       │   └── OverlayPortal/OverlayPortal.test.jsx
+│   │       └── providers/
+│   │           └── Api/ApiProvider.test.jsx
 │   └── backend/
 │       ├── package.json
 │       ├── Dockerfile
+│       ├── tsconfig.json
+│       ├── jest.config.js
 │       ├── prisma/
 │       │   ├── schema.prisma
 │       │   └── migrations/
 │       ├── src/
-│       │   ├── routes/             # one file per resource (patients, cases, diagnoses, images, logs)
+│       │   ├── routes/             # one file per resource (patients.ts, cases.ts, diagnoses.ts, images.ts, logs.ts)
 │       │   ├── services/           # business logic, called by routes, testable in isolation
 │       │   ├── db/                 # Prisma client instance, seed scripts
-│       │   └── server.js           # app entrypoint, includes /health for alive-check
+│       │   ├── plugins/            # Fastify plugin registration
+│       │   ├── app.ts              # Fastify instance: plugin/route wiring, no server bootstrap
+│       │   └── server.ts           # app entrypoint, includes /health for alive-check
 │       └── test/
 │           └── setup/              # test-db bootstrap/teardown helpers
 ```
 
 Rules tied to this structure:
 - `src/frontend` and `src/backend` are **owned modules**. Frontend code never imports anything from `src/backend/**` and vice versa. The only contract is the HTTP API described in `docs/api/`.
-- `app/` (Next.js routes) is composition-only: it assembles features and providers, it does not contain feature business logic or its own state.
-- Anything reusable across 2+ features that is not global/cross-cutting state goes in `lib/`, not in a provider.
+- `src/frontend/src/App.jsx` is composition-only: it wires `views/` to routes via `react-router-dom`, it does not contain view business logic or its own state.
+- There is no `lib/` or `utils/` folder in `src/frontend`. Anything that would have gone there instead lives inside the single component/provider that owns it (e.g. the shared HTTP fetch wrapper is `providers/Api/`, not a lib function).
+- `src/frontend/views/` holds exactly two entries, `MainView` and `NightView`. Every other screen element (patient scene, documents, diagnosis panel, chat, shop, inventory, popups, info board) is a `components/` entry composed inside one of those two views — not its own view and not a `features/` folder.
 
 ---
 
 ## 5. State Management & Provider Isolation Contract
 
-**Rule**: Every cross-cutting domain of state gets **exactly one Provider + exactly one custom hook**, and that pair is the *only* legal way for anything outside that domain to read or mutate its state.
+**Rule**: Every cross-cutting domain of state gets **exactly one Provider + exactly one custom hook**, and that pair is the *only* legal way for anything outside that domain to read or mutate its state. Each domain lives in its own `providers/<Domain>/` folder (Section 6).
 
 Pattern (naming is mandatory, not a suggestion):
 
-- Domain `PatientSession` → `PatientSessionProvider` (component) + `usePatientSession()` (hook). Owns: current patient, current phase of the appointment, examined attention points.
-- Domain `Diagnosis` → `DiagnosisProvider` + `useDiagnosis()`. Owns: selected diagnosis, selected treatment, submission state, result (correct/incorrect, money delta).
-- Domain `Inventory` → `InventoryProvider` + `useInventory()`. Owns: owned handbooks/equipment, currently available hints unlocked by owned items.
-- Domain `DayNight` → `DayNightProvider` + `useDayNight()`. Owns: current phase (day/night), current day number, money balance, threshold/plotline progress.
-- Additional domains (e.g. `Shop`, `Chat`) follow the identical `<Domain>Provider` / `use<Domain>()` naming.
+- Domain `PatientSession` → `providers/PatientSession/PatientSessionProvider.jsx` (component) + `usePatientSession.js` (hook). Owns: current patient, current phase of the appointment, examined attention points.
+- Domain `Diagnosis` → `providers/Diagnosis/DiagnosisProvider.jsx` + `useDiagnosis.js`. Owns: selected diagnosis, selected treatment, submission state, result (correct/incorrect, money delta).
+- Domain `Inventory` → `providers/Inventory/InventoryProvider.jsx` + `useInventory.js`. Owns: owned handbooks/equipment, currently available hints unlocked by owned items.
+- Domain `DayNight` → `providers/DayNight/DayNightProvider.jsx` + `useDayNight.js`. Owns: current phase (day/night), current day number, money balance, threshold/plotline progress.
+- Domain `Api` → `providers/Api/ApiProvider.jsx` + `useApi.js`. Owns: the fetch wrapper to the backend HTTP API (base URL, JSON parsing, error normalization). This is the only place frontend code talks to `fetch` directly — every other provider/component that needs the backend consumes `useApi()` instead of writing its own request logic.
+- Additional domains (e.g. `Shop`, `Chat`) follow the identical `providers/<Domain>/<Domain>Provider.jsx` + `use<Domain>.js` naming.
 
 **What is forbidden:**
-- Importing another feature's local component or internal hook (anything not exported from that feature's `index.js`) to read its state.
+- Importing another component's or view's internal file or internal hook (anything not exported from that folder's `index.js`) to read its state.
 - Prop-drilling cross-cutting/global state (money, current patient, diagnosis result, unlocked inventory) through component trees instead of consuming it via the domain hook where it's needed.
 - Reading another component's local `useState`/`useReducer` from outside that component — there is no mechanism for this, and if you find yourself wanting it, that state belongs in a domain provider instead.
 - Two providers reaching into each other's internals directly. If domain A's logic needs domain B's data, A's component consumes `useB()` the same way any other consumer would — providers do not get backdoor access to each other's internal state shape.
 
 **What is allowed:**
-- Ordinary parent → child prop passing within the same feature's own component subtree, for that child's own rendering concerns (e.g. `<AttentionPoint x={..} y={..} onClick={..} />` inside `patient-scene`). This is not "shared state," it's normal composition and is fine.
-- A component consuming multiple domain hooks at once (e.g. the result popup consumes both `useDiagnosis()` and `useDayNight()` to show the result and update money) — that's the intended cross-domain integration point, and it only happens through hooks.
-- Providers being composed/nested at the app root (`app/layout.jsx` or a dedicated `providers/AppProviders.jsx`), which is allowed to know about all providers since its only job is composition, not logic.
+- Ordinary parent → child prop passing within the same component's own subtree, for that child's own rendering concerns (e.g. `<AttentionPoint x={..} y={..} onClick={..} />` inside `PatientScene`). This is not "shared state," it's normal composition and is fine.
+- A component consuming multiple domain hooks at once (e.g. `ResultPopup` consumes both `useDiagnosis()` and `useDayNight()` to show the result and update money) — that's the intended cross-domain integration point, and it only happens through hooks.
+- Providers being composed/nested at the app root (`src/frontend/src/App.jsx`, or a dedicated `providers/AppProviders/AppProviders.jsx`), which is allowed to know about all providers since its only job is composition, not logic.
 
-If a piece of state is only ever used inside one feature and never read by anything outside it, it does **not** need a provider — plain local `useState`/`useReducer` inside that feature is correct and preferred (don't create providers for everything by default).
+If a piece of state is only ever used inside one component and never read by anything outside it, it does **not** need a provider — plain local `useState`/`useReducer` inside that component is correct and preferred (don't create providers for everything by default).
 
 ---
 
-## 6. Component File-Layout Convention
+## 6. Component / View / Provider File-Layout Convention
 
-Every component/feature is a **self-contained, co-located unit**. For a feature `diagnosis-panel`:
+Every view, component, and provider is a **self-contained, co-located unit for its source files** — but its test lives separately, in the mirrored `tests/` tree, never next to the source.
+
+For a component `DiagnosisPanel`:
 
 ```
-features/diagnosis-panel/
+components/DiagnosisPanel/
 ├── index.js                  # barrel: exports ONLY the public surface (component + provider + hook, if any)
 ├── DiagnosisPanel.jsx         # the component
-├── DiagnosisPanel.test.jsx    # its test, co-located, not in a separate /tests tree
 ├── DiagnosisPanel.module.css  # its styles (CSS Modules), scoped to this component
-├── DiagnosisProvider.jsx      # if this feature owns a domain (Section 5)
-├── useDiagnosis.js            # the hook pairing with the provider above
-└── internal/                  # optional: private helper components/hooks used only inside this feature, never exported
+└── internal/                  # optional: private helper components/hooks used only inside this component, never exported
 ```
 
+Its test lives at the mirrored path, rooted under `src/frontend/tests/`:
+
+```
+tests/components/DiagnosisPanel/
+└── DiagnosisPanel.test.jsx
+```
+
+The identical pattern applies to `views/<ViewName>/` (e.g. `views/MainView/` ↔ `tests/views/MainView/`) and to `providers/<Domain>/` (e.g. `providers/Diagnosis/DiagnosisProvider.jsx` + `useDiagnosis.js` ↔ `tests/providers/Diagnosis/DiagnosisProvider.test.jsx`).
+
 Rules:
-- `index.js` is the *only* import path anything outside the feature folder is allowed to use (`import { DiagnosisPanel, useDiagnosis } from '@/features/diagnosis-panel'`). Deep-importing `features/diagnosis-panel/DiagnosisPanel.jsx` from outside the folder is forbidden — this is what makes the isolation rule in Section 5 enforceable, not just aspirational.
-- Test files sit next to the file they test (`Foo.jsx` + `Foo.test.jsx`), never in a parallel `__tests__` directory that mirrors the source tree.
-- Styles are co-located and scoped (CSS Modules) to the component they style. Global styles only live in `src/frontend/styles/` and are limited to resets/design tokens (colors, spacing scale, typography) — never component layout.
+- `index.js` is the *only* import path anything **outside** the folder is allowed to use (`import { DiagnosisPanel } from '@/components/DiagnosisPanel'`). Deep-importing `components/DiagnosisPanel/DiagnosisPanel.jsx` from another component/view/provider is forbidden — this is what makes the isolation rule in Section 5 enforceable, not just aspirational.
+- A unit's own test is not an "outsider": a test may import that unit's non-barrel files (including `internal/` helpers) directly, since verifying a unit's internals is not the same as another domain reaching through it. A test still imports the public component/hook itself via the barrel (`import { DiagnosisPanel } from '../../../components/DiagnosisPanel'`) unless it's specifically exercising an internal helper.
+- Tests are never co-located and there is no per-folder `__tests__` directory. `src/frontend/tests/` is the single frontend test tree, and its internal structure exactly mirrors `views/`, `components/`, and `providers/`.
+- Styles are co-located and scoped (CSS Modules) to the view/component they style. Global styles only live in `src/frontend/styles/` and are limited to resets/design tokens (colors, spacing scale, typography) — never component layout.
 - Naming conventions:
-  - Components: `PascalCase.jsx` (`AttentionPoint.jsx`)
-  - Hooks: `camelCase.js` starting with `use` (`usePatientSession.js`)
-  - Providers: `PascalCase.jsx` ending in `Provider` (`PatientSessionProvider.jsx`)
-  - Feature folders: `kebab-case` (`patient-documents`)
-  - Prisma models: `PascalCase` singular (`Patient`, `CaseDocument`, `DiagnosisAttempt`)
-  - Backend route files: `kebab-case` matching resource, plural (`patients.js`, `diagnoses.js`)
+  - Views: `PascalCase` folder + file, exactly `MainView` and `NightView` — no other view may be added without updating this document.
+  - Components: `PascalCase.jsx` (`PatientScene.jsx`), folder name matches exactly (`components/PatientScene/`).
+  - Providers: `PascalCase` domain folder (`providers/Diagnosis/`) containing `PascalCase` + `Provider` suffix (`DiagnosisProvider.jsx`) and its `camelCase` `use`-prefixed hook (`useDiagnosis.js`).
+  - Hooks: `camelCase.js` starting with `use` (`usePatientSession.js`).
+  - Backend: TypeScript files (`.ts`). Route files `kebab-case` matching resource, plural (`patients.ts`, `diagnoses.ts`). Prisma models `PascalCase` singular (`Patient`, `CaseDocument`, `DiagnosisAttempt`).
 
 ---
 
@@ -171,17 +213,17 @@ Rules:
 **Default rule**: `position: absolute` (and `position: fixed` used for layout purposes) is **not allowed** anywhere in frontend styles. Use flexbox and grid for all layout, including seemingly "absolute-shaped" needs like the desk layout, shelf, attention-point hotspots over the 3D canvas, and popups.
 
 - Attention points over the Three.js canvas: position them via the Three.js/DOM overlay projection into a normal flow container (e.g. a grid cell or a wrapper sized to the canvas), not via manually-computed absolute coordinates, unless that computation is itself contained within the one exception mechanism below.
-- Popups/modals that visually "float" over content: use the **Overlay Portal exception** below, not ad hoc absolute positioning inline in the feature.
+- Popups/modals that visually "float" over content: use the **OverlayPortal component exception** below, not ad hoc absolute positioning inline in the component.
 
-### The one narrow exception: Overlay Portal
+### The one narrow exception: the `OverlayPortal` component
 
 If, and only if, a component must render visually detached from normal document flow (e.g. a modal, the settings/phone popup, a tooltip that must escape a clipping ancestor), it must go through a single shared mechanism:
 
-- Location: `src/frontend/lib/overlay-portal/` (a single shared module, not one per feature).
-- It is the *only* file in the frontend allowed to declare `position: fixed`/`position: absolute` for the purpose of layering above the page (a React portal rendering into a fixed full-viewport container, itself using flex/grid internally to position its children).
-- Any feature that needs an overlay imports and uses this shared portal component/hook — it does not declare its own `position: absolute`.
+- Location: `src/frontend/components/OverlayPortal/` (a single shared component, not one per feature).
+- It is the *only* folder in the frontend allowed to declare `position: fixed`/`position: absolute` for the purpose of layering above the page (a React portal rendering into the `#overlay-root` element declared in `index.html`, itself using flex/grid internally to position its children).
+- Any component that needs an overlay imports `OverlayPortal` from its `index.js` barrel (`import { OverlayPortal } from '@/components/OverlayPortal'`) — it does not declare its own `position: absolute`.
 - Every usage site must include a one-line comment directly above the JSX using it: `{/* overlay-portal: <why this must escape normal flow, e.g. "modal must render above 3D canvas and desk layout"> */}`.
-- Any PR introducing a *new* CSS declaration of `position: absolute` or `position: fixed` outside `lib/overlay-portal/` must be rejected in review — this is a lint/review gate, not a style preference. If a genuinely new case is found that the portal doesn't cover, the fix is to extend the shared portal mechanism, not to add a new one-off absolute rule.
+- Any PR introducing a *new* CSS declaration of `position: absolute` or `position: fixed` outside `components/OverlayPortal/` must be rejected in review — this is a lint/review gate, not a style preference. If a genuinely new case is found that the portal doesn't cover, the fix is to extend `OverlayPortal`, not to add a new one-off absolute rule.
 
 ---
 
@@ -191,16 +233,16 @@ No frontend component/hook and no backend endpoint/service is written without a 
 
 ### Frontend (Jest + React Testing Library)
 
-1. **Red**: Write `Component.test.jsx` (or `useHook.test.js`) first, asserting the behavior you're about to add (render output, user interaction via `@testing-library/user-event`, hook return values via `@testing-library/react`'s `renderHook`). Run it, confirm it fails for the expected reason (not a typo/import error).
-2. **Green**: Write the minimal component/hook code to make that test pass. No extra behavior beyond what's tested.
+1. **Red**: Write the test first, in the mirrored `tests/` path (`tests/views/<Name>/<Name>.test.jsx`, `tests/components/<Name>/<Name>.test.jsx`, or `tests/providers/<Domain>/<Domain>Provider.test.jsx`), asserting the behavior you're about to add (render output, user interaction via `@testing-library/user-event`, hook return values via `@testing-library/react`'s `renderHook`). Import the unit under test via its `index.js` barrel. Run it, confirm it fails for the expected reason (not a typo/import error).
+2. **Green**: Write the minimal view/component/hook code, in its own `views/`, `components/`, or `providers/` folder, to make that test pass. No extra behavior beyond what's tested.
 3. **Refactor**: Clean up implementation and test code with the test suite green throughout. Re-run tests after every change.
 4. Domain providers/hooks (Section 5) are tested by rendering a small test consumer component wrapped in the provider — never by reaching into provider internals.
-5. Three.js scene logic (attention point hit-testing, coordinate mapping) is isolated into plain, framework-free functions wherever possible specifically so it's unit-testable without a WebGL context; only thin glue code touches the Three.js renderer directly.
+5. Three.js scene logic (attention point hit-testing, coordinate mapping) is isolated into plain, framework-free functions inside that component's own `internal/` folder wherever possible, specifically so it's unit-testable without a WebGL context; only thin glue code touches the Three.js renderer directly. Its test lives at the mirrored path (e.g. `tests/components/PatientScene/internal/hitTesting.test.js`), which is allowed to import the `internal/` file directly (Section 6).
 
-### Backend (Jest + supertest + Prisma/Postgres)
+### Backend (Jest + ts-jest + supertest + Prisma/Postgres)
 
-1. **Red**: Write a supertest-driven test against the route (e.g. `POST /diagnoses`) asserting status code and response shape for the case being added, run it, confirm it fails.
-2. **Green**: Implement the route/service/Prisma query needed to pass. Use a real test database (separate `DATABASE_URL` pointing at a disposable test Postgres instance, migrated via `prisma migrate deploy` in test setup/teardown) for integration-level endpoint tests. Use a mocked/injected Prisma client only for pure unit tests of service-layer logic that don't need real DB behavior (e.g. scoring rules, verification logic).
+1. **Red**: Write a supertest-driven test against the route (e.g. `POST /diagnoses`) in `src/backend/test/routes/diagnoses.test.ts`, asserting status code and response shape for the case being added, run it, confirm it fails.
+2. **Green**: Implement the route/service/Prisma query needed to pass, as TypeScript (`src/backend/src/routes/diagnoses.ts`, etc.). Use a real test database (separate `DATABASE_URL` pointing at a disposable test Postgres instance, migrated via `prisma migrate deploy` in test setup/teardown) for integration-level endpoint tests. Use a mocked/injected Prisma client only for pure unit tests of service-layer logic that don't need real DB behavior (e.g. scoring rules, verification logic).
 3. **Refactor**: Clean up service/route code with tests green throughout.
 4. Every new Prisma model or migration is accompanied by at least one test exercising a route or service that uses it — a migration with no corresponding test is incomplete work.
 5. `src/backend/test/setup/` owns the test-DB bootstrap (create schema, run migrations, truncate between tests) — new tests reuse this, they don't hand-roll their own DB setup.
@@ -213,9 +255,9 @@ General rule: a PR that adds logic with no new/updated test is not reviewable �
 
 `.github/workflows/ci.yml` runs on every PR and must, in order, fail fast on:
 1. Install dependencies (`pnpm install --frozen-lockfile`)
-2. Lint (both `src/frontend` and `src/backend` — ESLint is what catches unused vars, bad imports, and prop-type violations in the absence of a type checker)
+2. Lint (both `src/frontend` and `src/backend` — ESLint is what catches unused vars and bad imports in the absence of a type checker on the frontend; on the backend, the TypeScript compiler itself catches type errors)
 3. Unit + integration tests (`pnpm test` at root, fanning out to both workspaces; backend tests run against a Postgres service container in the workflow)
-4. Build (`next build` for frontend; backend has no separate build step beyond install, since it ships plain JS)
+4. Build (`vite build` for frontend; `tsc` compiles backend TypeScript to `src/backend/dist/`)
 
 `.github/workflows/deploy.yml` runs on merge to `main` and must:
 1. Re-run the same checks as `ci.yml` (never deploy unverified code)
@@ -230,16 +272,16 @@ Branch protection on `main` requires: `ci.yml` passing, at least one approving r
 
 ## 10. Team Engineering Conventions
 
-- **Commit messages**: Conventional Commits style — `type(scope): summary`, e.g. `feat(diagnosis-panel): add treatment selection UI`, `fix(backend/routes): correct 404 on missing patient case`, `test(patient-scene): add hit-testing unit tests`. Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`, `ci`. Scope is the feature/module folder name.
+- **Commit messages**: Conventional Commits style — `type(scope): summary`, e.g. `feat(diagnosis-panel): add treatment selection UI`, `fix(backend/routes): correct 404 on missing patient case`, `test(patient-scene): add hit-testing unit tests`. Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`, `ci`. Scope is the component/provider/view folder name (lower-cased in the commit scope is fine even though the folder itself is PascalCase — be consistent within a PR).
 - **Branch naming**: `type/short-description` mirroring commit type, e.g. `feat/shop-purchase-flow`, `fix/attention-point-hitbox`.
 - **PR size**: keep PRs reviewable — one feature/fix per PR. If a PR touches both `src/frontend` and `src/backend` for one API contract change, that's fine as one PR, but unrelated changes never get bundled together. If a PR is trending past roughly 400 lines of diff (excluding generated/lockfile changes), split it.
 - **No direct pushes to `main`** (restated from Section 1) — everything through PRs.
 - **CI must be green before merge.** No merging on red or skipped checks.
 - **No `--no-verify`, no disabling pre-commit/CI hooks** to force a merge (Section 1).
 - **Code review is mandatory** and should be done using the project's `code-review` skill rather than an ad hoc read-through — run it before requesting/finishing human review, and again after addressing feedback.
-- **No TypeScript** (Section 1) — plain JavaScript only; reviewers reject any PR introducing `.ts`/`.tsx` files or a TS toolchain dependency.
-- **Naming consistency** (restated from Section 6): PascalCase components/providers, camelCase `use`-prefixed hooks, kebab-case feature folders, PascalCase singular Prisma models, kebab-case plural backend route files.
-- **Ownership boundary**: `src/frontend` and `src/backend` are separate ownership domains. A PR changing the API contract between them must update `docs/api/` in the same PR. Frontend code reaches the backend only via the typed API client in `src/frontend/lib/`, never via direct DB/Prisma access or duplicated route logic.
+- **TypeScript is mandatory in `src/backend` and forbidden in `src/frontend`** (Section 1) — reviewers reject any `.ts`/`.tsx` file inside `src/frontend`, and reject any `.js` file (other than tooling config like `vite.config.js` or `jest.config.js`) inside `src/backend/src`.
+- **Naming consistency** (restated from Section 6): `PascalCase` view/component folders, `PascalCase` + `Provider` suffix for provider files, `camelCase` `use`-prefixed hooks, `PascalCase` singular Prisma models, `kebab-case` plural backend route files.
+- **Ownership boundary**: `src/frontend` and `src/backend` are separate ownership domains. A PR changing the API contract between them must update `docs/api/` in the same PR. Frontend code reaches the backend only via `useApi()` from `src/frontend/providers/Api/`, never via direct DB/Prisma access or duplicated route logic.
 - **Docs discipline**: architecture-affecting decisions (new domain provider, new external service, schema changes with migration implications) get a short note in `docs/architecture/`. This isn't bureaucracy for its own sake — it's what lets a new contributor or a future Claude session understand *why*, not just *what*.
 
 ---
