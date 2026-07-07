@@ -1,0 +1,21 @@
+enum ChatSender {
+  PLAYER
+  PATIENT
+  SYSTEM
+}
+
+/// A flat transcript log for the (initially scripted/generic) patient dialogue.
+model ChatMessage {
+  id            String      @id @default(uuid(7)) @db.Uuid
+  caseId        String      @db.Uuid
+  case          Case        @relation(fields: [caseId], references: [id])
+  gameSessionId String      @db.Uuid
+  gameSession   GameSession @relation(fields: [gameSessionId], references: [id])
+  sender        ChatSender
+  content       String
+  sentAt        DateTime    @default(now())
+  sortOrder     Int
+
+  @@index([caseId, sortOrder])
+  @@index([gameSessionId, sentAt])
+}
