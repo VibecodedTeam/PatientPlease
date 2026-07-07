@@ -4,20 +4,36 @@
 
 The frontend calls this endpoint to start (or resume) a game round for the current day phase.
 It returns everything `MainView` needs to render a fresh appointment in one call: the player's
-`GameSession`, their owned shop items, the next unattempted `Case` (patient, attention points,
-documents), and the full diagnosis/treatment option catalogs.
+`GameSession`, their owned shop items, the next unattempted `Case` (patient, documents), and the
+full diagnosis/treatment option catalogs.
 
 ## Schema note
 
-This design targets the schema as it currently stands on `feature/game-round` (post
-`20260707120851_refine_game_models` / `20260707123207_refine_game_models`). It does **not**
-reintroduce `Patient.chiefComplaint`, `Case.unlockDay`, or the `CaseDifficulty` enum that those
-migrations removed. Consequently the response contract differs slightly from the original
-request:
+This design targets the schema as it currently stands on `feature/game-round`, including three
+rounds of migrations:
+
+1. `20260707120851_refine_game_models` / `20260707123207_refine_game_models`
+2. `20260707132324_replace_attention_point_with_region` — drops the `AttentionPoint` model
+   entirely. `CaseDocument` no longer has an `attentionPointId` FK to a separate hotspot table;
+   instead it has a nullable `attentionPointRegion: BodyRegion` column directly, unique per
+   `(attentionPointRegion, caseId)`. There is no more per-hotspot 3D position/hitbox/zoom data
+   (`positionX/Y/Z`, `hitboxRadius`, `zoomDistance/Yaw/Pitch`, `label`, `isKeyFinding`,
+   `sortOrder`) in the backend at all — a document is now tagged with the coarse body region it's
+   about (or `null` for region-less documents like UV history), and the frontend's `PatientScene`
+   is responsible for mapping a `BodyRegion` to a 3D hotspot position/zoom preset itself. The
+   `BodyRegion` enum also changed: `HAND`/`FOOT` split into `LEFT_HAND`/`RIGHT_HAND`/
+   `LEFT_FOOT`/`RIGHT_FOOT`.
+
+None of this reintroduces `Patient.chiefComplaint`, `Case.unlockDay`, or the `CaseDifficulty`
+enum that the first two migrations removed. Consequently the response contract differs from the
+originally requested shape:
 
 - `case.difficulty` is the raw `SmallInt` (e.g. `2`), not an enum string like `"MEDIUM"`.
 - `case.unlockDay` is omitted (column no longer exists).
 - `patient.chiefComplaint` is omitted (column no longer exists).
+- `case.attentionPoints` is **removed entirely** — there is no `AttentionPoint` model to query.
+- Each entry in `case.documents` carries `attentionPointRegion` (a `BodyRegion` string or `null`)
+  instead of `attentionPointId`.
 
 Everything else in the response matches the originally requested shape.
 
@@ -47,7 +63,6 @@ Everything else in the response matches the originally requested shape.
    `gameDayLog.gameSessionId` equals this session's id. Order by `difficulty asc`, take the
    first. `include`:
    - `patient`
-   - `attentionPoints` (`orderBy sortOrder asc`)
    - `documents` (`orderBy sortOrder asc`)
 
    Excluded from the query result mapping (answer-key fields, never sent to the client):
@@ -131,26 +146,10 @@ existing open round looks identical to a client as starting a new one.
       "portraitImageUrl": "https://cdn.example.com/patients/jan.png",
       "bodyModelVariant": "male_average_01"
     },
-    "attentionPoints": [
-      {
-        "id": "uuid",
-        "label": "Mole, left shoulder",
-        "bodyRegion": "LEFT_ARM",
-        "positionX": 0.12,
-        "positionY": 0.45,
-        "positionZ": 0.02,
-        "hitboxRadius": 0.05,
-        "zoomDistance": 1.2,
-        "zoomYaw": 15.0,
-        "zoomPitch": -5.0,
-        "isKeyFinding": true,
-        "sortOrder": 1
-      }
-    ],
     "documents": [
       {
         "id": "uuid",
-        "attentionPointId": "uuid-or-null",
+        "attentionPointRegion": "LEFT_ARM", // BodyRegion string, or null
         "type": "SKIN_IMAGE",
         "title": "Left shoulder — day 1",
         "documentDate": "iso-datetime-or-null",
@@ -198,9 +197,10 @@ Per CLAUDE.md Section 8, tests are written first (red), then the minimal impleme
 **`test/routes/round.test.ts`** (Fastify `inject()`, real test Postgres, following `auth.test.ts` conventions):
 
 - `401` with no session cookie.
-- `200` end-to-end happy path for a brand-new user: verifies full response shape, verifies
-  `correctDiagnosisId`/`correctTreatmentId`/`resultExplanationText` are absent from the `case`
-  object.
+- `200` end-to-end happy path for a brand-new user: verifies full response shape (including a
+  `documents[].attentionPointRegion` value), verifies `correctDiagnosisId`/`correctTreatmentId`/
+  `resultExplanationText` are absent from the `case` object, and verifies there is no
+  `attentionPoints` key anywhere in the response.
 - `200` resume path: calling twice with an open day log and no new attempts returns the same
   `case` both times, with no duplicate `GameDayLog` row created for the session.
 - `ownedItems`, `diagnosisOptions`, `treatmentOptions` are populated and correctly shaped.
@@ -217,3 +217,17 @@ approach of creating rows inline.
 `docs/api/round.md` is added in the same PR, following the format of `docs/api/auth.md`
 (per CLAUDE.md's ownership-boundary rule that an API contract change updates `docs/api/`
 in the same PR).
+
+## Migration
+
+`prisma/migrations/20260707132324_replace_attention_point_with_region/migration.sql` implements
+the schema change described above (drops `AttentionPoint`, adds `CaseDocument.attentionPointRegion`,
+narrows the `BodyRegion` enum). It was hand-authored via `prisma migrate diff` against the dev
+database and applied with `prisma migrate deploy` — `prisma migrate dev` could not be used
+non-interactively. The raw diff output ordered an `ALTER COLUMN ... TYPE` on
+`CaseDocument.attentionPointRegion` before that column was created by a later `ADD COLUMN`
+statement, which would fail; the applied migration instead runs the enum-widening `ALTER COLUMN`
+against `AttentionPoint.bodyRegion` (the column that actually exists at that point in the
+transaction, and whose table is dropped later in the same migration) before adding the new
+`CaseDocument` column. The `AttentionPoint` table was confirmed empty on the dev database before
+applying, so the enum narrowing (`HAND`/`FOOT` removed) is safe.

@@ -7,6 +7,23 @@ enum CaseDocumentType {
   WEATHER_HISTORY
 }
 
+enum BodyRegion {
+  HEAD
+  NECK
+  CHEST
+  BACK
+  ABDOMEN
+  LEFT_ARM
+  RIGHT_ARM
+  LEFT_LEG
+  RIGHT_LEG
+  LEFT_HAND
+  RIGHT_HAND
+  LEFT_FOOT
+  RIGHT_FOOT
+  OTHER
+}
+
 /// One shared model for every kind of desk documentation the player reviews.
 /// Image-specific fields are typed; everything else whose shape varies by
 /// `type` lives in `content`, validated per-type at the API boundary.
@@ -14,8 +31,7 @@ model CaseDocument {
   id               String           @id @default(uuid(7)) @db.Uuid
   caseId           String           @db.Uuid
   case             Case             @relation(fields: [caseId], references: [id])
-  attentionPointId String?          @db.Uuid
-  attentionPoint   AttentionPoint?  @relation(fields: [attentionPointId], references: [id])
+  attentionPointRegion  BodyRegion?
   type             CaseDocumentType
   title            String
   documentDate     DateTime?
@@ -29,5 +45,5 @@ model CaseDocument {
   content Json?
 
   @@index([caseId, sortOrder])
-  @@index([attentionPointId])
+  @@unique([attentionPointRegion, caseId])
 }
