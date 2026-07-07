@@ -5,8 +5,8 @@ import { createHttpClient } from '../../../../lib/Api';
 export const RoundContext = createContext(null);
 
 // Same-origin client — this fetches the mock JSON from Vite's own dev
-// server, not the backend. Swapped for `apiClient` (the backend-pointed
-// singleton) once the real POST /api/v1/round endpoint exists.
+// server, not the backend. Swapped for `useApi()` once the real
+// POST /api/v1/round endpoint exists.
 //
 // Uses window.location.origin (not an empty baseURL) because axios's fetch
 // adapter has no implicit "current page" to resolve a relative URL against

@@ -11,16 +11,6 @@ function DocumentsConsumer() {
 }
 
 describe('DocumentTableProvider', () => {
-  let originalFetch;
-
-  beforeEach(() => {
-    originalFetch = global.fetch;
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
-  });
-
   it('narrows RoundProvider data down to case.documents', async () => {
     global.fetch = jest.fn().mockResolvedValue(
       new Response(JSON.stringify({ case: { documents: [{ id: 'doc-1' }, { id: 'doc-2' }] } }), {

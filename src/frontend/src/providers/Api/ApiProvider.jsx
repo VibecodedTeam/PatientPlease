@@ -4,7 +4,7 @@ import { createHttpClient } from '../../../lib/Api';
 
 export const ApiContext = createContext(null);
 
-export function ApiProvider({ children, baseUrl = '' }) {
+export function ApiProvider({ children, baseUrl }) {
   const apiClient = useMemo(
     () => createHttpClient(baseUrl, { withCredentials: true }),
     [baseUrl],
@@ -14,5 +14,5 @@ export function ApiProvider({ children, baseUrl = '' }) {
 
 ApiProvider.propTypes = {
   children: PropTypes.node.isRequired,
-  baseUrl: PropTypes.string,
+  baseUrl: PropTypes.string.isRequired,
 };

@@ -57,5 +57,3 @@ export function createHttpClient(baseUrl = DEFAULT_BASE_URL, { withCredentials =
 
   return { get, post, put, patch, delete: del };
 }
-
-export const apiClient = createHttpClient();

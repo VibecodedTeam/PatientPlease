@@ -8,6 +8,9 @@ import { NightView } from '../views/NightView';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+if (!GOOGLE_CLIENT_ID) {
+  throw new Error('VITE_GOOGLE_CLIENT_ID environment variable is not set');
+}
 
 export default function App() {
   return (

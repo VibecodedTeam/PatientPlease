@@ -10,16 +10,6 @@ function RoundConsumer() {
 }
 
 describe('RoundProvider', () => {
-  let originalFetch;
-
-  beforeEach(() => {
-    originalFetch = global.fetch;
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
-  });
-
   it('fetches the same-origin round mock and exposes it via useRound', async () => {
     global.fetch = jest.fn().mockResolvedValue(new Response(JSON.stringify({ day: 3 }), { status: 200 }));
 

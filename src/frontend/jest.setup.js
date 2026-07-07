@@ -11,3 +11,17 @@ import { fetch, Headers, Request, Response } from 'undici';
 if (typeof globalThis.fetch === 'undefined') {
   Object.assign(globalThis, { fetch, Headers, Request, Response });
 }
+
+// Every test that mocks `global.fetch` (Section 8's convention) needs to
+// restore it afterward, or a later test file inherits the previous one's
+// mock. Centralized here instead of every test file re-declaring its own
+// originalFetch/beforeEach/afterEach triplet.
+let originalFetch;
+
+beforeEach(() => {
+  originalFetch = global.fetch;
+});
+
+afterEach(() => {
+  global.fetch = originalFetch;
+});

@@ -12,7 +12,14 @@ export function AuthGate({ googleClientId, children }) {
   }
 
   if (status === 'unauthenticated') {
-    return <Login googleClientId={googleClientId} onCredential={login} />;
+    return (
+      <Login
+        googleClientId={googleClientId}
+        onCredential={(credential) => {
+          login(credential).catch((err) => console.error('Google sign-in failed', err));
+        }}
+      />
+    );
   }
 
   return (

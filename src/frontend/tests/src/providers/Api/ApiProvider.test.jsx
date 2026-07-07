@@ -25,16 +25,6 @@ function PostCaller({ path, onResult }) {
 }
 
 describe('ApiProvider / useApi', () => {
-  let originalFetch;
-
-  beforeEach(() => {
-    originalFetch = global.fetch;
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
-  });
-
   it('exposes a get method to consumers', () => {
     global.fetch = jest.fn().mockResolvedValue(new Response('{}', { status: 200 }));
     render(
@@ -61,11 +51,11 @@ describe('ApiProvider / useApi', () => {
     );
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-    const calledWith = global.fetch.mock.calls[0][0];
-    // See src/frontend/lib/Api's own test for why this reads from either
-    // position — axios's fetch adapter passes a Request instance here.
-    const credentials = calledWith.credentials ?? global.fetch.mock.calls[0][1]?.credentials;
-    expect(credentials).toBe('include');
+    // Axios's fetch adapter passes a Request instance as fetch's sole
+    // argument, carrying `credentials` directly (see src/frontend/lib/Api's
+    // own test for the underlying verification).
+    const request = global.fetch.mock.calls[0][0];
+    expect(request.credentials).toBe('include');
   });
 
   it('resolves without parsing a body for 204 No Content responses', async () => {

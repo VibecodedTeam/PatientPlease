@@ -1,16 +1,6 @@
 import { createHttpClient } from '../../../lib/Api';
 
 describe('createHttpClient', () => {
-  let originalFetch;
-
-  beforeEach(() => {
-    originalFetch = global.fetch;
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
-  });
-
   it('resolves a GET with the parsed JSON body', async () => {
     global.fetch = jest.fn().mockResolvedValue(
       new Response(JSON.stringify({ hello: 'world' }), {
@@ -37,12 +27,11 @@ describe('createHttpClient', () => {
     const client = createHttpClient('http://api.test', { withCredentials: true });
     await client.get('/things');
 
-    const calledWith = global.fetch.mock.calls[0][0];
-    // Axios's fetch adapter passes a Request instance here (not a plain
-    // URL string) when the environment's Request supports `credentials`.
-    // Assert against whichever shape it actually used — read
-    // `global.fetch.mock.calls[0]` if this fails to see the real shape.
-    expect(calledWith.credentials ?? global.fetch.mock.calls[0][1]?.credentials).toBe('include');
+    // Axios's fetch adapter passes a Request instance as fetch's sole
+    // argument, carrying `credentials` directly (verified against this
+    // repo's exact axios/undici versions).
+    const request = global.fetch.mock.calls[0][0];
+    expect(request.credentials).toBe('include');
   });
 
   it('does not send credentials by default', async () => {
@@ -51,8 +40,7 @@ describe('createHttpClient', () => {
     const client = createHttpClient('http://api.test');
     await client.get('/things');
 
-    const calledWith = global.fetch.mock.calls[0][0];
-    const credentials = calledWith.credentials ?? global.fetch.mock.calls[0][1]?.credentials;
-    expect(credentials === 'omit' || credentials === undefined).toBe(true);
+    const request = global.fetch.mock.calls[0][0];
+    expect(request.credentials).toBe('omit');
   });
 });

@@ -32,16 +32,6 @@ function renderWithProviders(ui) {
 }
 
 describe('AuthProvider / useAuth', () => {
-  let originalFetch;
-
-  beforeEach(() => {
-    originalFetch = global.fetch;
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
-  });
-
   it('throws when useAuth is used outside AuthProvider', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<BareConsumer />)).toThrow('useAuth must be used within an AuthProvider');
@@ -101,6 +91,9 @@ describe('AuthProvider / useAuth', () => {
 
     await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('authenticated'));
     expect(screen.getByTestId('user')).toHaveTextContent('Test User');
+    const loginRequest = global.fetch.mock.calls[1][0];
+    expect(new URL(loginRequest.url).pathname).toBe('/auth/google');
+    expect(loginRequest.method).toBe('POST');
   });
 
   it('logout() clears the session via POST /auth/logout', async () => {
@@ -123,5 +116,8 @@ describe('AuthProvider / useAuth', () => {
       expect(screen.getByTestId('status')).toHaveTextContent('unauthenticated'),
     );
     expect(screen.getByTestId('user')).toHaveTextContent('none');
+    const logoutRequest = global.fetch.mock.calls[1][0];
+    expect(new URL(logoutRequest.url).pathname).toBe('/auth/logout');
+    expect(logoutRequest.method).toBe('POST');
   });
 });
