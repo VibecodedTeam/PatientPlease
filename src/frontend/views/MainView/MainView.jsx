@@ -1,5 +1,5 @@
 import React from 'react';
-import { RoundProvider } from './RoundProvider';
+import { RoundProvider } from './providers/Round';
 import { DocumentTableProvider } from '../../components/TableFol/DocumentTableFol';
 import { Table } from '../../components/TableFol';
 

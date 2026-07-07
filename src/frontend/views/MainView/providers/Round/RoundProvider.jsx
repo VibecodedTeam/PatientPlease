@@ -1,13 +1,17 @@
 import React, { createContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { createHttpClient } from '../../lib/Api/httpClient';
+import { createHttpClient } from '../../../../lib/Api';
 
 export const RoundContext = createContext(null);
 
 // Same-origin client — this fetches the mock JSON from Vite's own dev
 // server, not the backend. Swapped for `apiClient` (the backend-pointed
 // singleton) once the real POST /api/v1/round endpoint exists.
-const mockClient = createHttpClient('');
+//
+// Uses window.location.origin (not an empty baseURL) because axios's fetch
+// adapter has no implicit "current page" to resolve a relative URL against
+// the way a browser's native fetch does — it needs a fully qualified base.
+const mockClient = createHttpClient(window.location.origin);
 
 /**
  * Loads the full round payload: game session, owned items, the active
