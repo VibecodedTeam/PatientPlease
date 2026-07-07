@@ -1,38 +1,52 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Information_1 } from '../../../../../../../components/Table/internal/TabElem/internal/Information_1/Information_1';
+import { DocumentTableContext } from '../../../../../../../components/Table/providers/DocumentTable/DocumentTableProvider';
 import styles from '../../../../../../../components/Table/internal/TabElem/internal/Information_1/Information_1.module.css';
+
+function renderWithDocumentTable(ui, { patient = null } = {}) {
+  return render(
+    <DocumentTableContext.Provider value={{ documents: [], patient, isLoading: false, error: null }}>
+      {ui}
+    </DocumentTableContext.Provider>,
+  );
+}
 
 describe('Information_1', () => {
   it('renders the given title', () => {
-    render(<Information_1 title="Clinical Notes" notes={[]} />);
-
-    expect(screen.getByText('Clinical Notes')).toBeInTheDocument();
+    renderWithDocumentTable(<Information_1 title="Patient Info" />);
+    expect(screen.getByText('Patient Info')).toBeInTheDocument();
   });
 
-  it('renders each note item', () => {
-    render(
-      <Information_1
-        title="Clinical Notes"
-        notes={['Lesion on left forearm', 'Mild itching reported']}
-      />,
-    );
-
-    expect(screen.getByText('Lesion on left forearm')).toBeInTheDocument();
-    expect(screen.getByText('Mild itching reported')).toBeInTheDocument();
-  });
-
-  it('renders patient name and age next to the note list', () => {
-    render(<Information_1 title="Clinical Notes" patientName="Jane Doe" patientAge="42" notes={[]} />);
-
+  it('falls back to placeholder content when no patient is available', () => {
+    renderWithDocumentTable(<Information_1 />);
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-    expect(screen.getByText('Age', { exact: false })).toBeInTheDocument();
-    expect(screen.getByText('42', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Age 42')).toBeInTheDocument();
+    expect(screen.getAllByText('Pending clinical note')).toHaveLength(3);
+  });
+
+  it('renders real patient fields when a patient is provided', () => {
+    renderWithDocumentTable(<Information_1 />, {
+      patient: {
+        name: 'Jan Kowalski',
+        age: 52,
+        sex: 'MALE',
+        occupation: 'Roofer',
+        chiefComplaint: 'A mole on my shoulder has changed shape.',
+      },
+    });
+
+    expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
+    expect(screen.getByText('Age 52')).toBeInTheDocument();
+    expect(screen.getByText('Sex: MALE')).toBeInTheDocument();
+    expect(screen.getByText('Occupation: Roofer')).toBeInTheDocument();
+    expect(
+      screen.getByText('Chief complaint: A mole on my shoulder has changed shape.'),
+    ).toBeInTheDocument();
   });
 
   it('applies the card layout class to its root element', () => {
-    render(<Information_1 data-testid="card-root" title="t" notes={[]} />);
-
+    renderWithDocumentTable(<Information_1 data-testid="card-root" />);
     expect(screen.getByTestId('card-root')).toHaveClass(styles.card);
   });
 });

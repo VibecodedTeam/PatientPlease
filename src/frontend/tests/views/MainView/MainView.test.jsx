@@ -13,5 +13,6 @@ describe('MainView', () => {
     render(<MainView />);
 
     await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+    expect(screen.getByText('Patient Information')).toBeInTheDocument();
   });
 });
