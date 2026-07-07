@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ApiProvider } from '../../../../src/providers/Api';
-import { AuthProvider, useAuth } from '../../../../src/providers/Auth';
+import { ApiProvider } from '../../../providers/Api';
+import { AuthProvider, useAuth } from '../../../providers/Auth';
 
 const USER = { id: '1', email: 'user@example.test', name: 'Test User', avatarUrl: null };
 

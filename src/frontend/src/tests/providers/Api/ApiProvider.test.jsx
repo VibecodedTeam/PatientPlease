@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { ApiProvider, useApi } from '../../../../src/providers/Api';
+import { ApiProvider, useApi } from '../../../providers/Api';
 
 function TestConsumer() {
   const api = useApi();

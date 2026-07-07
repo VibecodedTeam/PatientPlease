@@ -9,6 +9,12 @@ describe('MainView', () => {
     );
   });
 
+  it('renders the wall with the pinned board', () => {
+    render(<MainView />);
+    expect(screen.getByRole('region', { name: /doctor office wall/i })).toBeInTheDocument();
+    expect(screen.getByText('Patients left today: 5')).toBeInTheDocument();
+  });
+
   it('renders the patient documents desk', async () => {
     render(<MainView />);
 
