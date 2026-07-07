@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useAuth } from '../../src/providers/Auth';
+import { useAuth } from '../../providers/Auth';
 import { Login } from '../Login';
 import styles from './AuthGate.module.css';
 

@@ -1,6 +1,6 @@
 import React, { createContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { createHttpClient } from '../../../lib/Api';
+import { createHttpClient } from '../../lib/Api';
 
 export const ApiContext = createContext(null);
 

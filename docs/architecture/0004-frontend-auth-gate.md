@@ -1,7 +1,7 @@
 # 0004: Frontend session gating via an AuthGate component, not a LoginView
 
 ## Status
-Accepted
+Accepted (path of `views/`/`components/`/`providers/` superseded by [0006](./0006-consolidate-frontend-under-src.md) — they now live under `src/frontend/src/`)
 
 ## Context
 The backend's Google Sign-In flow (`POST /auth/google`, `GET /auth/me`, `POST /auth/logout`,
