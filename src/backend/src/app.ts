@@ -10,6 +10,7 @@ import cookiePlugin from './plugins/cookie.js';
 import currentUserPlugin from './plugins/current-user.js';
 import authRoutes from './routes/auth.js';
 import healthRoutes from './routes/health.js';
+import roundRoutes from './routes/round.js';
 import type { GoogleIdTokenVerifier } from './services/auth.js';
 
 export interface BuildAppOptions {
@@ -34,6 +35,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     ...(options.googleClient ? { googleClient: options.googleClient } : {}),
   });
   app.register(healthRoutes);
+  app.register(roundRoutes);
 
   return app;
 }

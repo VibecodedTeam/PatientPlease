@@ -41,21 +41,21 @@ model Treatment {
 
 /// A player's diagnosis/treatment submission for a Case, and the game's verdict.
 model DiagnosisAttempt {
-  id                  String      @id @default(uuid(7)) @db.Uuid
-  gameSessionId       String      @db.Uuid
-  gameSession         GameSession @relation(fields: [gameSessionId], references: [id])
-  caseId              String      @db.Uuid
-  case                Case        @relation(fields: [caseId], references: [id])
-  selectedDiagnosisId String      @db.Uuid
-  selectedDiagnosis   Diagnosis   @relation(fields: [selectedDiagnosisId], references: [id])
-  selectedTreatmentId String?     @db.Uuid
-  selectedTreatment   Treatment?  @relation(fields: [selectedTreatmentId], references: [id])
+  id                  String     @id @default(uuid(7)) @db.Uuid
+  gameDayLogId        String     @db.Uuid
+  gameDayLog          GameDayLog @relation(fields: [gameDayLogId], references: [id])
+  caseId              String     @db.Uuid
+  case                Case       @relation(fields: [caseId], references: [id])
+  selectedDiagnosisId String     @db.Uuid
+  selectedDiagnosis   Diagnosis  @relation(fields: [selectedDiagnosisId], references: [id])
+  selectedTreatmentId String?    @db.Uuid
+  selectedTreatment   Treatment? @relation(fields: [selectedTreatmentId], references: [id])
   isDiagnosisCorrect  Boolean
   isTreatmentCorrect  Boolean?
   moneyDelta          Int
-  attemptedAt         DateTime    @default(now())
+  attemptedAt         DateTime   @default(now())
 
-  @@index([gameSessionId, attemptedAt])
+  @@index([gameDayLogId, attemptedAt])
   @@index([caseId])
   @@index([selectedDiagnosisId])
   @@index([selectedTreatmentId])
