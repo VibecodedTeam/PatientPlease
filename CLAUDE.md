@@ -16,7 +16,7 @@ These are never violated, no exceptions, no "just this once":
 7. **No direct pushes to `main`.** All work lands via PR, CI must be green, at least one review pass (see Section 10) is required before merge.
 8. **Never skip hooks or checks** (`--no-verify`, disabling lint-staged, commenting out CI steps, etc.) to get something to pass.
 9. **pnpm only.** No npm/yarn lockfiles, no mixing package managers.
-10. **No `features/` folder in frontend. A `lib/` folder is allowed, scoped strictly to pure, framework-free, stateless helpers** — e.g. a generic HTTP client factory. Nothing in `lib/` may hold React state, own a domain, or duplicate a provider's job; if it needs either, it belongs in a provider instead. `src/frontend/` holds only its entry point (`src/`), `views/` (exactly `MainView` and `NightView`), `components/`, `lib/`, `tests/`, and `styles/` — **there is no top-level `providers/` folder.** Every provider is co-located with the view/component it belongs to, or, for the small set of app-wide domains composed once at the root, lives next to `src/App.jsx` (Section 4, Section 5, Section 6).
+10. **No `features/` folder in frontend. A `lib/` folder is allowed, scoped strictly to pure, framework-free, stateless helpers** — e.g. a generic HTTP client factory. Nothing in `lib/` may hold React state, own a domain, or duplicate a provider's job; if it needs either, it belongs in a provider instead. `src/frontend/` holds only its React entry tree (`src/` — `main.jsx`, `App.jsx`, `providers/`, `views/` (exactly `MainView` and `NightView`), `components/`, and `styles/`), plus `lib/` and `tests/` as siblings of `src/` — **there is no top-level `providers/`, `views/`, `components/`, or `styles/` folder outside `src/`.** Every provider is co-located with the view/component it belongs to, or, for the small set of app-wide domains composed once at the root, lives next to `src/App.jsx` (Section 4, Section 5, Section 6).
 11. When a relevant skill exists (TDD, brainstorming, systematic-debugging, code-review, etc. from the `superpowers` plugin), **use it rather than re-deriving its process ad hoc.**
 
 ---
@@ -42,7 +42,7 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 | Frontend framework | React, bundled with Vite, routed with React Router (`react-router-dom`) as a client-rendered SPA. No Next.js, no server-side rendering. |
 | 3D rendering | Three.js (patient figure, attention points, zoom/click interaction) |
 | Frontend state | React Context + custom hooks only. No Redux, Zustand, MobX, Recoil, Jotai. |
-| Frontend tests | Jest + React Testing Library for all component/view/provider tests. No Vitest, no Cypress. Tests live in `src/frontend/tests/`, mirroring `src/frontend/`'s own tree exactly — `views/`, `components/`, `lib/`, and `src/` (Section 6). Playwright is permitted, but scoped exclusively to a `src/frontend/e2e/` smoke-test layer that verifies the built app boots and serves — it is not an alternative to, or a replacement for, the Jest/RTL unit-test tree, and no component/view/provider logic is tested through it. |
+| Frontend tests | Jest + React Testing Library for all component/view/provider tests. No Vitest, no Cypress. Tests live in `src/frontend/tests/`, mirroring `src/frontend/`'s own tree exactly — `src/` (containing `views/`, `components/`, `providers/`) and `lib/` (Section 6). Playwright is permitted, but scoped exclusively to a `src/frontend/e2e/` smoke-test layer that verifies the built app boots and serves — it is not an alternative to, or a replacement for, the Jest/RTL unit-test tree, and no component/view/provider logic is tested through it. |
 | Backend runtime | Node.js + Fastify API in `src/backend`, written in TypeScript. |
 | ORM / DB | Prisma + PostgreSQL |
 | Backend tests | Jest (`ts-jest`) + Fastify's built-in `inject()` (HTTP-level endpoint tests), against a real test Postgres database (preferred) or a mocked Prisma client for pure unit tests. Tests live in `src/backend/test/`. |
@@ -78,47 +78,47 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 │   │   ├── vite.config.js
 │   │   ├── index.html
 │   │   ├── jest.config.js
-│   │   ├── src/
+│   │   ├── src/                     # the entire React entry tree — main.jsx, App.jsx, providers/, views/, components/, styles/
 │   │   │   ├── main.jsx            # Vite/React entry point
 │   │   │   ├── App.jsx             # React Router route table — composition-only, wires views to routes, no view logic
-│   │   │   └── providers/          # the only providers/ folder in the tree: app-wide domains composed once, here, at the root
-│   │   │       ├── Api/             # axios-backed client (built on lib/Api), exposed via useApi()
-│   │   │       └── Auth/
-│   │   ├── views/                  # exactly two: MainView (day phase), NightView (night/shop phase)
-│   │   │   ├── MainView/
-│   │   │   │   ├── index.js
-│   │   │   │   ├── MainView.jsx
-│   │   │   │   ├── MainView.module.css
-│   │   │   │   └── providers/         # domains consumed only inside MainView's own subtree
-│   │   │   │       └── Round/
-│   │   │   └── NightView/
-│   │   │       ├── index.js
-│   │   │       ├── NightView.jsx
-│   │   │       └── NightView.module.css
-│   │   ├── components/             # every reusable/domain UI unit, flat, one PascalCase folder per component
-│   │   │   ├── PatientScene/        # Three.js figure + attention points
-│   │   │   ├── PatientDocuments/    # multi-frame document viewer
-│   │   │   ├── DiagnosisPanel/
-│   │   │   ├── ChatDialogue/
-│   │   │   ├── Shop/                 # night phase purchase UI
-│   │   │   ├── Inventory/            # shelf of owned books/equipment
-│   │   │   ├── ResultPopup/
-│   │   │   ├── InfoBoard/
-│   │   │   └── OverlayPortal/         # the one component allowed to declare position:fixed/absolute (Section 7)
-│   │   ├── lib/                     # pure, framework-free, stateless helpers only (Section 1, Section 6)
+│   │   │   ├── providers/          # the only app-root providers/ folder in the tree: app-wide domains composed once, here
+│   │   │   │   ├── Api/             # axios-backed client (built on lib/Api), exposed via useApi()
+│   │   │   │   └── Auth/
+│   │   │   ├── views/                  # exactly two: MainView (day phase), NightView (night/shop phase)
+│   │   │   │   ├── MainView/
+│   │   │   │   │   ├── index.js
+│   │   │   │   │   ├── MainView.jsx
+│   │   │   │   │   ├── MainView.module.css
+│   │   │   │   │   └── providers/         # domains consumed only inside MainView's own subtree
+│   │   │   │   │       └── Round/
+│   │   │   │   └── NightView/
+│   │   │   │       ├── index.js
+│   │   │   │       ├── NightView.jsx
+│   │   │   │       └── NightView.module.css
+│   │   │   ├── components/             # every reusable/domain UI unit, flat, one PascalCase folder per component
+│   │   │   │   ├── PatientScene/        # Three.js figure + attention points
+│   │   │   │   ├── PatientDocuments/    # multi-frame document viewer
+│   │   │   │   ├── DiagnosisPanel/
+│   │   │   │   ├── ChatDialogue/
+│   │   │   │   ├── Shop/                 # night phase purchase UI
+│   │   │   │   ├── Inventory/            # shelf of owned books/equipment
+│   │   │   │   ├── ResultPopup/
+│   │   │   │   ├── InfoBoard/
+│   │   │   │   └── OverlayPortal/         # the one component allowed to declare position:fixed/absolute (Section 7)
+│   │   │   └── styles/                  # global tokens/reset only — never component-specific layout
+│   │   ├── lib/                     # pure, framework-free, stateless helpers only (Section 1, Section 6) — sibling of src/, not inside it
 │   │   │   └── Api/                  # axios client factory: createHttpClient(baseUrl, { withCredentials })
-│   │   ├── styles/                  # global tokens/reset only — never component-specific layout
 │   │   └── tests/                   # every frontend test, mirroring src/frontend/'s own tree exactly
-│   │       ├── views/
-│   │       │   ├── MainView/MainView.test.jsx
-│   │       │   └── NightView/NightView.test.jsx
-│   │       ├── components/
-│   │       │   └── OverlayPortal/OverlayPortal.test.jsx
-│   │       ├── lib/
-│   │       │   └── Api/httpClient.test.js
-│   │       └── src/
-│   │           └── providers/
-│   │               └── Api/ApiProvider.test.jsx
+│   │       ├── src/
+│   │       │   ├── providers/
+│   │       │   │   └── Api/ApiProvider.test.jsx
+│   │       │   ├── views/
+│   │       │   │   ├── MainView/MainView.test.jsx
+│   │       │   │   └── NightView/NightView.test.jsx
+│   │       │   └── components/
+│   │       │       └── OverlayPortal/OverlayPortal.test.jsx
+│   │       └── lib/
+│   │           └── Api/httpClient.test.js
 │   └── backend/
 │       ├── package.json             # jest config lives inline here, not in a separate jest.config.js
 │       ├── Dockerfile
@@ -139,10 +139,11 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 
 Rules tied to this structure:
 - `src/frontend` and `src/backend` are **owned modules**. Frontend code never imports anything from `src/backend/**` and vice versa. The only contract is the HTTP API described in `docs/api/`.
+- `src/frontend/src/` is the entire React entry tree: `main.jsx`, `App.jsx`, the app-root `providers/`, and — unlike a typical Vite scaffold — `views/`, `components/`, and `styles/` all live inside `src/` too, as siblings of `App.jsx`. `lib/` and `tests/` are the only frontend folders that stay outside `src/`, at the top level of `src/frontend/`.
 - `src/frontend/src/App.jsx` is composition-only: it wires `views/` to routes via `react-router-dom`, it does not contain view business logic or its own state. It also composes the small set of app-wide providers (`Api`, `Auth`) — those live next to it, in `src/frontend/src/providers/`.
-- `src/frontend/lib/` is allowed but scoped to pure, framework-free, stateless helpers only (Section 1, constraint 10) — currently just `lib/Api/`, the shared axios client factory every provider that talks HTTP builds its client from.
-- There is no top-level `providers/` folder. A provider used only within one view's or component's own subtree lives co-located inside that folder, in its own `providers/<Domain>/` subfolder (e.g. `views/MainView/providers/Round/`, `components/Table/providers/DocumentTable/`) — see Section 5 for the full rule.
-- `src/frontend/views/` holds exactly two entries, `MainView` and `NightView`. Every other screen element (patient scene, documents, diagnosis panel, chat, shop, inventory, popups, info board) is a `components/` entry composed inside one of those two views — not its own view and not a `features/` folder.
+- `src/frontend/lib/` is allowed but scoped to pure, framework-free, stateless helpers only (Section 1, constraint 10) — currently just `lib/Api/`, the shared axios client factory every provider that talks HTTP builds its client from. It is a sibling of `src/frontend/src/`, not nested inside it, since it holds no React code.
+- There is no top-level `providers/` folder outside `src/frontend/src/providers/`. A provider used only within one view's or component's own subtree lives co-located inside that folder, in its own `providers/<Domain>/` subfolder (e.g. `src/views/MainView/providers/Round/`, `src/components/Table/providers/DocumentTable/`) — see Section 5 for the full rule.
+- `src/frontend/src/views/` holds exactly two entries, `MainView` and `NightView`. Every other screen element (patient scene, documents, diagnosis panel, chat, shop, inventory, popups, info board) is a `src/components/` entry composed inside one of those two views — not its own view and not a `features/` folder.
 
 ---
 
@@ -150,14 +151,14 @@ Rules tied to this structure:
 
 **Rule**: Every cross-cutting domain of state gets **exactly one Provider + exactly one custom hook**, and that pair is the *only* legal way for anything outside that domain to read or mutate its state. **Where a domain's provider lives depends on its reach, not a fixed top-level folder:**
 
-- A domain consumed only within one view's or component's own subtree lives **co-located inside that owning folder**, in its own `providers/<Domain>/` subfolder — e.g. `views/MainView/providers/Round/`, `components/Table/providers/DocumentTable/`.
+- A domain consumed only within one view's or component's own subtree lives **co-located inside that owning folder**, in its own `providers/<Domain>/` subfolder — e.g. `src/views/MainView/providers/Round/`, `src/components/Table/providers/DocumentTable/`.
 - A domain composed once at the app root and consumed across multiple, otherwise-unrelated views (currently `Api` and `Auth`) lives next to `src/frontend/src/App.jsx`, in `src/frontend/src/providers/<Domain>/` — co-located with the one file that composes it.
 - Either way the pattern inside the `<Domain>/` folder is identical (naming is mandatory, not a suggestion): `<Domain>Provider.jsx` (component) + `use<Domain>.js` (hook) + `index.js` (barrel exporting only the public Provider + hook). Nesting a provider inside a view/component folder does not make it "internal" to that folder — it still gets its own barrel and is importable by anything that legitimately needs that domain, the same as a top-level provider would be.
 
 Current domains:
 
-- `Round` → `views/MainView/providers/Round/RoundProvider.jsx` + `useRound.js`. Owns: the full round payload (game session, owned items, active case, diagnosis/treatment catalogs). Consumed only within `MainView`.
-- `DocumentTable` → `components/Table/providers/DocumentTable/DocumentTableProvider.jsx` + `useDocumentTable.js`. Owns: the desk documents narrowed from `Round`'s payload. Consumed only within `Table`.
+- `Round` → `src/views/MainView/providers/Round/RoundProvider.jsx` + `useRound.js`. Owns: the full round payload (game session, owned items, active case, diagnosis/treatment catalogs). Consumed only within `MainView`.
+- `DocumentTable` → `src/components/Table/providers/DocumentTable/DocumentTableProvider.jsx` + `useDocumentTable.js`. Owns: the desk documents narrowed from `Round`'s payload. Consumed only within `Table`.
 - `Api` → `src/providers/Api/ApiProvider.jsx` + `useApi.js`. Owns: the HTTP client to the backend API (base URL, credentials, JSON parsing, error normalization), built via `lib/Api`'s `createHttpClient`. This is the only place frontend code builds an HTTP client directly — every other provider/component that needs the backend consumes `useApi()`.
 - `Auth` → `src/providers/Auth/AuthProvider.jsx` + `useAuth.js`. Owns: the signed-in user, auth status, login/logout. Consumes `useApi()` like any other domain would.
 - Future domains (`PatientSession`, `Diagnosis`, `Inventory`, `DayNight`, `Chat`, etc.) follow the identical `<Domain>Provider.jsx` + `use<Domain>.js` + `index.js` naming; whether each ends up co-located or app-root depends on its actual reach once it's built, not decided in advance here.
@@ -184,7 +185,7 @@ Every view, component, and provider is a **self-contained, co-located unit for i
 For a component `DiagnosisPanel`:
 
 ```
-components/DiagnosisPanel/
+src/components/DiagnosisPanel/
 ├── index.js                  # barrel: exports ONLY the public surface (component + provider + hook, if any)
 ├── DiagnosisPanel.jsx         # the component
 ├── DiagnosisPanel.module.css  # its styles (CSS Modules), scoped to this component
@@ -194,20 +195,20 @@ components/DiagnosisPanel/
 Its test lives at the mirrored path, rooted under `src/frontend/tests/`:
 
 ```
-tests/components/DiagnosisPanel/
+tests/src/components/DiagnosisPanel/
 └── DiagnosisPanel.test.jsx
 ```
 
-The identical pattern applies to `views/<ViewName>/` (e.g. `views/MainView/` ↔ `tests/views/MainView/`), to any provider regardless of where it's co-located (e.g. `components/Table/providers/DocumentTable/DocumentTableProvider.jsx` ↔ `tests/components/Table/providers/DocumentTable/DocumentTableProvider.test.jsx`, or `src/providers/Auth/AuthProvider.jsx` ↔ `tests/src/providers/Auth/AuthProvider.test.jsx`), and to `lib/` (e.g. `lib/Api/httpClient.js` ↔ `tests/lib/Api/httpClient.test.js`). In every case, `tests/` mirrors the exact path of the file being tested, rooted at `src/frontend/` itself — not a fixed shortlist of top-level folders.
+The identical pattern applies to `src/views/<ViewName>/` (e.g. `src/views/MainView/` ↔ `tests/src/views/MainView/`), to any provider regardless of where it's co-located (e.g. `src/components/Table/providers/DocumentTable/DocumentTableProvider.jsx` ↔ `tests/src/components/Table/providers/DocumentTable/DocumentTableProvider.test.jsx`, or `src/providers/Auth/AuthProvider.jsx` ↔ `tests/src/providers/Auth/AuthProvider.test.jsx`), and to `lib/` (e.g. `lib/Api/httpClient.js` ↔ `tests/lib/Api/httpClient.test.js`, staying outside the `src/` mirror since `lib/` itself is a sibling of `src/`, not inside it). In every case, `tests/` mirrors the exact path of the file being tested, rooted at `src/frontend/` itself — not a fixed shortlist of top-level folders.
 
 Rules:
-- `index.js` is the *only* import path anything **outside** the folder is allowed to use (`import { DiagnosisPanel } from '@/components/DiagnosisPanel'`). Deep-importing `components/DiagnosisPanel/DiagnosisPanel.jsx` from another component/view/provider is forbidden — this is what makes the isolation rule in Section 5 enforceable, not just aspirational.
-- A unit's own test is not an "outsider": a test may import that unit's non-barrel files (including `internal/` helpers) directly, since verifying a unit's internals is not the same as another domain reaching through it. A test still imports the public component/hook itself via the barrel (`import { DiagnosisPanel } from '../../../components/DiagnosisPanel'`) unless it's specifically exercising an internal helper.
-- Tests are never co-located and there is no per-folder `__tests__` directory. `src/frontend/tests/` is the single frontend test tree, and its internal structure exactly mirrors `views/`, `components/`, and `providers/`.
-- Styles are co-located and scoped (CSS Modules) to the view/component they style. Global styles only live in `src/frontend/styles/globals.css` — the only file in that folder — and are limited to a CSS reset plus `:root` design tokens (colors, spacing scale, typography); never component-specific layout or one-off overrides.
+- `index.js` is the *only* import path anything **outside** the folder is allowed to use (`import { DiagnosisPanel } from '@/components/DiagnosisPanel'`). Deep-importing `src/components/DiagnosisPanel/DiagnosisPanel.jsx` from another component/view/provider is forbidden — this is what makes the isolation rule in Section 5 enforceable, not just aspirational.
+- A unit's own test is not an "outsider": a test may import that unit's non-barrel files (including `internal/` helpers) directly, since verifying a unit's internals is not the same as another domain reaching through it. A test still imports the public component/hook itself via the barrel (`import { DiagnosisPanel } from '../../../../src/components/DiagnosisPanel'`) unless it's specifically exercising an internal helper.
+- Tests are never co-located and there is no per-folder `__tests__` directory. `src/frontend/tests/` is the single frontend test tree, and its internal structure exactly mirrors `src/` (holding `views/`, `components/`, `providers/`) and `lib/`.
+- Styles are co-located and scoped (CSS Modules) to the view/component they style. Global styles only live in `src/frontend/src/styles/globals.css` — the only file in that folder — and are limited to a CSS reset plus `:root` design tokens (colors, spacing scale, typography); never component-specific layout or one-off overrides.
 - Naming conventions:
   - Views: `PascalCase` folder + file, exactly `MainView` and `NightView` — no other view may be added without updating this document.
-  - Components: `PascalCase.jsx` (`PatientScene.jsx`), folder name matches exactly (`components/PatientScene/`).
+  - Components: `PascalCase.jsx` (`PatientScene.jsx`), folder name matches exactly (`src/components/PatientScene/`).
   - Providers: `PascalCase` domain folder (`providers/Diagnosis/`) containing `PascalCase` + `Provider` suffix (`DiagnosisProvider.jsx`) and its `camelCase` `use`-prefixed hook (`useDiagnosis.js`).
   - Hooks: `camelCase.js` starting with `use` (`usePatientSession.js`).
   - Backend: TypeScript files (`.ts`). Route files `kebab-case` matching resource, plural (`patients.ts`, `diagnoses.ts`). Prisma models `PascalCase` singular (`Patient`, `CaseDocument`, `DiagnosisAttempt`).
@@ -225,11 +226,11 @@ Rules:
 
 If, and only if, a component must render visually detached from normal document flow (e.g. a modal, the settings/phone popup, a tooltip that must escape a clipping ancestor), it must go through a single shared mechanism:
 
-- Location: `src/frontend/components/OverlayPortal/` (a single shared component, not one per feature).
+- Location: `src/frontend/src/components/OverlayPortal/` (a single shared component, not one per feature).
 - It is the *only* folder in the frontend allowed to declare `position: fixed`/`position: absolute` for the purpose of layering above the page (a React portal rendering into the `#overlay-root` element declared in `index.html`, itself using flex/grid internally to position its children).
 - Any component that needs an overlay imports `OverlayPortal` from its `index.js` barrel (`import { OverlayPortal } from '@/components/OverlayPortal'`) — it does not declare its own `position: absolute`.
 - Every usage site must include a one-line comment directly above the JSX using it: `{/* overlay-portal: <why this must escape normal flow, e.g. "modal must render above 3D canvas and desk layout"> */}`.
-- Any PR introducing a *new* CSS declaration of `position: absolute` or `position: fixed` outside `components/OverlayPortal/` must be rejected in review — this is a lint/review gate, not a style preference. If a genuinely new case is found that the portal doesn't cover, the fix is to extend `OverlayPortal`, not to add a new one-off absolute rule.
+- Any PR introducing a *new* CSS declaration of `position: absolute` or `position: fixed` outside `src/components/OverlayPortal/` must be rejected in review — this is a lint/review gate, not a style preference. If a genuinely new case is found that the portal doesn't cover, the fix is to extend `OverlayPortal`, not to add a new one-off absolute rule.
 
 ---
 
@@ -239,11 +240,11 @@ No frontend component/hook and no backend endpoint/service is written without a 
 
 ### Frontend (Jest + React Testing Library)
 
-1. **Red**: Write the test first, in the mirrored `tests/` path (`tests/views/<Name>/<Name>.test.jsx`, `tests/components/<Name>/<Name>.test.jsx`, or `tests/providers/<Domain>/<Domain>Provider.test.jsx`), asserting the behavior you're about to add (render output, user interaction via `@testing-library/user-event`, hook return values via `@testing-library/react`'s `renderHook`). Import the unit under test via its `index.js` barrel. Run it, confirm it fails for the expected reason (not a typo/import error).
+1. **Red**: Write the test first, in the mirrored `tests/` path (`tests/src/views/<Name>/<Name>.test.jsx`, `tests/src/components/<Name>/<Name>.test.jsx`, or `tests/src/providers/<Domain>/<Domain>Provider.test.jsx`), asserting the behavior you're about to add (render output, user interaction via `@testing-library/user-event`, hook return values via `@testing-library/react`'s `renderHook`). Import the unit under test via its `index.js` barrel. Run it, confirm it fails for the expected reason (not a typo/import error).
 2. **Green**: Write the minimal view/component/hook code, in its own `views/`, `components/`, or `providers/` folder, to make that test pass. No extra behavior beyond what's tested.
 3. **Refactor**: Clean up implementation and test code with the test suite green throughout. Re-run tests after every change.
 4. Domain providers/hooks (Section 5) are tested by rendering a small test consumer component wrapped in the provider — never by reaching into provider internals.
-5. Three.js scene logic (attention point hit-testing, coordinate mapping) is isolated into plain, framework-free functions inside that component's own `internal/` folder wherever possible, specifically so it's unit-testable without a WebGL context; only thin glue code touches the Three.js renderer directly. Its test lives at the mirrored path (e.g. `tests/components/PatientScene/internal/hitTesting.test.js`), which is allowed to import the `internal/` file directly (Section 6).
+5. Three.js scene logic (attention point hit-testing, coordinate mapping) is isolated into plain, framework-free functions inside that component's own `internal/` folder wherever possible, specifically so it's unit-testable without a WebGL context; only thin glue code touches the Three.js renderer directly. Its test lives at the mirrored path (e.g. `tests/src/components/PatientScene/internal/hitTesting.test.js`), which is allowed to import the `internal/` file directly (Section 6).
 6. Any test exercising code that talks HTTP mocks `global.fetch` directly — never `jest.mock()` on `axios` or on `lib/Api` itself. This repo's frontend Jest transform (`esbuild-jest`) does not guarantee `jest.mock()` calls are hoisted above `import` statements the way Babel's transform does, so intercepting a module import is unreliable here. `lib/Api`'s client is deliberately configured with axios's `fetch` adapter (Section 5) so that mocking the real `global.fetch` global — which needs no hoisting, since it isn't an import — reliably intercepts every HTTP call regardless of transform behavior. A provider that merely re-exposes `lib/Api`'s client (rather than talking HTTP itself) may still use `jest.mock()` on its own direct dependencies if the mock factory closes only over `jest.fn()` values created at module-evaluation time, not on anything import-order-sensitive.
 
 ### Backend (Jest + ts-jest + Fastify `inject()` + Prisma/Postgres)
