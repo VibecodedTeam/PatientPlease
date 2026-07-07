@@ -14,9 +14,11 @@ model User {
 
 /// A logged-in browser session for a User, created after a successful Google Sign-In.
 model UserSession {
-  id           String   @id @default(uuid(7)) @db.Uuid
-  userId       String   @db.Uuid
-  user         User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid(7)) @db.Uuid
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+  /// SHA-256 hex digest of the opaque session token held in the client's cookie.
+  /// The raw token is never stored — only its hash, so a database leak doesn't hand out live sessions.
   sessionToken String   @unique
   expiresAt    DateTime
   createdAt    DateTime @default(now())

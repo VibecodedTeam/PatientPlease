@@ -9,3 +9,23 @@ body {
   height: 100%;
   font-family: system-ui, sans-serif;
 }
+:root {
+  --color-taupe: #A89E96;
+  --color-slate: #384254;
+  --color-navy: #193447;
+  --color-ink: #212129;
+  --color-maroon: #531516;
+  --color-teal: #075247;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: system-ui, sans-serif;
+}
