@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "build": "prisma generate && tsc -p tsconfig.build.json",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
-    "test": "prisma generate && prisma migrate deploy && node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test": "prisma generate && prisma migrate deploy && node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "lint": "prisma generate && eslint src test"
   },
   "dependencies": {
