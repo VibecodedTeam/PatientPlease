@@ -1,0 +1,11 @@
+.table {
+  width: 940px;
+  height: 554px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 20px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #8b5a2b 0%, #6b3f1d 50%, #3e2313 100%);
+}

@@ -1,0 +1,28 @@
+.tabElem {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #ffffff;
+}
+
+/* Każdy z trzech elementów (Information_1 + dwa children) zajmuje równą szerokość */
+.tabElem > * {
+  flex: 1 1 0;
+  min-width: 0; /* pozwala treści się zawijać zamiast rozpychać rząd */
+}
+
+.tabElem:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 600px) {
+  .tabElem {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
