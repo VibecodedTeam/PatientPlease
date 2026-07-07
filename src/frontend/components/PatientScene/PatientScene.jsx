@@ -43,7 +43,7 @@ export function PatientScene() {
       0.1,
       1000
     );
-    camera.position.set(0, 1.5, 3);
+    camera.position.set(0, 0, 3);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -58,7 +58,9 @@ export function PatientScene() {
     controls.enableZoom = true;
     controls.minDistance = 1;
     controls.maxDistance = 10;
-    controls.target.set(0, 1, 0);
+    // The model is recentered onto the world origin below, so the default target
+    // must be (0, 0, 0) too, or the character renders off-center in the viewport.
+    controls.target.set(0, 0, 0);
     controlsRef.current = controls;
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.5));
