@@ -91,11 +91,12 @@ export function Model3D() {
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
 
-    model.position.set(-center.x, -center.y, -center.z);
-
     const maxDimension = Math.max(size.x, size.y, size.z);
     const scale = maxDimension > 0 ? 2 / maxDimension : 1;
     model.scale.set(scale, scale, scale);
+    // Position is a translation in parent space, applied on top of (not scaled by)
+    // the object's own scale, so the centering offset must be pre-multiplied by it.
+    model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
 
     model.traverse((child) => {
       if (child.isMesh && !child.material) {
