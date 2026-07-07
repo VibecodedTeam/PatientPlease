@@ -237,4 +237,20 @@ describe('auth routes', () => {
       expect(response.statusCode).toBe(204);
     });
   });
+
+  describe('CORS', () => {
+    it('allows the configured frontend origin with credentials', async () => {
+      app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+      await app.ready();
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/auth/me',
+        headers: { origin: process.env['FRONTEND_ORIGIN'] as string },
+      });
+
+      expect(response.headers['access-control-allow-origin']).toBe(process.env['FRONTEND_ORIGIN']);
+      expect(response.headers['access-control-allow-credentials']).toBe('true');
+    });
+  });
 });

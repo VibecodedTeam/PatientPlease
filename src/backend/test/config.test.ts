@@ -1,5 +1,6 @@
 import {
   resolveCookieSecret,
+  resolveFrontendOrigin,
   resolveGoogleClientId,
   resolvePort,
   resolveSessionTtlMs,
@@ -65,6 +66,24 @@ describe('resolveCookieSecret', () => {
   it('throws when NODE_ENV is production and COOKIE_SECRET is a known placeholder', () => {
     expect(() => resolveCookieSecret('dev-only-insecure-secret-change-me', 'production')).toThrow(
       'COOKIE_SECRET is set to a known placeholder value and must not be used in production',
+    );
+  });
+});
+
+describe('resolveFrontendOrigin', () => {
+  it('returns the value when FRONTEND_ORIGIN is set', () => {
+    expect(resolveFrontendOrigin('http://localhost:4173')).toBe('http://localhost:4173');
+  });
+
+  it('throws when FRONTEND_ORIGIN is unset', () => {
+    expect(() => resolveFrontendOrigin(undefined)).toThrow(
+      'FRONTEND_ORIGIN environment variable is not set',
+    );
+  });
+
+  it('throws when FRONTEND_ORIGIN is an empty string', () => {
+    expect(() => resolveFrontendOrigin('')).toThrow(
+      'FRONTEND_ORIGIN environment variable is not set',
     );
   });
 });

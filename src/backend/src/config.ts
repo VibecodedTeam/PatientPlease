@@ -11,6 +11,13 @@ export function resolveGoogleClientId(value: string | undefined): string {
   return value;
 }
 
+export function resolveFrontendOrigin(value: string | undefined): string {
+  if (!value) {
+    throw new Error('FRONTEND_ORIGIN environment variable is not set');
+  }
+  return value;
+}
+
 const KNOWN_PLACEHOLDER_COOKIE_SECRETS = new Set([
   'dev-only-insecure-secret-change-me',
   'ci-only-insecure-secret-change-me',

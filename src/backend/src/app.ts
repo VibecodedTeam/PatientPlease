@@ -1,5 +1,11 @@
 import Fastify, { type FastifyInstance } from 'fastify';
-import { resolveCookieSecret, resolveGoogleClientId, resolveSessionTtlMs } from './config.js';
+import cors from '@fastify/cors';
+import {
+  resolveCookieSecret,
+  resolveFrontendOrigin,
+  resolveGoogleClientId,
+  resolveSessionTtlMs,
+} from './config.js';
 import cookiePlugin from './plugins/cookie.js';
 import currentUserPlugin from './plugins/current-user.js';
 import authRoutes from './routes/auth.js';
@@ -17,7 +23,9 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const cookieSecret = resolveCookieSecret(process.env['COOKIE_SECRET'], process.env['NODE_ENV']);
   const googleClientId = resolveGoogleClientId(process.env['GOOGLE_CLIENT_ID']);
   const sessionTtlMs = resolveSessionTtlMs(process.env['SESSION_TTL_MS']);
+  const frontendOrigin = resolveFrontendOrigin(process.env['FRONTEND_ORIGIN']);
 
+  app.register(cors, { origin: frontendOrigin, credentials: true });
   app.register(cookiePlugin, { secret: cookieSecret });
   app.register(currentUserPlugin);
   app.register(authRoutes, {

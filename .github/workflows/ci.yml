@@ -35,6 +35,7 @@ jobs:
       PORT: 4000
       GOOGLE_CLIENT_ID: test-client-id.apps.googleusercontent.com
       COOKIE_SECRET: ci-only-insecure-secret-change-me
+      FRONTEND_ORIGIN: http://localhost:4173
 
     steps:
       - uses: actions/checkout@v4
