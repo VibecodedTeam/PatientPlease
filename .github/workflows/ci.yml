@@ -76,6 +76,24 @@ jobs:
       - name: Verify frontend alive
         run: curl --fail --silent --show-error http://localhost:4173/
 
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile --filter frontend
+
+      - name: Install Playwright browsers
+        run: pnpm --filter frontend exec playwright install --with-deps chromium
+
+      - name: Run frontend e2e smoke test
+        env:
+          E2E_BASE_URL: http://localhost:4173
+        run: pnpm --filter frontend test:e2e
+
       - name: Show container logs on failure
         if: failure()
         run: docker compose -p ci -f docker/docker-compose.yml logs
