@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { Information_1 } from './Information_1';
-import styles from './Information_1.module.css';
+import { Information_1 } from '../../../../../../../components/Table/internal/TabElem/internal/Information_1/Information_1';
+import styles from '../../../../../../../components/Table/internal/TabElem/internal/Information_1/Information_1.module.css';
 
 describe('Information_1', () => {
   it('renders the given title', () => {

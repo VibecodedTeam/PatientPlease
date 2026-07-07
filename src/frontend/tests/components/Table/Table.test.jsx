@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { Table } from './Table';
-import styles from './Table.module.css';
+import { Table } from '../../../components/Table/Table';
+import styles from '../../../components/Table/Table.module.css';
 
 describe('Table', () => {
   it('renders its children', () => {

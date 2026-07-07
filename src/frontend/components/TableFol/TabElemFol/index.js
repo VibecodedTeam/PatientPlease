@@ -1,1 +1,0 @@
-export { TabElem } from './TabElem';

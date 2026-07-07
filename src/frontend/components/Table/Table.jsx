@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styles from './Table.module.css';
-import { TabElem } from './TabElemFol';
-import { Diagnose } from './DiagnoseFol'
+import { TabElem } from './internal/TabElem/TabElem';
+import { Diagnose } from './internal/Diagnose/Diagnose';
 
 export function Table({ children, className = '', ...rest }) {
   const rootClassName = className ? `${styles.table} ${className}` : styles.table;
