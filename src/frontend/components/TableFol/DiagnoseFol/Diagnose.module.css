@@ -4,6 +4,7 @@
   justify-content: flex-start;
   flex: 0 0 240px;
   box-sizing: border-box;
+  height: 100%;
 }
 
 .card {

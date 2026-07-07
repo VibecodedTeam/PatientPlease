@@ -6,9 +6,8 @@
   gap: 14px;
   padding: 10px 12px;
   box-sizing: border-box;
+  height: 100%;
 }
-
-
 
 :where(.tabElem > *) {
   flex: 1 1 0;

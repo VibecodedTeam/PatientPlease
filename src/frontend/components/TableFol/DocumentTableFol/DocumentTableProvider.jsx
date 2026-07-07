@@ -5,16 +5,19 @@ import { useRound } from '../../../views/MainView/useRound';
 export const DocumentTableContext = createContext(null);
 
 /**
- * Narrows RoundProvider's full payload down to just the desk documents
- * (case.documents) that Table/TabElem/Information components need —
- * they don't need to know about gameSession, ownedItems, or the
- * diagnosis catalogs at all.
+ * Narrows RoundProvider's full payload down to what the desk/table
+ * components need: the case's documents and patient identity. Leaf
+ * components consume this provider, not useRound() directly — RoundProvider
+ * itself is only ever read here, so nothing downstream is coupled to its
+ * full shape.
  */
 export function DocumentTableProvider({ children }) {
   const { round, isLoading, error } = useRound();
   const documents = round?.case?.documents ?? [];
+  const patient = round?.case?.patient ?? null;
+
   return (
-    <DocumentTableContext.Provider value={{ documents, isLoading, error }}>
+    <DocumentTableContext.Provider value={{ documents, patient, isLoading, error }}>
       {children}
     </DocumentTableContext.Provider>
   );
