@@ -23,6 +23,8 @@ services:
       dockerfile: src/backend/Dockerfile
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-game}:${POSTGRES_PASSWORD:-game}@postgres:5432/${POSTGRES_DB:-skin_disease_game}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-test-client-id.apps.googleusercontent.com}
+      COOKIE_SECRET: ${COOKIE_SECRET:-dev-only-insecure-secret-change-me}
     ports:
       - "4000:4000"
     depends_on:

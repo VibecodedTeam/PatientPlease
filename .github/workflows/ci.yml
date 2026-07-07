@@ -33,6 +33,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://game:game@localhost:5432/skin_disease_game
       PORT: 4000
+      GOOGLE_CLIENT_ID: test-client-id.apps.googleusercontent.com
+      COOKIE_SECRET: ci-only-insecure-secret-change-me
 
     steps:
       - uses: actions/checkout@v4
