@@ -1,16 +1,16 @@
 import React from 'react';
 import { PatientViewer } from '../../components/PatientViewer';
-import { Model3D, Model3DProvider } from '../../components/3DModule';
+import { PatientScene, PatientSceneProvider } from '../../components/PatientScene';
 import styles from './MainView.module.css';
 
 export function MainView() {
   return (
     <div className={styles.layout}>
       <PatientViewer />
-      {/* TEMPORARY: manual verification of Model3D, remove when told to */}
-      <Model3DProvider url="/3DModels/FinalBaseMesh.obj">
-        <Model3D />
-      </Model3DProvider>
+      {/* TEMPORARY: manual verification of PatientScene's dots/click detection, remove when told to */}
+      <PatientSceneProvider url="/3DModels/FinalBaseMesh.obj">
+        <PatientScene />
+      </PatientSceneProvider>
       <div className={styles.content}>Main View</div>
     </div>
   );
