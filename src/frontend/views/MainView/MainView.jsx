@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './MainView.module.css';
-import { Wall } from '../../components/wall';
+import { Wall } from '../../components/Wall';
 
 export function MainView() {
   return (

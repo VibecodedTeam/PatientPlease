@@ -1,10 +1,14 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Wall } from './Wall';
-import { mockBooks } from './mockBooks';
+import { Wall } from '../../../components/Wall';
+import { mockBooks } from '../../../components/Wall/mockBooks';
 
 describe('Wall', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="root"></div><div id="overlay-root"></div>';
+  });
+
   it('renders the doctor office wall', () => {
     render(<Wall />);
     expect(screen.getByRole('region', { name: /doctor office wall/i })).toBeInTheDocument();

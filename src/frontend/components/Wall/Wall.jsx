@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import styles from './Wall.module.css';
 import { mockBooks } from './mockBooks';
-import { OverlayPortal } from '../../lib/overlay-portal';
+import { OverlayPortal } from '../OverlayPortal';
 
 const PATIENTS_LEFT_TODAY = 5;
 
@@ -24,6 +24,9 @@ const MAX_PINNED_NOTES = 6;
 
 const randomBetween = (min, max) => Math.random() * (max - min) + min;
 
+const withModifierClass = (baseClass, modifierClass, active) =>
+  active ? `${baseClass} ${modifierClass}` : baseClass;
+
 /**
  * Shape of a single book entry, shared so future integrations (JSON payload, shop, API
  * response) can validate their data against the same contract Wall expects.
@@ -43,7 +46,9 @@ export const bookShape = PropTypes.shape({
  *   Book data to render. Falls back to mockBooks when not provided — later this will come from
  *   the player's purchased inventory once the night shop exists.
  */
-export function Wall({ books = mockBooks }) {
+export function Wall({ books }) {
+  const bookList = books ?? mockBooks;
+
   const [selectedBookId, setSelectedBookId] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [pinnedNotes, setPinnedNotes] = useState([{ id: 0, text: PREVENTION_TIPS[0], slot: 0, offsetX: 0, offsetY: 0, rotate: -2 }]);
@@ -55,16 +60,16 @@ export function Wall({ books = mockBooks }) {
   const [lampOn, setLampOn] = useState(false);
   const [dermatoscopeOn, setDermatoscopeOn] = useState(false);
 
-  const boughtBooks = books.filter((book) => book.bought);
+  const boughtBooks = bookList.filter((book) => book.bought);
   const selectedBook = boughtBooks.find((book) => book.id === selectedBookId) ?? null;
 
   useEffect(() => {
     setSelectedBookId((currentId) => {
       if (currentId === null) return null;
-      const isCurrentStillBought = books.some((book) => book.id === currentId && book.bought);
+      const isCurrentStillBought = bookList.some((book) => book.id === currentId && book.bought);
       return isCurrentStillBought ? currentId : null;
     });
-  }, [books]);
+  }, [bookList]);
 
   const openSettings = () => {
     setSelectedBookId(null);
@@ -177,7 +182,7 @@ export function Wall({ books = mockBooks }) {
                   <button
                     key={book.id}
                     type="button"
-                    className={isSelected ? `${styles.book} ${styles.bookSelected}` : styles.book}
+                    className={withModifierClass(styles.book, styles.bookSelected, isSelected)}
                     aria-pressed={isSelected}
                     title={`${book.title} — ${book.category}`}
                     onClick={() => selectBook(book.id)}
@@ -189,11 +194,7 @@ export function Wall({ books = mockBooks }) {
 
               <button
                 type="button"
-                className={
-                  dermatoscopeOn
-                    ? `${styles.shelfDermatoscope} ${styles.shelfDermatoscopeOn}`
-                    : styles.shelfDermatoscope
-                }
+                className={withModifierClass(styles.shelfDermatoscope, styles.shelfDermatoscopeOn, dermatoscopeOn)}
                 aria-label="Toggle dermatoscope"
                 aria-pressed={dermatoscopeOn}
                 title="Toggle dermatoscope"
@@ -212,7 +213,7 @@ export function Wall({ books = mockBooks }) {
 
               <button
                 type="button"
-                className={lampOn ? `${styles.shelfLamp} ${styles.shelfLampOn}` : styles.shelfLamp}
+                className={withModifierClass(styles.shelfLamp, styles.shelfLampOn, lampOn)}
                 aria-label="Toggle desk lamp"
                 aria-pressed={lampOn}
                 title="Toggle desk lamp"
