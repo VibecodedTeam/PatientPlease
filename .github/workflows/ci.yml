@@ -33,6 +33,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://game:game@localhost:5432/skin_disease_game
       PORT: 4000
+      GOOGLE_CLIENT_ID: test-client-id.apps.googleusercontent.com
+      COOKIE_SECRET: ci-only-insecure-secret-change-me
+      FRONTEND_ORIGIN: http://localhost:4173
 
     steps:
       - uses: actions/checkout@v4
@@ -60,6 +63,11 @@ jobs:
     name: Docker Compose alive-check
     runs-on: ubuntu-latest
     needs: test
+    env:
+      # The image runs with NODE_ENV=production, which rejects known placeholder
+      # secrets (see src/backend/src/config.ts) — must not match docker-compose.yml's
+      # default or the app refuses to boot.
+      COOKIE_SECRET: docker-smoke-test-secret-not-for-production-use
     steps:
       - name: Checkout
         uses: actions/checkout@v4
