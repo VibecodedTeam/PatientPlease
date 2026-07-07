@@ -46,6 +46,9 @@ export function dodajKropke(glownyModel, x, y, z, kolor) {
   );
   dot.position.copy(position);
   dot.userData.isKropka = true;
+  // Remembered so a caller can revert this dot's color after highlighting it (e.g. on click),
+  // without needing to know what color it started as.
+  dot.userData.baseColor = dot.material.color.getHex();
 
   glownyModel.add(dot);
   return dot;

@@ -14,6 +14,7 @@ describe('dodajKropke', () => {
     expect(dot.geometry.type).toBe('SphereGeometry');
     expect(dot.material.color.getHex()).toBe(0x00ff00);
     expect(dot.userData.isKropka).toBe(true);
+    expect(dot.userData.baseColor).toBe(0x00ff00);
     expect(dot.position.y).toBeCloseTo(1, 5);
     expect(dot.position.x).toBeCloseTo(0, 5);
     expect(dot.position.z).toBeCloseTo(0, 5);

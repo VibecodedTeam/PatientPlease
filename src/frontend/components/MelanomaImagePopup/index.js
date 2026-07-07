@@ -1,0 +1,1 @@
+export { MelanomaImagePopup } from './MelanomaImagePopup';

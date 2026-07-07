@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { usePatientScene } from './usePatientScene';
 import { dodajKropke } from './internal/dodajKropke';
 import { screenToNdc } from './internal/screenToNdc';
 import { pickDot } from './internal/pickDot';
+import { MelanomaImagePopup } from '../MelanomaImagePopup';
 import styles from './PatientScene.module.css';
 
 // Demo attention points, in the model's own raw local coordinate space (before the
@@ -28,7 +29,17 @@ export function PatientScene() {
   const controlsRef = useRef(null);
   const modelRef = useRef(null);
   const dotsRef = useRef([]);
+  const activeDotRef = useRef(null);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { model, status } = usePatientScene();
+
+  const closePopup = () => {
+    if (activeDotRef.current) {
+      activeDotRef.current.material.color.setHex(activeDotRef.current.userData.baseColor);
+      activeDotRef.current = null;
+    }
+    setIsPopupOpen(false);
+  };
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
@@ -87,9 +98,15 @@ export function PatientScene() {
       const rect = renderer.domElement.getBoundingClientRect();
       const ndc = screenToNdc(event.clientX, event.clientY, rect);
       const hit = pickDot(ndc, cameraRef.current, dotsRef.current);
-      if (hit) {
-        hit.material.color.set(0xff0000);
+      if (!hit) return;
+
+      // Only one dot is active at a time - revert whichever was active before.
+      if (activeDotRef.current && activeDotRef.current !== hit) {
+        activeDotRef.current.material.color.setHex(activeDotRef.current.userData.baseColor);
       }
+      hit.material.color.set(0xff0000);
+      activeDotRef.current = hit;
+      setIsPopupOpen(true);
     };
     renderer.domElement.addEventListener('click', handleClick);
 
@@ -164,5 +181,10 @@ export function PatientScene() {
     };
   }, [model, status]);
 
-  return <div ref={containerRef} className={styles.container} data-testid="patient-scene-container" />;
+  return (
+    <>
+      <div ref={containerRef} className={styles.container} data-testid="patient-scene-container" />
+      {isPopupOpen && <MelanomaImagePopup onClose={closePopup} />}
+    </>
+  );
 }
