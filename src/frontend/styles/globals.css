@@ -9,3 +9,7 @@ body {
   height: 100%;
   font-family: system-ui, sans-serif;
 }
+
+#root {
+  height: 100%;
+}
