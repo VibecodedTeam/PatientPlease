@@ -1,9 +1,17 @@
 node_modules/
+.pnpm-store/
 dist/
 build/
 coverage/
+test-results/
+playwright-report/
+blob-report/
 .eslintcache
 .env
 .env.local
 *.log
 .DS_Store
+
+# pnpm only (CLAUDE.md Hard Constraint #9) — no npm/yarn lockfiles
+package-lock.json
+yarn.lock

@@ -1,0 +1,26 @@
+/// A player account, authenticated exclusively via Google Sign-In (no passwords).
+model User {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  googleId  String   @unique
+  email     String   @unique
+  name      String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions     UserSession[]
+  gameSessions GameSession[]
+}
+
+/// A logged-in browser session for a User, created after a successful Google Sign-In.
+model UserSession {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  userId       String   @db.Uuid
+  user         User     @relation(fields: [userId], references: [id])
+  sessionToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
