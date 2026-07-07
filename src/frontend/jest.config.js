@@ -1,4 +1,5 @@
 module.exports = {
+  roots: ['<rootDir>/tests'],
   testEnvironment: 'jsdom',
   moduleNameMapper: {
     '\\.module\\.css$': 'identity-obj-proxy',

@@ -5,11 +5,11 @@ import { render, screen } from '@testing-library/react';
 // routes any file containing "mock(" through an extra babel pass that strips the
 // `React` import binding before esbuild's later JSX pass re-inserts bare
 // `React.createElement` calls, causing a "React is not defined" crash.
-jest.mock('../../components/PatientViewer', () => ({
+jest.mock('../../../components/PatientViewer', () => ({
   PatientViewer: () => require('react').createElement('div', { 'data-testid': 'patient-viewer' }),
 }));
 
-const { MainView } = require('./MainView');
+const { MainView } = require('../../../views/MainView');
 
 describe('MainView', () => {
   it('renders', () => {
