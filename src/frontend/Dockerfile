@@ -14,7 +14,9 @@ RUN pnpm --filter frontend build
 
 FROM node:22-alpine AS run
 WORKDIR /app/src/frontend
-RUN corepack enable
+# Pin and activate pnpm at build time so the container never needs network access
+# at startup — corepack otherwise re-fetches the packageManager version on every run.
+RUN corepack enable && corepack prepare pnpm@11.10.0 --activate
 COPY --from=build /app /app
 ENV NODE_ENV=production
 EXPOSE 4173
