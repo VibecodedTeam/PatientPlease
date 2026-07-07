@@ -1,5 +1,4 @@
 import React from 'react';
-import { PatientViewer } from '../../components/PatientViewer';
 import { PatientScene, PatientSceneProvider } from '../../components/PatientScene';
 import styles from './MainView.module.css';
 
@@ -10,7 +9,6 @@ export function MainView() {
       <PatientSceneProvider url="/3DModels/FinalBaseMesh.obj">
         <PatientScene />
       </PatientSceneProvider>
-      <PatientViewer />
       <div className={styles.content}>Main View</div>
     </div>
   );
