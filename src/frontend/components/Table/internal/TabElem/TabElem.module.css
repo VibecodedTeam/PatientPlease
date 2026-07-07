@@ -1,0 +1,26 @@
+.tabElem {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  flex: 0 0 632px;
+  gap: 14px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+:where(.tabElem > *) {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.tabElem:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 600px) {
+  .tabElem {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

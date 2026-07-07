@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { ApiProvider, useApi } from '../../../providers/Api';
+import { ApiProvider, useApi } from '../../../../src/providers/Api';
 
 function TestConsumer() {
   const api = useApi();
@@ -26,8 +26,9 @@ function PostCaller({ path, onResult }) {
 
 describe('ApiProvider / useApi', () => {
   it('exposes a get method to consumers', () => {
+    global.fetch = jest.fn().mockResolvedValue(new Response('{}', { status: 200 }));
     render(
-      <ApiProvider>
+      <ApiProvider baseUrl="http://api.test">
         <TestConsumer />
       </ApiProvider>,
     );
@@ -40,42 +41,33 @@ describe('ApiProvider / useApi', () => {
     consoleError.mockRestore();
   });
 
-  it('sends requests with credentials included, so the session cookie round-trips cross-origin', () => {
-    const originalFetch = global.fetch;
-    const fetchMock = jest
-      .fn()
-      .mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
-    global.fetch = fetchMock;
+  it('sends requests with credentials included, so the session cookie round-trips cross-origin', async () => {
+    global.fetch = jest.fn().mockResolvedValue(new Response('{}', { status: 200 }));
 
     render(
-      <ApiProvider>
+      <ApiProvider baseUrl="http://api.test">
         <GetCaller />
       </ApiProvider>,
     );
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ credentials: 'include' }),
-    );
-    global.fetch = originalFetch;
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    // Axios's fetch adapter passes a Request instance as fetch's sole
+    // argument, carrying `credentials` directly (see src/frontend/lib/Api's
+    // own test for the underlying verification).
+    const request = global.fetch.mock.calls[0][0];
+    expect(request.credentials).toBe('include');
   });
 
   it('resolves without parsing a body for 204 No Content responses', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 204,
-      json: () => Promise.reject(new Error('Unexpected end of JSON input')),
-    });
+    global.fetch = jest.fn().mockResolvedValue(new Response(null, { status: 204 }));
     const onResult = jest.fn();
 
     render(
-      <ApiProvider>
+      <ApiProvider baseUrl="http://api.test">
         <PostCaller path="/auth/logout" onResult={onResult} />
       </ApiProvider>,
     );
 
     await waitFor(() => expect(onResult).toHaveBeenCalledWith(null));
-    global.fetch = originalFetch;
   });
 });
