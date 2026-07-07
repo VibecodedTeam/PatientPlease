@@ -1,11 +1,20 @@
+.slot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  flex: 0 1 360px;
+  min-width: 300px;
+  box-sizing: border-box;
+}
+
 .card {
   display: flex;
-  align-items: start;
+  align-items: center;
   justify-content: center;
-  flex: 2 1.5 200px;
+  width: 100%;
   box-sizing: border-box;
-  padding: 10px;
-   background-color: #eef1e6;
+  padding: 20px;
+  background-color: #eef1e6;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
   border-radius: 6px;
   overflow: hidden;

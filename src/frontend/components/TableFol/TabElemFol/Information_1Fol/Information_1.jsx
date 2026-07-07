@@ -17,22 +17,24 @@ export function Information_1({
   className = '',
   ...rest
 }) {
-  const rootClassName = className ? `${styles.card} ${className}` : styles.card;
+  const cardClassName = className ? `${styles.card} ${className}` : styles.card;
 
   return (
-    <div className={rootClassName} {...rest}>
-      <h3 className={styles.title}>{title}</h3>
-      <div className={styles.summary}>
-        <span className={styles.patientName}>{patientName}</span>
-        <span className={styles.patientAge}>Age {patientAge}</span>
+    <div className={styles.slot}>
+      <div className={cardClassName} {...rest}>
+        <h3 className={styles.title}>{title}</h3>
+        <div className={styles.summary}>
+          <span className={styles.patientName}>{patientName}</span>
+          <span className={styles.patientAge}>Age {patientAge}</span>
+        </div>
+        <ul className={styles.notesList}>
+          {notes.map((note, index) => (
+            <li key={index} className={styles.noteItem}>
+              {note}
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul className={styles.notesList}>
-        {notes.map((note, index) => (
-          <li key={index} className={styles.noteItem}>
-            {note}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
