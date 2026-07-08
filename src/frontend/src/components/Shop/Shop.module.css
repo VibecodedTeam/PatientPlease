@@ -1,0 +1,88 @@
+.shop {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: #212129;
+  color: #A89E96;
+  padding: 1.5rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: #384254;
+  border: 1px solid #193447;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.itemUnaffordable {
+  opacity: 0.5;
+}
+
+.icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.name {
+  font-weight: bold;
+}
+
+.price {
+  color: #A89E96;
+}
+
+.toggle {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 2px solid #A89E96;
+  background-color: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggleSelected {
+  background-color: #073B33;
+  border-color: #073B33;
+}
+
+.toggle:disabled {
+  cursor: not-allowed;
+  border-color: #384254;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.buyButton {
+  background-color: #531516;
+  color: #A89E96;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.buyButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
