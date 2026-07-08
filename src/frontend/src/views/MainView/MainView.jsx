@@ -61,7 +61,11 @@ function MainViewContent() {
         </button>
       </div>
       <div className={styles.mainView}>
-        <section className={styles.patientArea} aria-label="Patient preview area placeholder" />
+        <section className={styles.patientArea} aria-label="Patient preview area">
+          <PatientSceneProvider url="/3DModels/FinalBaseMesh.obj">
+            <PatientScene />
+          </PatientSceneProvider>
+        </section>
         <div className={styles.rightColumn}>
           <div className={styles.wallCell}>
             <Wall />
