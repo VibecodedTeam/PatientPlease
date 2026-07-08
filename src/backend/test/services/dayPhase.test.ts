@@ -8,7 +8,7 @@ import {
 function createMockPrisma() {
   return {
     gameDayLog: {
-      findFirst: jest.fn(),
+      findFirst: jest.fn<DayPhasePrismaClient['gameDayLog']['findFirst']>(),
     },
   };
 }
@@ -53,7 +53,10 @@ describe('resolveDayPhase', () => {
 
   it('resolves night phase, upcoming day 4, capacity 2, when the latest GameDayLog (day 3) has ended', async () => {
     const prisma = createMockPrisma();
-    prisma.gameDayLog.findFirst.mockResolvedValue({ dayNumber: 3, endedAt: new Date('2026-07-03T00:00:00.000Z') });
+    prisma.gameDayLog.findFirst.mockResolvedValue({
+      dayNumber: 3,
+      endedAt: new Date('2026-07-03T00:00:00.000Z'),
+    });
 
     const result = await resolveDayPhase(prisma, 'session-uuid');
 
