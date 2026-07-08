@@ -37,9 +37,7 @@ export interface GamePrismaClient {
   };
   diagnosisAttempt: {
     deleteMany(args: { where: { gameDayLogId: string } }): Promise<unknown>;
-    count(args: {
-      where: { gameDayLogId: string; isDiagnosisCorrect?: boolean };
-    }): Promise<number>;
+    count(args: { where: { gameDayLogId: string; isDiagnosisCorrect?: boolean } }): Promise<number>;
   };
 }
 
