@@ -9,6 +9,8 @@ import {
 import cookiePlugin from './plugins/cookie.js';
 import currentUserPlugin from './plugins/current-user.js';
 import authRoutes from './routes/auth.js';
+import dayRoutes from './routes/day.js';
+import gameRoutes from './routes/game.js';
 import healthRoutes from './routes/health.js';
 import roundRoutes from './routes/round.js';
 import type { GoogleIdTokenVerifier } from './services/auth.js';
@@ -36,6 +38,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   });
   app.register(healthRoutes);
   app.register(roundRoutes);
+  app.register(gameRoutes);
+  app.register(dayRoutes);
 
   return app;
 }
