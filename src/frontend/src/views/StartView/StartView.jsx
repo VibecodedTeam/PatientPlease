@@ -169,49 +169,51 @@ export function StartView() {
         <SunGraphic />
 
         <div
-          className="sca-hero-bg-dot"
-          style={{ width: 260, height: 260, top: -60, left: -80 }}
+          className="sca-hero-bg-dot dot-tl"
+          style={{ width: 260, height: 260, marginTop: -60, marginLeft: -80 }}
         />
         <div
-          className="sca-hero-bg-dot"
-          style={{ width: 180, height: 180, bottom: -40, right: -40 }}
+          className="sca-hero-bg-dot dot-br"
+          style={{ width: 180, height: 180, marginBottom: -40, marginRight: -40 }}
         />
 
-        <span className="sca-eyebrow">Skin Cancer Awareness</span>
+        <div className="sca-hero-content">
+          <span className="sca-eyebrow">Skin Cancer Awareness</span>
 
-        <h1 className="sca-headline">
-          Know your skin.
-          <br />
-          Catch it <em>early</em>.
-        </h1>
+          <h1 className="sca-headline">
+            Know your skin.
+            <br />
+            Catch it <em>early</em>.
+          </h1>
 
-        <p className="sca-subhead">
-          Most skin cancers are caused by sun exposure you can control — and
-          nearly all are treatable when found in time. It starts with knowing
-          what to look for.
-        </p>
+          <p className="sca-subhead">
+            Most skin cancers are caused by sun exposure you can control — and
+            nearly all are treatable when found in time. It starts with knowing
+            what to look for.
+          </p>
 
-        <div className="sca-stage">
-          <span className="sca-ring r1" />
-          <span className="sca-ring r2" />
-          <span className="sca-ring r3" />
+          <div className="sca-stage">
+            <span className="sca-ring r1" />
+            <span className="sca-ring r2" />
+            <span className="sca-ring r3" />
 
-          <span className="sca-mole m1" />
-          <span className="sca-mole irregular m2" />
-          <span className="sca-mole m3" />
-          <span className="sca-mole irregular m4" />
+            <span className="sca-mole m1" />
+            <span className="sca-mole irregular m2" />
+            <span className="sca-mole m3" />
+            <span className="sca-mole irregular m4" />
 
-          <button
-            className="sca-play-btn"
-            onClick={() => setIsPlaying((p) => !p)}
-            aria-pressed={isPlaying}
-            aria-label={isPlaying ? 'Pause awareness video' : 'Play awareness video'}
-          >
-            <span className="sca-play-icon" />
-          </button>
+            <button
+              className="sca-play-btn"
+              onClick={() => setIsPlaying((p) => !p)}
+              aria-pressed={isPlaying}
+              aria-label={isPlaying ? 'Pause awareness video' : 'Play awareness video'}
+            >
+              <span className="sca-play-icon" />
+            </button>
+          </div>
+
+          <p className="sca-caption">{isPlaying ? CAPTIONS[captionIndex] : ''}</p>
         </div>
-
-        <p className="sca-caption">{isPlaying ? CAPTIONS[captionIndex] : ''}</p>
       </section>
 
       <section className="sca-section" aria-labelledby="abcde-heading">
