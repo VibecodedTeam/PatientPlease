@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './Start.css';
+import styles from './StartView.module.css';
 
 const ICONS = {
   A: (
@@ -48,7 +48,7 @@ const ABCDE = [
   {
     letter: 'A',
     word: 'Asymmetry',
-    desc: 'One half of the mole doesn\u2019t match the other in shape or size.',
+    desc: 'One half of the mole doesn’t match the other in shape or size.',
   },
   {
     letter: 'B',
@@ -58,7 +58,7 @@ const ABCDE = [
   {
     letter: 'C',
     word: 'Color',
-    desc: 'Uneven shading \u2014 shades of brown, black, tan, or even red and blue.',
+    desc: 'Uneven shading — shades of brown, black, tan, or even red and blue.',
   },
   {
     letter: 'D',
@@ -117,14 +117,14 @@ const STATS = [
 ];
 
 const CAPTIONS = [
-  '\u25b6 Spotting the signs \u2014 00:04',
-  '\u25b6 The ABCDE check \u2014 00:11',
-  '\u25b6 When to see a dermatologist \u2014 00:19',
+  '▶ Spotting the signs — 00:04',
+  '▶ The ABCDE check — 00:11',
+  '▶ When to see a dermatologist — 00:19',
 ];
 
 function SunGraphic() {
   return (
-    <svg className="sca-sun" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <svg className={styles['sca-sun']} viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <circle cx="200" cy="200" r="70" stroke="currentColor" strokeWidth="1.4" />
       {Array.from({ length: 16 }).map((_, i) => {
         const angle = (i * 360) / 16;
@@ -146,7 +146,7 @@ function SunGraphic() {
   );
 }
 
-export default function SkinCancerAwareness() {
+export function StartView() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [captionIndex, setCaptionIndex] = useState(0);
   const intervalRef = useRef(null);
@@ -164,114 +164,114 @@ export default function SkinCancerAwareness() {
   }, [isPlaying]);
 
   return (
-    <div className={`sca-page${isPlaying ? ' is-playing' : ''}`}>
-      <section className="sca-hero">
-        <div className="sca-hero-bg" aria-hidden="true">
+    <div className={`${styles['sca-page']}${isPlaying ? ` ${styles['is-playing']}` : ''}`}>
+      <section className={styles['sca-hero']}>
+        <div className={styles['sca-hero-bg']} aria-hidden="true">
           <SunGraphic />
           <div
-            className="sca-hero-bg-dot corner-tl"
+            className={`${styles['sca-hero-bg-dot']} ${styles['corner-tl']}`}
             style={{ width: 260, height: 260 }}
           />
           <div
-            className="sca-hero-bg-dot corner-br"
+            className={`${styles['sca-hero-bg-dot']} ${styles['corner-br']}`}
             style={{ width: 180, height: 180 }}
           />
         </div>
 
-        <div className="sca-hero-content">
-          <span className="sca-eyebrow">Skin Cancer Awareness</span>
+        <div className={styles['sca-hero-content']}>
+          <span className={styles['sca-eyebrow']}>Skin Cancer Awareness</span>
 
-          <h1 className="sca-headline">
+          <h1 className={styles['sca-headline']}>
             Know your skin.
             <br />
             Catch it <em>early</em>.
           </h1>
 
-          <p className="sca-subhead">
+          <p className={styles['sca-subhead']}>
             Most skin cancers are caused by sun exposure you can control — and
             nearly all are treatable when found in time. It starts with knowing
             what to look for.
           </p>
 
-          <div className="sca-stage">
-            <span className="sca-ring r1" />
-            <span className="sca-ring r2" />
-            <span className="sca-ring r3" />
+          <div className={styles['sca-stage']}>
+            <span className={`${styles['sca-ring']} ${styles.r1}`} />
+            <span className={`${styles['sca-ring']} ${styles.r2}`} />
+            <span className={`${styles['sca-ring']} ${styles.r3}`} />
 
-            <span className="sca-mole m1" />
-            <span className="sca-mole irregular m2" />
-            <span className="sca-mole m3" />
-            <span className="sca-mole irregular m4" />
+            <span className={`${styles['sca-mole']} ${styles.m1}`} />
+            <span className={`${styles['sca-mole']} ${styles.irregular} ${styles.m2}`} />
+            <span className={`${styles['sca-mole']} ${styles.m3}`} />
+            <span className={`${styles['sca-mole']} ${styles.irregular} ${styles.m4}`} />
 
             <button
-              className="sca-play-btn"
+              className={styles['sca-play-btn']}
               onClick={() => setIsPlaying((p) => !p)}
               aria-pressed={isPlaying}
               aria-label={isPlaying ? 'Pause awareness video' : 'Play awareness video'}
             >
-              <span className="sca-play-icon">
-                <span className="sca-play-bar" />
-                <span className="sca-play-bar" />
+              <span className={styles['sca-play-icon']}>
+                <span className={styles['sca-play-bar']} />
+                <span className={styles['sca-play-bar']} />
               </span>
             </button>
           </div>
 
-          <p className="sca-caption">{isPlaying ? CAPTIONS[captionIndex] : ''}</p>
+          <p className={styles['sca-caption']}>{isPlaying ? CAPTIONS[captionIndex] : ''}</p>
         </div>
       </section>
 
-      <section className="sca-section" aria-labelledby="abcde-heading">
-        <div className="sca-section-head">
-          <span className="sca-eyebrow">The self-check</span>
-          <h2 className="sca-section-title" id="abcde-heading">
+      <section className={styles['sca-section']} aria-labelledby="abcde-heading">
+        <div className={styles['sca-section-head']}>
+          <span className={styles['sca-eyebrow']}>The self-check</span>
+          <h2 className={styles['sca-section-title']} id="abcde-heading">
             The ABCDE rule
           </h2>
-          <p className="sca-section-sub">
+          <p className={styles['sca-section-sub']}>
             Dermatologists use this five-point checklist to tell a harmless
             mole from one that needs a closer look. Run through it once a
             month.
           </p>
         </div>
 
-        <div className="sca-abcde">
+        <div className={styles['sca-abcde']}>
           {ABCDE.map((item) => (
-            <div className="sca-abcde-card" key={item.letter}>
-              <span className="sca-abcde-icon">{ICONS[item.letter]}</span>
-              <div className="sca-abcde-letter">{item.letter}</div>
-              <div className="sca-abcde-word">{item.word}</div>
-              <div className="sca-abcde-desc">{item.desc}</div>
+            <div className={styles['sca-abcde-card']} key={item.letter}>
+              <span className={styles['sca-abcde-icon']}>{ICONS[item.letter]}</span>
+              <div className={styles['sca-abcde-letter']}>{item.letter}</div>
+              <div className={styles['sca-abcde-word']}>{item.word}</div>
+              <div className={styles['sca-abcde-desc']}>{item.desc}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="sca-stats">
-        <div className="sca-stats-inner">
+      <section className={styles['sca-stats']}>
+        <div className={styles['sca-stats-inner']}>
           {STATS.map((s) => (
             <div key={s.label}>
-              <span className="sca-stat-icon">{s.icon}</span>
-              <div className="sca-stat-num">{s.num}</div>
-              <div className="sca-stat-label">{s.label}</div>
+              <span className={styles['sca-stat-icon']}>{s.icon}</span>
+              <div className={styles['sca-stat-num']}>{s.num}</div>
+              <div className={styles['sca-stat-label']}>{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="sca-cta">
-        <span className="sca-eyebrow">Take five minutes</span>
-        <h2 className="sca-cta-title">Check one mole you’ve been ignoring.</h2>
-        <p className="sca-cta-text">
+      <section className={styles['sca-cta']}>
+        <span className={styles['sca-eyebrow']}>Take five minutes</span>
+        <h2 className={styles['sca-cta-title']}>Check one mole you’ve been ignoring.</h2>
+        <p className={styles['sca-cta-text']}>
           A skin check takes less time than the video above. If something
           matches two or more letters of the ABCDE rule, book a dermatologist
           appointment — it’s worth the five minutes.
         </p>
         <button
-          className="sca-cta-btn"
+          className={styles['sca-cta-btn']}
           onClick={() => window.open('https://www.aad.org/find-a-derm', '_blank')}
         >
           Find a dermatologist
         </button>
-        <p className="sca-foot-note">
+        <p className={styles['sca-foot-note']}>
           This page is educational and not a substitute for professional
           medical advice.
         </p>
