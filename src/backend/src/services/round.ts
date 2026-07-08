@@ -48,6 +48,10 @@ export interface GameDayLogRecord {
   dayNumber: number;
   startingMoney: number;
   endingMoney: number | null;
+  casesAttempted: number;
+  casesCorrect: number;
+  thresholdMet: boolean | null;
+  penaltyApplied: boolean | null;
   endedAt: Date | null;
 }
 

@@ -26,12 +26,16 @@ export interface GamePrismaClient {
         endingMoney?: number;
         casesAttempted?: number;
         casesCorrect?: number;
+        thresholdMet?: boolean | null;
         penaltyApplied?: boolean;
       };
     }): Promise<GameDayLogRecord>;
   };
   diagnosisAttempt: {
     deleteMany(args: { where: { gameDayLogId: string } }): Promise<unknown>;
+    count(args: {
+      where: { gameDayLogId: string; isDiagnosisCorrect?: boolean };
+    }): Promise<number>;
   };
 }
 
@@ -100,6 +104,10 @@ function toGameDayLogResponse(record: GameDayLogRecord): GameDayLogRecord {
     dayNumber: record.dayNumber,
     startingMoney: record.startingMoney,
     endingMoney: record.endingMoney,
+    casesAttempted: record.casesAttempted,
+    casesCorrect: record.casesCorrect,
+    thresholdMet: record.thresholdMet,
+    penaltyApplied: record.penaltyApplied,
     endedAt: record.endedAt,
   };
 }
@@ -198,9 +206,28 @@ export async function endDay(
   const session = await requireActiveGameSession(prisma, userId);
   const openDayLog = await requireOpenGameDayLog(prisma, session.id);
 
+  const [casesAttempted, casesCorrect] = await Promise.all([
+    prisma.diagnosisAttempt.count({ where: { gameDayLogId: openDayLog.id } }),
+    prisma.diagnosisAttempt.count({
+      where: { gameDayLogId: openDayLog.id, isDiagnosisCorrect: true },
+    }),
+  ]);
+
+  const endingMoney = session.money;
+  const thresholdMet =
+    session.studentLoanThreshold === null ? null : endingMoney >= session.studentLoanThreshold;
+  const penaltyApplied = thresholdMet === false;
+
   const updatedDayLog = await prisma.gameDayLog.update({
     where: { id: openDayLog.id },
-    data: { endedAt: new Date(), endingMoney: session.money },
+    data: {
+      endedAt: new Date(),
+      endingMoney,
+      casesAttempted,
+      casesCorrect,
+      thresholdMet,
+      penaltyApplied,
+    },
   });
 
   return {

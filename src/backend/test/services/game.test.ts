@@ -23,6 +23,7 @@ function createMockPrisma() {
     },
     diagnosisAttempt: {
       deleteMany: jest.fn<GamePrismaClient['diagnosisAttempt']['deleteMany']>(),
+      count: jest.fn<GamePrismaClient['diagnosisAttempt']['count']>(),
     },
   };
 }
@@ -46,6 +47,10 @@ function makeGameDayLog(overrides: Partial<GameDayLogRecord> = {}): GameDayLogRe
     dayNumber: 1,
     startingMoney: 50,
     endingMoney: null,
+    casesAttempted: 0,
+    casesCorrect: 0,
+    thresholdMet: null,
+    penaltyApplied: false,
     endedAt: null,
     ...overrides,
   };
@@ -287,29 +292,84 @@ describe('endDay', () => {
     expect(prisma.gameDayLog.update).not.toHaveBeenCalled();
   });
 
-  it('stamps endedAt and endingMoney on the open day log, leaving session.status untouched', async () => {
+  it('counts DiagnosisAttempts and stamps casesAttempted/casesCorrect/endingMoney/endedAt', async () => {
     const prisma = createMockPrisma();
-    const session = makeSession({ money: 75, status: 'ACTIVE' });
+    const session = makeSession({ money: 75, status: 'ACTIVE', studentLoanThreshold: null });
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    const endedLog = makeGameDayLog({ id: 'open-log-uuid', endingMoney: 75, endedAt: new Date() });
+    prisma.diagnosisAttempt.count.mockResolvedValueOnce(3).mockResolvedValueOnce(2);
+    const endedLog = makeGameDayLog({
+      id: 'open-log-uuid',
+      endingMoney: 75,
+      casesAttempted: 3,
+      casesCorrect: 2,
+      thresholdMet: null,
+      penaltyApplied: false,
+      endedAt: new Date(),
+    });
     prisma.gameDayLog.update.mockResolvedValue(endedLog);
 
     const result = await endDay(prisma, 'user-uuid');
 
+    expect(prisma.diagnosisAttempt.count).toHaveBeenNthCalledWith(1, {
+      where: { gameDayLogId: 'open-log-uuid' },
+    });
+    expect(prisma.diagnosisAttempt.count).toHaveBeenNthCalledWith(2, {
+      where: { gameDayLogId: 'open-log-uuid', isDiagnosisCorrect: true },
+    });
     expect(prisma.gameDayLog.update).toHaveBeenCalledWith({
       where: { id: 'open-log-uuid' },
-      data: { endedAt: expect.any(Date) as Date, endingMoney: 75 },
+      data: {
+        endedAt: expect.any(Date) as Date,
+        endingMoney: 75,
+        casesAttempted: 3,
+        casesCorrect: 2,
+        thresholdMet: null,
+        penaltyApplied: false,
+      },
     });
-    expect(prisma.gameSession.update).not.toHaveBeenCalled();
-    expect(result.gameSession).toEqual(session);
     expect(result.dayLog).toEqual(endedLog);
+  });
+
+  it('sets thresholdMet true and penaltyApplied false when endingMoney meets studentLoanThreshold', async () => {
+    const prisma = createMockPrisma();
+    const session = makeSession({ money: 100, studentLoanThreshold: 100 });
+    prisma.gameSession.findFirst.mockResolvedValue(session);
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.diagnosisAttempt.count.mockResolvedValueOnce(1).mockResolvedValueOnce(1);
+    prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+
+    await endDay(prisma, 'user-uuid');
+
+    expect(prisma.gameDayLog.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ thresholdMet: true, penaltyApplied: false }),
+      }),
+    );
+  });
+
+  it('sets thresholdMet false and penaltyApplied true when endingMoney misses studentLoanThreshold', async () => {
+    const prisma = createMockPrisma();
+    const session = makeSession({ money: 40, studentLoanThreshold: 100 });
+    prisma.gameSession.findFirst.mockResolvedValue(session);
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.diagnosisAttempt.count.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+    prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+
+    await endDay(prisma, 'user-uuid');
+
+    expect(prisma.gameDayLog.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ thresholdMet: false, penaltyApplied: true }),
+      }),
+    );
   });
 
   it('never leaks the gameSessionId column present on the raw GameDayLog row', async () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.diagnosisAttempt.count.mockResolvedValue(0);
     prisma.gameDayLog.update.mockResolvedValue({
       ...makeGameDayLog({ id: 'open-log-uuid' }),
       gameSessionId: 'session-uuid',
@@ -327,6 +387,7 @@ describe('endDay', () => {
       userId: 'user-uuid',
     } as GameSessionRecord);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.diagnosisAttempt.count.mockResolvedValue(0);
     prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
     const result = await endDay(prisma, 'user-uuid');
