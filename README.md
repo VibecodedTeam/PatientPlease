@@ -50,7 +50,13 @@ pnpm install
    ```bash
    export DATABASE_URL="postgresql://game:game@localhost:5432/skin_disease_game"
    ```
-3. Run both workspaces in dev mode from the repo root:
+3. Apply migrations and seed content data (diagnoses, treatments, shop items, patients/cases/documents/hints — never application/session data like users or game sessions):
+   ```bash
+   pnpm --filter backend exec prisma migrate deploy
+   pnpm --filter backend seed
+   ```
+   The seed is safe to re-run any time — every row is upserted by a fixed id, so running it again never duplicates data.
+4. Run both workspaces in dev mode from the repo root:
    ```bash
    pnpm dev
    ```
@@ -76,7 +82,11 @@ pnpm --filter backend dev
    ```
    (equivalent to `docker compose -f docker/docker-compose.yml up --build`)
 3. The frontend is served at `http://localhost:4173` (production Vite build via `vite preview`). Postgres listens on `localhost:5432`. **The backend container builds successfully but exits immediately** — same reason as above, `src/server.js` doesn't implement a server yet.
-4. Stop everything:
+4. The backend container seeds its content data (diagnoses, treatments, shop items, patients/cases/documents/hints) automatically on every start, after migrations and before the server boots — no manual step needed. It's safe on every restart since seeding upserts by a fixed id rather than inserting blindly. To re-run it manually against an already-running stack:
+   ```bash
+   docker compose -f docker/docker-compose.yml exec backend node dist/db/seed.js
+   ```
+5. Stop everything:
    ```bash
    pnpm docker:down
    ```

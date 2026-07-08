@@ -78,6 +78,26 @@ jobs:
       - name: Verify database alive
         run: docker compose -p ci -f docker/docker-compose.yml exec -T postgres pg_isready -U game -d skin_disease_game
 
+      - name: Verify seed data
+        run: |
+          check_count() {
+            table="$1"
+            count=$(docker compose -p ci -f docker/docker-compose.yml exec -T postgres \
+              psql -U game -d skin_disease_game -tAc "SELECT count(*) FROM \"$table\";" | tr -d '[:space:]')
+            echo "$table: $count rows"
+            if [ "$count" -lt 20 ]; then
+              echo "Expected at least 20 seeded rows in $table, got $count" >&2
+              exit 1
+            fi
+          }
+          check_count Diagnosis
+          check_count Treatment
+          check_count ShopItem
+          check_count Patient
+          check_count "Case"
+          check_count CaseDocument
+          check_count CaseHint
+
       - name: Verify backend alive
         run: curl --fail --silent --show-error http://localhost:4000/health
 
