@@ -343,11 +343,17 @@ describe('endDay', () => {
 
     await endDay(prisma, 'user-uuid');
 
-    expect(prisma.gameDayLog.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ thresholdMet: true, penaltyApplied: false }),
-      }),
-    );
+    expect(prisma.gameDayLog.update).toHaveBeenCalledWith({
+      where: { id: 'open-log-uuid' },
+      data: {
+        endedAt: expect.any(Date) as Date,
+        endingMoney: 100,
+        casesAttempted: 1,
+        casesCorrect: 1,
+        thresholdMet: true,
+        penaltyApplied: false,
+      },
+    });
   });
 
   it('sets thresholdMet false and penaltyApplied true when endingMoney misses studentLoanThreshold', async () => {
@@ -361,11 +367,17 @@ describe('endDay', () => {
 
     await endDay(prisma, 'user-uuid');
 
-    expect(prisma.gameDayLog.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ thresholdMet: false, penaltyApplied: true }),
-      }),
-    );
+    expect(prisma.gameDayLog.update).toHaveBeenCalledWith({
+      where: { id: 'open-log-uuid' },
+      data: {
+        endedAt: expect.any(Date) as Date,
+        endingMoney: 40,
+        casesAttempted: 1,
+        casesCorrect: 0,
+        thresholdMet: false,
+        penaltyApplied: true,
+      },
+    });
   });
 
   it('resets consecutiveBadDiagnosisCount to 0 when casesCorrect equals casesAttempted', async () => {
