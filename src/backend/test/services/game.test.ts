@@ -2,6 +2,7 @@ import { jest } from '@jest/globals';
 import {
   NoActiveGameError,
   NoOpenDayError,
+  endDay,
   pauseGame,
   resetDay,
   resetGame,
@@ -44,6 +45,7 @@ function makeGameDayLog(overrides: Partial<GameDayLogRecord> = {}): GameDayLogRe
     id: 'day-log-uuid',
     dayNumber: 1,
     startingMoney: 50,
+    endingMoney: null,
     endedAt: null,
     ...overrides,
   };
@@ -255,5 +257,80 @@ describe('resetDay', () => {
     const result = await resetDay(prisma, 'user-uuid');
 
     expect(result).not.toHaveProperty('userId');
+  });
+});
+
+describe('endDay', () => {
+  it('throws NoActiveGameError when there is no GameSession', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(null);
+
+    await expect(endDay(prisma, 'user-uuid')).rejects.toThrow(NoActiveGameError);
+  });
+
+  it.each(['PAUSED', 'GAME_OVER', 'COMPLETED'] as const)(
+    'throws NoActiveGameError when the latest session is %s',
+    async (status) => {
+      const prisma = createMockPrisma();
+      prisma.gameSession.findFirst.mockResolvedValue(makeSession({ status }));
+
+      await expect(endDay(prisma, 'user-uuid')).rejects.toThrow(NoActiveGameError);
+    },
+  );
+
+  it('throws NoOpenDayError when the ACTIVE session has no open GameDayLog', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    prisma.gameDayLog.findFirst.mockResolvedValue(null);
+
+    await expect(endDay(prisma, 'user-uuid')).rejects.toThrow(NoOpenDayError);
+    expect(prisma.gameDayLog.update).not.toHaveBeenCalled();
+  });
+
+  it('stamps endedAt and endingMoney on the open day log, leaving session.status untouched', async () => {
+    const prisma = createMockPrisma();
+    const session = makeSession({ money: 75, status: 'ACTIVE' });
+    prisma.gameSession.findFirst.mockResolvedValue(session);
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    const endedLog = makeGameDayLog({ id: 'open-log-uuid', endingMoney: 75, endedAt: new Date() });
+    prisma.gameDayLog.update.mockResolvedValue(endedLog);
+
+    const result = await endDay(prisma, 'user-uuid');
+
+    expect(prisma.gameDayLog.update).toHaveBeenCalledWith({
+      where: { id: 'open-log-uuid' },
+      data: { endedAt: expect.any(Date) as Date, endingMoney: 75 },
+    });
+    expect(prisma.gameSession.update).not.toHaveBeenCalled();
+    expect(result.gameSession).toEqual(session);
+    expect(result.dayLog).toEqual(endedLog);
+  });
+
+  it('never leaks the gameSessionId column present on the raw GameDayLog row', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.gameDayLog.update.mockResolvedValue({
+      ...makeGameDayLog({ id: 'open-log-uuid' }),
+      gameSessionId: 'session-uuid',
+    } as GameDayLogRecord);
+
+    const result = await endDay(prisma, 'user-uuid');
+
+    expect(result.dayLog).not.toHaveProperty('gameSessionId');
+  });
+
+  it('never leaks the userId column present on the raw GameSession row', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue({
+      ...makeSession(),
+      userId: 'user-uuid',
+    } as GameSessionRecord);
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+
+    const result = await endDay(prisma, 'user-uuid');
+
+    expect(result.gameSession).not.toHaveProperty('userId');
   });
 });
