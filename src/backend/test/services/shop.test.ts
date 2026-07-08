@@ -8,7 +8,7 @@ import {
   InsufficientFundsError,
   getShopCatalog,
   purchaseItem,
-  type ShopItemRecord,
+  type ShopCatalogItemRecord,
   type ShopPrismaClient,
 } from '../../src/services/shop.js';
 import type { GameSessionRecord, OwnedItemRecord } from '../../src/services/round.js';
@@ -47,7 +47,7 @@ function makeSession(overrides: Partial<GameSessionRecord> = {}): GameSessionRec
   };
 }
 
-function makeShopItem(overrides: Partial<ShopItemRecord> = {}): ShopItemRecord {
+function makeShopItem(overrides: Partial<ShopCatalogItemRecord> = {}): ShopCatalogItemRecord {
   return {
     id: 'shop-item-uuid',
     sku: 'sku-1',

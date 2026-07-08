@@ -7,8 +7,6 @@ import {
 } from './dayPhase.js';
 import type { GameSessionRecord, GameSessionStatusValue, OwnedItemRecord } from './round.js';
 
-export type { NotNightPhaseError };
-
 /** Narrow, structurally-compatible subset of PrismaClient this service depends on — mirrors RoundPrismaClient in services/round.ts. */
 export interface InventoryPrismaClient extends DayPhasePrismaClient {
   gameSession: {
