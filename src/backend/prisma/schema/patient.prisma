@@ -4,27 +4,6 @@ enum Sex {
   OTHER
 }
 
-enum CaseDifficulty {
-  EASY
-  MEDIUM
-  HARD
-}
-
-enum BodyRegion {
-  HEAD
-  NECK
-  CHEST
-  BACK
-  ABDOMEN
-  LEFT_ARM
-  RIGHT_ARM
-  LEFT_LEG
-  RIGHT_LEG
-  HAND
-  FOOT
-  OTHER
-}
-
 /// A patient's identity/presentation, shown on the day-phase desk and 3D scene.
 model Patient {
   id               String   @id @default(uuid(7)) @db.Uuid
@@ -32,7 +11,6 @@ model Patient {
   age              Int
   sex              Sex
   occupation       String?
-  chiefComplaint   String
   portraitImageUrl String
   bodyModelVariant String
   createdAt        DateTime @default(now())
@@ -44,21 +22,20 @@ model Patient {
 model Case {
   id                    String         @id @default(uuid(7)) @db.Uuid
   patientId             String         @unique @db.Uuid
-  patient               Patient        @relation(fields: [patientId], references: [id])
-  difficulty            CaseDifficulty
-  unlockDay             Int?
-  correctDiagnosisId    String         @db.Uuid
-  correctDiagnosis      Diagnosis      @relation(fields: [correctDiagnosisId], references: [id])
-  correctTreatmentId    String?        @db.Uuid
-  correctTreatment      Treatment?     @relation(fields: [correctTreatmentId], references: [id])
+  patient               Patient    @relation(fields: [patientId], references: [id])
+  difficulty            Int        @db.SmallInt
+  correctDiagnosisId    String     @db.Uuid
+  correctDiagnosis      Diagnosis  @relation(fields: [correctDiagnosisId], references: [id])
+  correctTreatmentId    String?    @db.Uuid
+  correctTreatment      Treatment? @relation(fields: [correctTreatmentId], references: [id])
+  
   moneyReward           Int
   moneyPenalty          Int
   resultExplanationText String
-  isActive              Boolean        @default(true)
-  createdAt             DateTime       @default(now())
+  isActive              Boolean    @default(true)
+  createdAt             DateTime   @default(now())
 
   documents         CaseDocument[]
-  attentionPoints   AttentionPoint[]
   hints             CaseHint[]
   diagnosisAttempts DiagnosisAttempt[]
   chatMessages      ChatMessage[]
@@ -66,27 +43,5 @@ model Case {
 
   @@index([correctDiagnosisId])
   @@index([correctTreatmentId])
-  @@index([isActive, unlockDay])
-}
-
-/// A clickable/zoomable hotspot on the 3D-rendered patient (lesion, mole, rash, etc.).
-model AttentionPoint {
-  id           String     @id @default(uuid(7)) @db.Uuid
-  caseId       String     @db.Uuid
-  case         Case       @relation(fields: [caseId], references: [id])
-  label        String
-  bodyRegion   BodyRegion
-  positionX    Float
-  positionY    Float
-  positionZ    Float
-  hitboxRadius Float
-  zoomDistance Float?
-  zoomYaw      Float?
-  zoomPitch    Float?
-  isKeyFinding Boolean
-  sortOrder    Int
-
-  documents CaseDocument[]
-
-  @@index([caseId, sortOrder])
+  @@index([isActive])
 }
