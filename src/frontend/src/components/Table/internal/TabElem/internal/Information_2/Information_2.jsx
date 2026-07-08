@@ -31,8 +31,8 @@ export function Information_2({ title = 'General Patient Story', className = '',
   return (
     <div className={styles.slot}>
       <div className={cardClassName} {...rest}>
+        <div className={styles.title}>{title}</div>
         <div className={styles.content}>
-          <div className={styles.title}>{title}</div>
           {historyDocuments.length > 0 ? (
             historyDocuments.map((doc) => (
               <p key={doc.id} className={styles.body}>

@@ -10,6 +10,8 @@ RUN pnpm install --frozen-lockfile --prod=false
 
 FROM deps AS build
 COPY src/frontend src/frontend
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 RUN pnpm --filter frontend build
 
 FROM node:22-alpine AS run
