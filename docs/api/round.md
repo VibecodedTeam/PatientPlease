@@ -51,7 +51,8 @@ existing open round looks identical to a client as starting a new one.
       },
       "purchasePrice": 100,
       "purchasedOnDay": 2,
-      "purchasedAt": "iso-datetime"
+      "purchasedAt": "iso-datetime",
+      "isEquipped": false
     }
   ],
   "case": {

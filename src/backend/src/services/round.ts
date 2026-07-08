@@ -47,6 +47,11 @@ export interface GameDayLogRecord {
   id: string;
   dayNumber: number;
   startingMoney: number;
+  endingMoney: number | null;
+  casesAttempted: number;
+  casesCorrect: number;
+  thresholdMet: boolean | null;
+  penaltyApplied: boolean | null;
   endedAt: Date | null;
 }
 
@@ -65,6 +70,7 @@ export interface OwnedItemRecord {
   purchasePrice: number;
   purchasedOnDay: number;
   purchasedAt: Date;
+  isEquipped: boolean;
 }
 
 export interface DiagnosisRecord {
@@ -271,6 +277,7 @@ function toOwnedItemResponse(record: OwnedItemRecord): OwnedItemRecord {
     purchasePrice: record.purchasePrice,
     purchasedOnDay: record.purchasedOnDay,
     purchasedAt: record.purchasedAt,
+    isEquipped: record.isEquipped,
   };
 }
 

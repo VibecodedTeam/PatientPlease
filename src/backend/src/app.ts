@@ -12,7 +12,9 @@ import authRoutes from './routes/auth.js';
 import dayRoutes from './routes/day.js';
 import gameRoutes from './routes/game.js';
 import healthRoutes from './routes/health.js';
+import inventoryRoutes from './routes/inventory.js';
 import roundRoutes from './routes/round.js';
+import shopRoutes from './routes/shop.js';
 import type { GoogleIdTokenVerifier } from './services/auth.js';
 
 export interface BuildAppOptions {
@@ -40,6 +42,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   app.register(roundRoutes);
   app.register(gameRoutes);
   app.register(dayRoutes);
+  app.register(shopRoutes);
+  app.register(inventoryRoutes);
 
   return app;
 }
