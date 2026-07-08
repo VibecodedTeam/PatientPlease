@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react';
 import { NightView } from '../../../views/NightView';
 
 describe('NightView', () => {
-  it('renders', () => {
+  it('renders the shop', () => {
     render(<NightView />);
-    expect(screen.getByText('Night View')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Buy' })).toBeInTheDocument();
   });
 });

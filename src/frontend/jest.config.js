@@ -7,6 +7,9 @@ module.exports = {
   transform: {
     '^.+\\.jsx?$': 'esbuild-jest',
   },
+  // pnpm nests real packages under node_modules/.pnpm/<pkg>@<version>/node_modules/<pkg>,
+  // so both segments need to be excluded from the default node_modules ignore rule.
+  transformIgnorePatterns: ['node_modules/(?!(\\.pnpm/three@|three/))'],
   setupFiles: ['<rootDir>/jest.polyfills.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   // Without this, Jest keeps node_modules packages (e.g. axios) cached

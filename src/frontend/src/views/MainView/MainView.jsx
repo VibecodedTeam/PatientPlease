@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './MainView.module.css';
+import { PatientScene, PatientSceneProvider } from '../../components/PatientScene';
 import { Wall } from '../../components/Wall';
 import { Table } from '../../components/Table';
 import { RoundProvider } from './providers/Round';
@@ -10,7 +11,11 @@ export function MainView() {
     <RoundProvider>
       <DocumentTableProvider>
         <div className={styles.mainView}>
-          <section className={styles.patientArea} aria-label="Patient preview area placeholder" />
+          <section className={styles.patientArea} aria-label="Patient preview area">
+            <PatientSceneProvider url="/3DModels/FinalBaseMesh.obj">
+              <PatientScene />
+            </PatientSceneProvider>
+          </section>
           <div className={styles.rightColumn}>
             <div className={styles.wallCell}>
               <Wall />
