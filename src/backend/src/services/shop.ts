@@ -7,9 +7,7 @@ import {
 } from './dayPhase.js';
 import type { GameSessionRecord, GameSessionStatusValue, OwnedItemRecord } from './round.js';
 
-export type { NotNightPhaseError };
-
-export interface ShopItemRecord {
+export interface ShopCatalogItemRecord {
   id: string;
   sku: string;
   name: string;
@@ -34,8 +32,8 @@ export interface ShopPrismaClient extends DayPhasePrismaClient {
     findMany(args: {
       where: { isActive: boolean; OR: [{ unlockDay: null }, { unlockDay: { lte: number } }] };
       orderBy: { name: 'asc' };
-    }): Promise<ShopItemRecord[]>;
-    findUnique(args: { where: { id: string } }): Promise<ShopItemRecord | null>;
+    }): Promise<ShopCatalogItemRecord[]>;
+    findUnique(args: { where: { id: string } }): Promise<ShopCatalogItemRecord | null>;
   };
   ownedItem: {
     findMany(args: { where: { gameSessionId: string } }): Promise<{ shopItemId: string }[]>;
