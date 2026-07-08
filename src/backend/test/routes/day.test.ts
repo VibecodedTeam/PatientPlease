@@ -50,6 +50,32 @@ async function createActiveSessionWithOpenDay(userId: string, money = 100) {
   return { gameSession, gameDayLog };
 }
 
+async function createMelanomaCase() {
+  const diagnosis = await prisma.diagnosis.create({
+    data: { code: 'MELANOMA', name: 'Melanoma', description: 'test', category: 'MALIGNANT' },
+  });
+  const patient = await prisma.patient.create({
+    data: {
+      name: 'Jan Kowalski',
+      age: 52,
+      sex: 'MALE',
+      portraitImageUrl: 'https://cdn.example.test/jan.png',
+      bodyModelVariant: 'male_average_01',
+    },
+  });
+  const gameCase = await prisma.case.create({
+    data: {
+      patientId: patient.id,
+      difficulty: 1,
+      correctDiagnosisId: diagnosis.id,
+      moneyReward: 50,
+      moneyPenalty: 20,
+      resultExplanationText: 'It was melanoma.',
+    },
+  });
+  return { diagnosis, gameCase };
+}
+
 describe('POST /api/v1/day/reset', () => {
   let app: FastifyInstance;
 
@@ -137,29 +163,7 @@ describe('POST /api/v1/day/reset', () => {
     await app.ready();
     const { cookie, userId } = await signIn(app);
     const { gameSession, gameDayLog } = await createActiveSessionWithOpenDay(userId, 50);
-
-    const diagnosis = await prisma.diagnosis.create({
-      data: { code: 'MELANOMA', name: 'Melanoma', description: 'test', category: 'MALIGNANT' },
-    });
-    const patient = await prisma.patient.create({
-      data: {
-        name: 'Jan Kowalski',
-        age: 52,
-        sex: 'MALE',
-        portraitImageUrl: 'https://cdn.example.test/jan.png',
-        bodyModelVariant: 'male_average_01',
-      },
-    });
-    const gameCase = await prisma.case.create({
-      data: {
-        patientId: patient.id,
-        difficulty: 1,
-        correctDiagnosisId: diagnosis.id,
-        moneyReward: 50,
-        moneyPenalty: 20,
-        resultExplanationText: 'It was melanoma.',
-      },
-    });
+    const { diagnosis, gameCase } = await createMelanomaCase();
     await prisma.diagnosisAttempt.create({
       data: {
         gameDayLogId: gameDayLog.id,
@@ -342,29 +346,7 @@ describe('POST /api/v1/day/end', () => {
       where: { id: gameSession.id },
       data: { studentLoanThreshold: 100 },
     });
-
-    const diagnosis = await prisma.diagnosis.create({
-      data: { code: 'MELANOMA', name: 'Melanoma', description: 'test', category: 'MALIGNANT' },
-    });
-    const patient = await prisma.patient.create({
-      data: {
-        name: 'Jan Kowalski',
-        age: 52,
-        sex: 'MALE',
-        portraitImageUrl: 'https://cdn.example.test/jan.png',
-        bodyModelVariant: 'male_average_01',
-      },
-    });
-    const gameCase = await prisma.case.create({
-      data: {
-        patientId: patient.id,
-        difficulty: 1,
-        correctDiagnosisId: diagnosis.id,
-        moneyReward: 50,
-        moneyPenalty: 20,
-        resultExplanationText: 'It was melanoma.',
-      },
-    });
+    const { diagnosis, gameCase } = await createMelanomaCase();
     await prisma.diagnosisAttempt.createMany({
       data: [
         {

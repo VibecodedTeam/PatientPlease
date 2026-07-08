@@ -90,6 +90,10 @@ function makeGameDayLog(overrides: Partial<GameDayLogRecord> = {}): GameDayLogRe
     dayNumber: 1,
     startingMoney: 0,
     endingMoney: null,
+    casesAttempted: 0,
+    casesCorrect: 0,
+    thresholdMet: null,
+    penaltyApplied: false,
     endedAt: null,
     ...overrides,
   };

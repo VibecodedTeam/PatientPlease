@@ -12,7 +12,7 @@ import {
 } from '../../src/services/game.js';
 
 function createMockPrisma() {
-  return {
+  const mockPrisma = {
     gameSession: {
       findFirst: jest.fn<GamePrismaClient['gameSession']['findFirst']>(),
       update: jest.fn<GamePrismaClient['gameSession']['update']>(),
@@ -23,9 +23,16 @@ function createMockPrisma() {
     },
     diagnosisAttempt: {
       deleteMany: jest.fn<GamePrismaClient['diagnosisAttempt']['deleteMany']>(),
-      count: jest.fn<GamePrismaClient['diagnosisAttempt']['count']>(),
+      findMany: jest.fn<GamePrismaClient['diagnosisAttempt']['findMany']>(),
     },
+    $transaction: jest.fn() as unknown as GamePrismaClient['$transaction'],
   };
+  // The mock transaction just runs the callback against this same mock client,
+  // so tests can keep asserting on gameSession.update/gameDayLog.update directly.
+  mockPrisma.$transaction = jest.fn((fn: (tx: GamePrismaClient) => Promise<unknown>) =>
+    fn(mockPrisma as unknown as GamePrismaClient),
+  ) as unknown as GamePrismaClient['$transaction'];
+  return mockPrisma;
 }
 
 function makeSession(overrides: Partial<GameSessionRecord> = {}): GameSessionRecord {
@@ -229,6 +236,7 @@ describe('resetDay', () => {
       data: {
         casesAttempted: 0,
         casesCorrect: 0,
+        thresholdMet: null,
         penaltyApplied: false,
         pausedAt: null,
       },
@@ -292,12 +300,16 @@ describe('endDay', () => {
     expect(prisma.gameDayLog.update).not.toHaveBeenCalled();
   });
 
-  it('counts DiagnosisAttempts and stamps casesAttempted/casesCorrect/endingMoney/endedAt', async () => {
+  it('counts DiagnosisAttempts from a single query and stamps casesAttempted/casesCorrect/endingMoney/endedAt', async () => {
     const prisma = createMockPrisma();
     const session = makeSession({ money: 75, status: 'ACTIVE', studentLoanThreshold: null });
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    prisma.diagnosisAttempt.count.mockResolvedValueOnce(3).mockResolvedValueOnce(2);
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([
+      { isDiagnosisCorrect: true },
+      { isDiagnosisCorrect: true },
+      { isDiagnosisCorrect: false },
+    ]);
     prisma.gameSession.update.mockResolvedValue(session);
     const endedLog = makeGameDayLog({
       id: 'open-log-uuid',
@@ -312,11 +324,10 @@ describe('endDay', () => {
 
     const result = await endDay(prisma, 'user-uuid');
 
-    expect(prisma.diagnosisAttempt.count).toHaveBeenNthCalledWith(1, {
+    expect(prisma.diagnosisAttempt.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.diagnosisAttempt.findMany).toHaveBeenCalledWith({
       where: { gameDayLogId: 'open-log-uuid' },
-    });
-    expect(prisma.diagnosisAttempt.count).toHaveBeenNthCalledWith(2, {
-      where: { gameDayLogId: 'open-log-uuid', isDiagnosisCorrect: true },
+      select: { isDiagnosisCorrect: true },
     });
     expect(prisma.gameDayLog.update).toHaveBeenCalledWith({
       where: { id: 'open-log-uuid' },
@@ -329,6 +340,9 @@ describe('endDay', () => {
         penaltyApplied: false,
       },
     });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.gameSession.update).toHaveBeenCalledTimes(1);
+    expect(prisma.gameDayLog.update).toHaveBeenCalledTimes(1);
     expect(result.dayLog).toEqual(endedLog);
   });
 
@@ -337,7 +351,7 @@ describe('endDay', () => {
     const session = makeSession({ money: 100, studentLoanThreshold: 100 });
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    prisma.diagnosisAttempt.count.mockResolvedValueOnce(1).mockResolvedValueOnce(1);
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([{ isDiagnosisCorrect: true }]);
     prisma.gameSession.update.mockResolvedValue(session);
     prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
@@ -361,7 +375,7 @@ describe('endDay', () => {
     const session = makeSession({ money: 40, studentLoanThreshold: 100 });
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    prisma.diagnosisAttempt.count.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([{ isDiagnosisCorrect: false }]);
     prisma.gameSession.update.mockResolvedValue(session);
     prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
@@ -385,7 +399,10 @@ describe('endDay', () => {
     const session = makeSession({ money: 60, consecutiveBadDiagnosisCount: 3 });
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    prisma.diagnosisAttempt.count.mockResolvedValueOnce(2).mockResolvedValueOnce(2);
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([
+      { isDiagnosisCorrect: true },
+      { isDiagnosisCorrect: true },
+    ]);
     prisma.gameSession.update.mockResolvedValue(makeSession({ consecutiveBadDiagnosisCount: 0 }));
     prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
@@ -403,7 +420,11 @@ describe('endDay', () => {
     const session = makeSession({ money: 60, consecutiveBadDiagnosisCount: 1 });
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    prisma.diagnosisAttempt.count.mockResolvedValueOnce(3).mockResolvedValueOnce(1);
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([
+      { isDiagnosisCorrect: true },
+      { isDiagnosisCorrect: false },
+      { isDiagnosisCorrect: false },
+    ]);
     prisma.gameSession.update.mockResolvedValue(makeSession({ consecutiveBadDiagnosisCount: 3 }));
     prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
@@ -420,7 +441,7 @@ describe('endDay', () => {
     const session = makeSession({ money: 60, consecutiveBadDiagnosisCount: 4 });
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    prisma.diagnosisAttempt.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([]);
     prisma.gameSession.update.mockResolvedValue(makeSession({ consecutiveBadDiagnosisCount: 0 }));
     prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
@@ -436,7 +457,7 @@ describe('endDay', () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    prisma.diagnosisAttempt.count.mockResolvedValue(0);
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([]);
     prisma.gameSession.update.mockResolvedValue(makeSession());
     prisma.gameDayLog.update.mockResolvedValue({
       ...makeGameDayLog({ id: 'open-log-uuid' }),
@@ -452,7 +473,7 @@ describe('endDay', () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    prisma.diagnosisAttempt.count.mockResolvedValue(0);
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([]);
     prisma.gameSession.update.mockResolvedValue({
       ...makeSession(),
       userId: 'user-uuid',
