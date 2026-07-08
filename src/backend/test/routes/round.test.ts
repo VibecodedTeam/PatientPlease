@@ -159,7 +159,7 @@ describe('POST /api/v1/round', () => {
     const rawBody = response.body;
     const body = response.json<{
       gameSession: { id: string };
-      ownedItems: { shopItem: { sku: string } }[];
+      ownedItems: { shopItem: { sku: string }; isEquipped: boolean }[];
       case: Record<string, unknown> & { documents: { attentionPointRegion: string | null }[] };
       diagnosisOptions: { id: string; code: string; name: string; category: string }[];
       treatmentOptions: { id: string; code: string; name: string; kind: string }[];
@@ -168,6 +168,7 @@ describe('POST /api/v1/round', () => {
     expect(body.gameSession.id).toBe(gameSession.id);
     expect(body.ownedItems).toHaveLength(1);
     expect(body.ownedItems[0]?.shopItem.sku).toBe('sku-1');
+    expect(body.ownedItems[0]?.isEquipped).toBe(false);
     expect(body.diagnosisOptions).toEqual([
       { id: diagnosis.id, code: 'MELANOMA', name: 'Melanoma', category: 'MALIGNANT' },
     ]);
