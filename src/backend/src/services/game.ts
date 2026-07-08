@@ -11,7 +11,11 @@ export interface GamePrismaClient {
     }): Promise<GameSessionRecord | null>;
     update(args: {
       where: { id: string };
-      data: { status?: GameSessionStatusValue; money?: number };
+      data: {
+        status?: GameSessionStatusValue;
+        money?: number;
+        consecutiveBadDiagnosisCount?: number;
+      };
     }): Promise<GameSessionRecord>;
   };
   gameDayLog: {
@@ -218,20 +222,30 @@ export async function endDay(
     session.studentLoanThreshold === null ? null : endingMoney >= session.studentLoanThreshold;
   const penaltyApplied = thresholdMet === false;
 
-  const updatedDayLog = await prisma.gameDayLog.update({
-    where: { id: openDayLog.id },
-    data: {
-      endedAt: new Date(),
-      endingMoney,
-      casesAttempted,
-      casesCorrect,
-      thresholdMet,
-      penaltyApplied,
-    },
-  });
+  const wrongCount = casesAttempted - casesCorrect;
+  const consecutiveBadDiagnosisCount =
+    casesCorrect === casesAttempted ? 0 : session.consecutiveBadDiagnosisCount + wrongCount;
+
+  const [updatedSession, updatedDayLog] = await Promise.all([
+    prisma.gameSession.update({
+      where: { id: session.id },
+      data: { consecutiveBadDiagnosisCount },
+    }),
+    prisma.gameDayLog.update({
+      where: { id: openDayLog.id },
+      data: {
+        endedAt: new Date(),
+        endingMoney,
+        casesAttempted,
+        casesCorrect,
+        thresholdMet,
+        penaltyApplied,
+      },
+    }),
+  ]);
 
   return {
-    gameSession: toGameSessionResponse(session),
+    gameSession: toGameSessionResponse(updatedSession),
     dayLog: toGameDayLogResponse(updatedDayLog),
   };
 }
