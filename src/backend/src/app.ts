@@ -18,7 +18,9 @@ import chatRoutes from './routes/chat.js';
 import dayRoutes from './routes/day.js';
 import gameRoutes from './routes/game.js';
 import healthRoutes from './routes/health.js';
+import inventoryRoutes from './routes/inventory.js';
 import roundRoutes from './routes/round.js';
+import shopRoutes from './routes/shop.js';
 import type { GoogleIdTokenVerifier } from './services/auth.js';
 import { createGeminiClient, type GeminiClient } from './services/llm.js';
 import { createGoogleSpeechClient, type TranscriptionClient } from './services/transcription.js';
@@ -63,6 +65,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     geminiClient:
       options.geminiClient ?? createGeminiClient({ apiKey: geminiApiKey, model: geminiModel }),
   });
+  app.register(shopRoutes);
+  app.register(inventoryRoutes);
 
   return app;
 }
