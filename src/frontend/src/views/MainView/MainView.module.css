@@ -1,8 +1,91 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0d0a08;
+}
+
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-bg-elevated);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 0.85rem;
+}
+
+.hudPaused {
+  border-bottom-color: var(--color-danger);
+}
+
+.readouts {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.timer {
+  font-variant-numeric: tabular-nums;
+}
+
+.timerPaused {
+  color: var(--color-text-muted);
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.statusDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.statusDotRunning {
+  background: var(--color-ok);
+}
+
+.statusDotPaused {
+  background: var(--color-danger);
+}
+
+.statusPaused {
+  color: var(--color-danger);
+}
+
+.settingsButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.settingsButton:hover {
+  border-color: var(--color-accent);
+}
+
+.gearIcon {
+  font-size: 1rem;
+}
+
 .mainView {
   display: grid;
   grid-template-columns: minmax(260px, 32%) 1fr;
   grid-template-rows: auto 1fr;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
   background: #0d0a08;
 }
 
