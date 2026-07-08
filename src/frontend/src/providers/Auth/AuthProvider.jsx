@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from '../Api';
+import { ENDPOINTS } from '../../lib/endpointList';
 
 export const AuthContext = createContext(null);
 
@@ -12,7 +13,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
     api
-      .get('/auth/me')
+      .get(ENDPOINTS.auth.me)
       .then((body) => {
         if (cancelled) return;
         setUser(body.user);
@@ -30,7 +31,7 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async (idToken) => {
-      const body = await api.post('/auth/google', { idToken });
+      const body = await api.post(ENDPOINTS.auth.google, { idToken });
       setUser(body.user);
       setStatus('authenticated');
     },
@@ -38,7 +39,7 @@ export function AuthProvider({ children }) {
   );
 
   const logout = useCallback(async () => {
-    await api.post('/auth/logout');
+    await api.post(ENDPOINTS.auth.logout);
     setUser(null);
     setStatus('unauthenticated');
   }, [api]);
