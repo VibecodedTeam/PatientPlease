@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel pacjenta — symulacja konsultacji</title>
+<style>
+  :root{
+    --panel-bg:#0e1b26;        /* granat gabinetu nocnego dyżuru */
+    --card:#142534;
+    --card-2:#1a2e40;
+    --ink:#eaf2f7;
+    --ink-dim:#9db4c3;
+    --accent:#5cc8b8;          /* chirurgiczna zieleń */
+    --accent-ink:#062a24;
+    --doctor:#2f6df0;
+    --line:#24405a;
+    --radius:14px;
+    font-size:15px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    background:#08121a;
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+    padding:16px;
+  }
+
+  /* ====== KOMPONENT: PatientPanel — 340 × 832 px ====== */
+  .patient-panel{
+    width:340px;height:832px;
+    display:flex;flex-direction:column;
+    background:linear-gradient(180deg,var(--panel-bg) 0%,#0b1620 100%);
+    border:1px solid var(--line);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.55);
+  }
+
+  /* --- nagłówek karty pacjenta --- */
+  .pp-header{
+    padding:12px 16px 10px;
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:baseline;justify-content:space-between;
+  }
+  .pp-header h1{font-size:.82rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .pp-header .pp-id{font-size:.7rem;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+
+  /* --- twarz pacjenta --- */
+  .pp-face{
+    padding:14px 0 8px;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    background:radial-gradient(circle at 50% 20%,#16324a 0%,transparent 65%);
+  }
+  .pp-face svg{width:170px;height:170px;display:block}
+  .pp-name{font-size:.95rem;font-weight:600}
+  .pp-state{font-size:.72rem;color:var(--ink-dim)}
+  .pp-state .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:5px;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* mruganie oczu */
+  .eyes{transform-origin:center;animation:blink 4.5s infinite}
+  @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+  /* usta w trakcie mówienia */
+  .patient-panel.is-talking .mouth{animation:talk .28s infinite alternate}
+  @keyframes talk{from{transform:scaleY(.4)}to{transform:scaleY(1.25)}}
+  .mouth{transform-origin:170px 208px}
+  @media (prefers-reduced-motion: reduce){
+    .eyes,.mouth,.pp-state .dot{animation:none !important}
+  }
+
+  /* --- okno konwersacji --- */
+  .pp-chat{
+    flex:1;
+    overflow-y:auto;              /* przewijalna rozmowa */
+    padding:12px 12px 8px;
+    display:flex;flex-direction:column;gap:8px;
+    scroll-behavior:smooth;
+  }
+  .pp-chat::-webkit-scrollbar{width:6px}
+  .pp-chat::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+
+  .msg{
+    max-width:82%;
+    padding:8px 11px;
+    border-radius:var(--radius);
+    font-size:.85rem;line-height:1.4;
+    word-wrap:break-word;
+    animation:appear .18s ease-out;
+  }
+  @keyframes appear{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .msg .who{display:block;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:2px}
+  .msg-patient{align-self:flex-start;background:var(--card-2);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg-doctor{align-self:flex-end;background:var(--doctor);border-bottom-right-radius:4px;color:#fff}
+  .msg-doctor .who{color:rgba(255,255,255,.7)}
+
+  /* --- pole odpowiedzi lekarza --- */
+  .pp-input{
+    border-top:1px solid var(--line);
+    padding:10px;
+    display:flex;gap:8px;align-items:flex-end;
+    background:var(--card);
+  }
+  .pp-input textarea{
+    flex:1;resize:none;height:44px;max-height:90px;
+    background:var(--panel-bg);color:var(--ink);
+    border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font:inherit;font-size:.85rem;
+  }
+  .pp-input textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .pp-input button{
+    height:44px;padding:0 16px;
+    background:var(--accent);color:var(--accent-ink);
+    border:none;border-radius:10px;
+    font:inherit;font-size:.85rem;font-weight:700;cursor:pointer;
+  }
+  .pp-input button:hover{filter:brightness(1.1)}
+  .pp-input button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+</style>
+</head>
+<body>
+
+<!-- ====== HTML wyświetlający komponent ====== -->
+<aside class="patient-panel" id="patientPanel" aria-label="Panel pacjenta">
+  <header class="pp-header">
+    <h1>Karta pacjenta</h1>
+    <span class="pp-id">ID 2026-0714</span>
+  </header>
+
+  <section class="pp-face" aria-hidden="true">
+    <!-- Twarz pacjenta 2D (SVG) -->
+    <svg viewBox="0 0 340 300">
+      <!-- ramiona / fartuch szpitalny -->
+      <path d="M60 300 Q60 236 170 236 Q280 236 280 300 Z" fill="#3f7d9e"/>
+      <path d="M150 236 L170 262 L190 236 Z" fill="#dceef5"/>
+      <!-- szyja -->
+      <rect x="150" y="200" width="40" height="44" rx="12" fill="#e8b48c"/>
+      <!-- głowa -->
+      <ellipse cx="170" cy="146" rx="74" ry="82" fill="#f2c29a"/>
+      <!-- włosy -->
+      <path d="M96 140 Q92 54 170 54 Q248 54 244 140 Q244 96 208 88 Q224 76 196 70 Q170 60 136 78 Q106 92 96 140 Z" fill="#4a3527"/>
+      <!-- uszy -->
+      <ellipse cx="96" cy="152" rx="10" ry="15" fill="#e8b48c"/>
+      <ellipse cx="244" cy="152" rx="10" ry="15" fill="#e8b48c"/>
+      <!-- brwi -->
+      <path d="M124 122 Q140 114 156 121" stroke="#4a3527" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M184 121 Q200 114 216 122" stroke="#4a3527" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- oczy (mrugają) -->
+      <g class="eyes">
+        <ellipse cx="140" cy="142" rx="11" ry="12" fill="#fff"/>
+        <ellipse cx="200" cy="142" rx="11" ry="12" fill="#fff"/>
+        <circle cx="140" cy="144" r="5.5" fill="#2b2b2b"/>
+        <circle cx="200" cy="144" r="5.5" fill="#2b2b2b"/>
+      </g>
+      <!-- nos -->
+      <path d="M170 152 Q164 176 172 180" stroke="#d99a6c" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <!-- usta (animowane przy mówieniu) -->
+      <g class="mouth">
+        <path d="M146 206 Q170 220 194 206 Q170 212 146 206 Z" fill="#a4553f"/>
+      </g>
+      <!-- lekki rumieniec zmęczenia -->
+      <ellipse cx="126" cy="176" rx="12" ry="6" fill="#e79c74" opacity=".45"/>
+      <ellipse cx="214" cy="176" rx="12" ry="6" fill="#e79c74" opacity=".45"/>
+    </svg>
+    <div class="pp-name">Jan Kowalski, 54 l.</div>
+    <div class="pp-state"><span class="dot"></span>przytomny · w kontakcie logicznym</div>
+  </section>
+
+  <!-- przewijalna historia rozmowy -->
+  <div class="pp-chat" id="chatLog" role="log" aria-live="polite"></div>
+
+  <!-- pole tekstowe lekarza -->
+  <div class="pp-input">
+    <textarea id="doctorInput" placeholder="Zadaj pytanie pacjentowi…" aria-label="Odpowiedź lekarza"></textarea>
+    <button id="sendBtn" type="button">Wyślij</button>
+  </div>
+</aside>
+
+<script>
+/* =====================================================
+   Logika komponentu PatientPanel
+   API:
+     patientSay(text)   — pacjent wypowiada kwestię
+     sendDoctorReply()  — lekarz wysyła treść pola tekstowego
+   ===================================================== */
+
+const panel  = document.getElementById('patientPanel');
+const log    = document.getElementById('chatLog');
+const input  = document.getElementById('doctorInput');
+const sendBtn= document.getElementById('sendBtn');
+
+/* pomocnicza: dopisanie wiadomości i autoprzewinięcie */
+function appendMessage(text, author){
+  const el = document.createElement('div');
+  el.className = 'msg ' + (author === 'patient' ? 'msg-patient' : 'msg-doctor');
+  const who = document.createElement('span');
+  who.className = 'who';
+  who.textContent = author === 'patient' ? 'Pacjent' : 'Lekarz';
+  el.appendChild(who);
+  el.appendChild(document.createTextNode(text));
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;   // zawsze widoczna najnowsza wiadomość
+}
+
+/* --- funkcja: pacjent mówi --- */
+function patientSay(text){
+  appendMessage(text, 'patient');
+  panel.classList.add('is-talking');               // animacja ust
+  clearTimeout(patientSay._t);
+  patientSay._t = setTimeout(
+    () => panel.classList.remove('is-talking'),
+    Math.min(600 + text.length * 35, 4000)         // czas "mówienia" ~ długość kwestii
+  );
+}
+
+/* --- funkcja: lekarz wysyła odpowiedź --- */
+function sendDoctorReply(){
+  const text = input.value.trim();
+  if(!text) return;
+  appendMessage(text, 'doctor');
+  input.value = '';
+  input.focus();
+  simulatePatientResponse();   // element gry: pacjent reaguje
+}
+
+/* prosta reakcja pacjenta (do podmiany na właściwą logikę gry) */
+const cannedReplies = [
+  'Ten ból w klatce zaczął się wczoraj wieczorem, panie doktorze…',
+  'Trochę mnie dusi, zwłaszcza kiedy wchodzę po schodach.',
+  'Biorę tylko leki na nadciśnienie, nic więcej.',
+  'Nie, nie palę od dziesięciu lat. Ale kiedyś paliłem paczkę dziennie.',
+  'Ojciec zmarł na zawał w moim wieku… boję się, że to to samo.'
+];
+let replyIndex = 0;
+function simulatePatientResponse(){
+  const line = cannedReplies[replyIndex % cannedReplies.length];
+  replyIndex++;
+  setTimeout(() => patientSay(line), 700);
+}
+
+/* zdarzenia UI */
+sendBtn.addEventListener('click', sendDoctorReply);
+input.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendDoctorReply();
+  }
+});
+
+/* kwestia otwierająca */
+patientSay('Dzień dobry… przyszedłem, bo od wczoraj gniecie mnie w klatce piersiowej.');
+</script>
+</body>
+</html>
