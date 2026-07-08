@@ -45,29 +45,49 @@
 /* ---------- HERO ---------- */
 
 .sca-hero {
-  position: relative;
+  display: grid;
   padding: 4.5rem 1.5rem 5rem;
   text-align: center;
   overflow: hidden;
 }
 
+/* .sca-hero-bg and .sca-hero-content share the hero's single grid cell so the
+   decorative background can sit behind the foreground content without
+   position:absolute — stacking order follows DOM order within the cell. */
+.sca-hero-bg,
+.sca-hero-content {
+  grid-area: 1 / 1;
+}
+
+.sca-hero-bg {
+  display: grid;
+  pointer-events: none;
+}
+
 .sca-hero-bg-dot {
-  position: absolute;
+  grid-area: 1 / 1;
   border-radius: 40% 60% 55% 45%;
   background: var(--slate);
   opacity: 0.16;
 }
 
+.sca-hero-bg-dot.corner-tl { justify-self: start; align-self: start; margin: -60px 0 0 -80px; }
+.sca-hero-bg-dot.corner-br { justify-self: end; align-self: end; margin: 0 -40px -40px 0; }
+
 .sca-sun {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  grid-area: 1 / 1;
+  justify-self: center;
+  align-self: center;
   width: min(560px, 130vw);
   height: min(560px, 130vw);
-  transform: translate(-50%, -50%);
   color: var(--navy);
   opacity: 0.08;
-  pointer-events: none;
+}
+
+.sca-hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .sca-headline {
@@ -95,26 +115,32 @@
 }
 
 .sca-stage {
-  position: relative;
+  display: grid;
   width: min(420px, 80vw);
   height: min(420px, 80vw);
   margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+/* Every child of .sca-stage shares its single grid cell so rings, moles, and
+   the play button overlap in place instead of via position:absolute. */
+.sca-stage > * {
+  grid-area: 1 / 1;
 }
 
 .sca-ring {
-  position: absolute;
+  justify-self: center;
+  align-self: center;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   border: 1.4px solid var(--navy);
   opacity: 0;
   animation: sca-scan 3.6s cubic-bezier(0.2, 0.7, 0.4, 1) infinite;
 }
 
-.sca-ring.r1 { width: 100%; height: 100%; animation-delay: 0s; }
-.sca-ring.r2 { width: 100%; height: 100%; animation-delay: 1.2s; }
-.sca-ring.r3 { width: 100%; height: 100%; animation-delay: 2.4s; }
+.sca-ring.r1 { animation-delay: 0s; }
+.sca-ring.r2 { animation-delay: 1.2s; }
+.sca-ring.r3 { animation-delay: 2.4s; }
 
 @keyframes sca-scan {
   0%   { transform: scale(0.28); opacity: 0.55; border-color: var(--navy); }
@@ -128,7 +154,6 @@
 }
 
 .sca-mole {
-  position: absolute;
   border-radius: 50%;
   background: var(--navy);
 }
@@ -138,13 +163,14 @@
   background: var(--rust);
 }
 
-.sca-mole.m1 { width: 10px; height: 10px; top: 12%; left: 20%; opacity: 0.5; }
-.sca-mole.m2 { width: 14px; height: 12px; top: 22%; right: 12%; opacity: 0.7; }
-.sca-mole.m3 { width: 8px;  height: 8px;  bottom: 16%; left: 14%; opacity: 0.4; }
-.sca-mole.m4 { width: 16px; height: 13px; bottom: 10%; right: 18%; opacity: 0.55; }
+.sca-mole.m1 { width: 10px; height: 10px; justify-self: start; align-self: start; margin: 12% 0 0 20%; opacity: 0.5; }
+.sca-mole.m2 { width: 14px; height: 12px; justify-self: end;   align-self: start; margin: 22% 12% 0 0; opacity: 0.7; }
+.sca-mole.m3 { width: 8px;  height: 8px;  justify-self: start; align-self: end;   margin: 0 0 16% 14%; opacity: 0.4; }
+.sca-mole.m4 { width: 16px; height: 13px; justify-self: end;   align-self: end;   margin: 0 18% 10% 0; opacity: 0.55; }
 
 .sca-play-btn {
-  position: relative;
+  justify-self: center;
+  align-self: center;
   z-index: 2;
   width: 152px;
   height: 152px;
@@ -179,6 +205,9 @@
 }
 
 .sca-play-icon {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   width: 0;
   height: 0;
   border-style: solid;
@@ -188,28 +217,25 @@
   transition: all 0.2s ease;
 }
 
+.sca-play-bar {
+  display: none;
+}
+
 .sca-page.is-playing .sca-play-icon {
-  width: 14px;
+  width: auto;
   height: 34px;
   border: none;
   margin-left: 0;
   background: transparent;
-  position: relative;
 }
 
-.sca-page.is-playing .sca-play-icon::before,
-.sca-page.is-playing .sca-play-icon::after {
-  content: '';
-  position: absolute;
-  top: 0;
+.sca-page.is-playing .sca-play-bar {
+  display: block;
   width: 5px;
   height: 34px;
   background: var(--stone);
   border-radius: 1px;
 }
-
-.sca-page.is-playing .sca-play-icon::before { left: 0; }
-.sca-page.is-playing .sca-play-icon::after { left: 9px; }
 
 .sca-caption {
   margin-top: 1.6rem;

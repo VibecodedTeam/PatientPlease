@@ -1,1 +1,0 @@
-export { PatientViewer } from './PatientViewer';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './SkinCancerAwareness.css';
+import './Start.css';
 
 const ICONS = {
   A: (
@@ -166,52 +166,58 @@ export default function SkinCancerAwareness() {
   return (
     <div className={`sca-page${isPlaying ? ' is-playing' : ''}`}>
       <section className="sca-hero">
-        <SunGraphic />
-
-        <div
-          className="sca-hero-bg-dot"
-          style={{ width: 260, height: 260, top: -60, left: -80 }}
-        />
-        <div
-          className="sca-hero-bg-dot"
-          style={{ width: 180, height: 180, bottom: -40, right: -40 }}
-        />
-
-        <span className="sca-eyebrow">Skin Cancer Awareness</span>
-
-        <h1 className="sca-headline">
-          Know your skin.
-          <br />
-          Catch it <em>early</em>.
-        </h1>
-
-        <p className="sca-subhead">
-          Most skin cancers are caused by sun exposure you can control — and
-          nearly all are treatable when found in time. It starts with knowing
-          what to look for.
-        </p>
-
-        <div className="sca-stage">
-          <span className="sca-ring r1" />
-          <span className="sca-ring r2" />
-          <span className="sca-ring r3" />
-
-          <span className="sca-mole m1" />
-          <span className="sca-mole irregular m2" />
-          <span className="sca-mole m3" />
-          <span className="sca-mole irregular m4" />
-
-          <button
-            className="sca-play-btn"
-            onClick={() => setIsPlaying((p) => !p)}
-            aria-pressed={isPlaying}
-            aria-label={isPlaying ? 'Pause awareness video' : 'Play awareness video'}
-          >
-            <span className="sca-play-icon" />
-          </button>
+        <div className="sca-hero-bg" aria-hidden="true">
+          <SunGraphic />
+          <div
+            className="sca-hero-bg-dot corner-tl"
+            style={{ width: 260, height: 260 }}
+          />
+          <div
+            className="sca-hero-bg-dot corner-br"
+            style={{ width: 180, height: 180 }}
+          />
         </div>
 
-        <p className="sca-caption">{isPlaying ? CAPTIONS[captionIndex] : ''}</p>
+        <div className="sca-hero-content">
+          <span className="sca-eyebrow">Skin Cancer Awareness</span>
+
+          <h1 className="sca-headline">
+            Know your skin.
+            <br />
+            Catch it <em>early</em>.
+          </h1>
+
+          <p className="sca-subhead">
+            Most skin cancers are caused by sun exposure you can control — and
+            nearly all are treatable when found in time. It starts with knowing
+            what to look for.
+          </p>
+
+          <div className="sca-stage">
+            <span className="sca-ring r1" />
+            <span className="sca-ring r2" />
+            <span className="sca-ring r3" />
+
+            <span className="sca-mole m1" />
+            <span className="sca-mole irregular m2" />
+            <span className="sca-mole m3" />
+            <span className="sca-mole irregular m4" />
+
+            <button
+              className="sca-play-btn"
+              onClick={() => setIsPlaying((p) => !p)}
+              aria-pressed={isPlaying}
+              aria-label={isPlaying ? 'Pause awareness video' : 'Play awareness video'}
+            >
+              <span className="sca-play-icon">
+                <span className="sca-play-bar" />
+                <span className="sca-play-bar" />
+              </span>
+            </button>
+          </div>
+
+          <p className="sca-caption">{isPlaying ? CAPTIONS[captionIndex] : ''}</p>
+        </div>
       </section>
 
       <section className="sca-section" aria-labelledby="abcde-heading">
