@@ -9,15 +9,14 @@
 .card {
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   width: 100%;
   height: 350px;
   box-sizing: border-box;
-  padding: 20px;
   background-color: #eef1e6;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
   border-radius: 6px;
   overflow: hidden;
-  align-items: flex-start
 }
 
 .content {
@@ -27,6 +26,7 @@
   text-align: center;
   gap: 12px;
   width: 100%;
+  padding-bottom: 20px;
 }
 
 .title {
@@ -38,11 +38,10 @@
   color: #eef1e6;
   background: linear-gradient(135deg, #5d6b4a, #37402a);
   letter-spacing: 0.02em;
-  border-radius: 4px;
 }
 
 .body {
-  padding: 0 6px;
+  padding: 0 20px;
   font-size: 0.9rem;
   line-height: 1.5;
   color: #33362b;
