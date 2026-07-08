@@ -1,17 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { usePatientScene } from './usePatientScene';
 import { screenToNdc } from './internal/screenToNdc';
 import { pickDot } from './internal/pickDot';
 import { dodajKropkeDlaRegionu } from './internal/dodajKropkeDlaRegionu';
-import { BodyRegion } from './internal/bodyRegions';
+import { deriveAttentionRegions } from './internal/deriveAttentionRegions';
 import { MelanomaImagePopup } from '../MelanomaImagePopup';
 import styles from './PatientScene.module.css';
 
 const DOT_COLOR = 0xffff00;
 
-export function PatientScene() {
+export function PatientScene({ documents }) {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -150,9 +151,7 @@ export function PatientScene() {
       }
     });
 
-    // TEMPORARY until real case/attention-point data exists (see plan) - places one
-    // dot per BodyRegion so click detection can be tested immediately.
-    Object.values(BodyRegion).forEach((region) => {
+    deriveAttentionRegions(documents).forEach((region) => {
       dotsRef.current.push(dodajKropkeDlaRegionu(model, region, DOT_COLOR));
     });
 
@@ -173,7 +172,7 @@ export function PatientScene() {
         }
       });
     };
-  }, [model, status]);
+  }, [model, status, documents]);
 
   return (
     <>
@@ -182,3 +181,15 @@ export function PatientScene() {
     </>
   );
 }
+
+PatientScene.propTypes = {
+  documents: PropTypes.arrayOf(
+    PropTypes.shape({
+      attentionPointRegion: PropTypes.string,
+    }),
+  ),
+};
+
+PatientScene.defaultProps = {
+  documents: [],
+};

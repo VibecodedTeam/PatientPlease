@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from '../../../../providers/Api';
+import { ENDPOINTS } from '../../../../lib/endpointList';
 
 export const GameSessionContext = createContext(null);
 
@@ -28,25 +29,25 @@ export function GameSessionProvider({ children }) {
     // Fire-and-forget: a 401 (shouldn't happen behind AuthGate) or 409
     // (no_active_game/no_open_day, expected until Round is wired to a real
     // session) must not block the local pause state from taking effect.
-    api.post('/api/v1/game/pause').catch(() => {});
+    api.post(ENDPOINTS.game.pause).catch(() => {});
   }, [api]);
 
   // Real resume has no dedicated endpoint — per docs/api/game.md, a PAUSED
-  // session flips back to ACTIVE on the next POST /api/v1/round call.
-  // RoundProvider doesn't make that call yet (still reads mock JSON), so
-  // this stays local-only until Round is wired to the real endpoint.
+  // session flips back to ACTIVE the next time POST /api/v1/round is called
+  // (e.g. on the next page load), not by resumeTimer itself, so this only
+  // updates local timer state.
   const resumeTimer = useCallback(() => {
     setIsPaused(false);
   }, []);
 
   const resetDay = useCallback(() => {
     setElapsedSeconds(0);
-    api.post('/api/v1/day/reset').catch(() => {});
+    api.post(ENDPOINTS.day.reset).catch(() => {});
   }, [api]);
 
   const resetGame = useCallback(() => {
     setElapsedSeconds(0);
-    api.post('/api/v1/game/reset').catch(() => {});
+    api.post(ENDPOINTS.game.reset).catch(() => {});
   }, [api]);
 
   useEffect(() => {

@@ -39,12 +39,12 @@ jest.mock('three/examples/jsm/controls/OrbitControls.js', () => ({
 // this file only verifies PatientScene's click-handling wiring calls it and applies the red color.
 jest.mock('../../../components/PatientScene/internal/pickDot');
 
-function renderWithSceneContext(contextValue) {
+function renderWithSceneContext(contextValue, patientSceneProps = {}) {
   return render(
     React.createElement(
       PatientSceneContext.Provider,
       { value: contextValue },
-      React.createElement(PatientScene)
+      React.createElement(PatientScene, patientSceneProps)
     )
   );
 }
@@ -70,6 +70,27 @@ describe('PatientScene', () => {
 
     renderWithSceneContext({ model, status: 'success', error: null });
     expect(screen.getByTestId('patient-scene-container')).toBeInTheDocument();
+  });
+
+  it('places a dot only for regions present in the documents prop, including OTHER', () => {
+    const actualThree = jest.requireActual('three');
+    const model = new actualThree.Group();
+    model.add(new actualThree.Mesh(new actualThree.BoxGeometry(1, 1, 1)));
+
+    const documents = [
+      { id: 'd1', attentionPointRegion: 'HEAD' },
+      { id: 'd2', attentionPointRegion: null },
+      { id: 'd3', attentionPointRegion: 'OTHER' },
+    ];
+
+    renderWithSceneContext({ model, status: 'success', error: null }, { documents });
+
+    const placedRegions = model.children
+      .filter((child) => child.userData.isKropka)
+      .map((child) => child.userData.bodyRegion)
+      .sort();
+
+    expect(placedRegions).toEqual(['HEAD', 'OTHER']);
   });
 
   function makeDot(actualThree, color = 0x00ff00) {

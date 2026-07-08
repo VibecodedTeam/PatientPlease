@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../providers/Api';
 import { AuthProvider, useAuth } from '../../../providers/Auth';
@@ -15,7 +15,11 @@ import { MainView } from '../../../views/MainView';
 jest.mock('../../../components/PatientScene', () => {
   const ReactLib = require('react');
   return {
-    PatientScene: () => ReactLib.createElement('div', { 'data-testid': 'patient-scene-stub' }),
+    PatientScene: ({ documents }) =>
+      ReactLib.createElement('div', {
+        'data-testid': 'patient-scene-stub',
+        'data-document-ids': (documents ?? []).map((document) => document.id).join(','),
+      }),
     PatientSceneProvider: ({ url, children }) =>
       ReactLib.createElement(
         'div',
@@ -27,9 +31,38 @@ jest.mock('../../../components/PatientScene', () => {
 
 const USER = { id: '1', email: 'user@example.test', name: 'Test User', avatarUrl: null };
 
+const ROUND_DOCUMENTS = [
+  {
+    id: 'doc-1',
+    attentionPointRegion: 'LEFT_ARM',
+    type: 'SKIN_IMAGE',
+    title: 'Left shoulder — day 1',
+    documentDate: '2026-01-01T00:00:00.000Z',
+    sortOrder: 1,
+    imageUrl: 'https://cdn.example.com/skin/lesion_01.png',
+    imageWidthPx: 1024,
+    imageHeightPx: 768,
+    imageAltText: 'Asymmetric brown lesion, ~8mm',
+    content: null,
+  },
+  {
+    id: 'doc-2',
+    attentionPointRegion: null,
+    type: 'UV_EXPOSURE_HISTORY',
+    title: 'Sun exposure history',
+    documentDate: null,
+    sortOrder: 2,
+    imageUrl: null,
+    imageWidthPx: null,
+    imageHeightPx: null,
+    imageAltText: null,
+    content: { sunbedUse: 'frequent', occupationalExposure: 'high' },
+  },
+];
+
 const DEFAULT_ROUTES = {
-  '/src/data/round_data.json': () =>
-    new Response(JSON.stringify({ case: { documents: [] } }), { status: 200 }),
+  '/api/v1/round': () =>
+    new Response(JSON.stringify({ case: { documents: ROUND_DOCUMENTS } }), { status: 200 }),
   '/auth/me': () => new Response(JSON.stringify({ user: USER }), { status: 200 }),
 };
 
@@ -89,13 +122,18 @@ describe('MainView', () => {
     expect(screen.getByText('Patient Information')).toBeInTheDocument();
   });
 
-  it('renders the 3D patient scene in the patient preview area', async () => {
+  it('renders the 3D patient scene in the patient preview area, fed by the round data', async () => {
     await renderMainView();
 
-    expect(screen.getByTestId('patient-scene-stub')).toBeInTheDocument();
     expect(screen.getByTestId('patient-scene-provider-stub')).toHaveAttribute(
       'data-url',
       '/3DModels/FinalBaseMesh.obj',
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('patient-scene-stub')).toHaveAttribute(
+        'data-document-ids',
+        'doc-1,doc-2',
+      ),
     );
   });
 
