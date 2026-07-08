@@ -5,6 +5,26 @@ import { ApiProvider } from '../../../providers/Api';
 import { AuthProvider, useAuth } from '../../../providers/Auth';
 import { MainView } from '../../../views/MainView';
 
+// esbuild-jest mishandles JSX hoisting in files that also call jest.mock(),
+// so renderMainView()'s render(...) call below uses React.createElement instead
+// of a JSX literal. PatientScene/PatientSceneProvider are mocked because they
+// drive a real Three.js WebGLRenderer, which has no context to attach to under
+// jsdom — PatientScene's own test suite (tests/components/PatientScene/) is
+// where that rendering is exercised; this suite only verifies MainView wires
+// the provider with the right model url and mounts the scene.
+jest.mock('../../../components/PatientScene', () => {
+  const ReactLib = require('react');
+  return {
+    PatientScene: () => ReactLib.createElement('div', { 'data-testid': 'patient-scene-stub' }),
+    PatientSceneProvider: ({ url, children }) =>
+      ReactLib.createElement(
+        'div',
+        { 'data-testid': 'patient-scene-provider-stub', 'data-url': url },
+        children,
+      ),
+  };
+});
+
 const USER = { id: '1', email: 'user@example.test', name: 'Test User', avatarUrl: null };
 
 const DEFAULT_ROUTES = {
@@ -32,13 +52,15 @@ function AuthenticatedGate({ children }) {
 
 async function renderMainView() {
   const result = render(
-    <ApiProvider baseUrl="http://api.test">
-      <AuthProvider>
-        <AuthenticatedGate>
-          <MainView />
-        </AuthenticatedGate>
-      </AuthProvider>
-    </ApiProvider>,
+    React.createElement(
+      ApiProvider,
+      { baseUrl: 'http://api.test' },
+      React.createElement(
+        AuthProvider,
+        null,
+        React.createElement(AuthenticatedGate, null, React.createElement(MainView)),
+      ),
+    ),
   );
   await waitFor(() => expect(screen.getByText('Status: Running')).toBeInTheDocument());
   return result;
@@ -65,6 +87,16 @@ describe('MainView', () => {
 
     await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
     expect(screen.getByText('Patient Information')).toBeInTheDocument();
+  });
+
+  it('renders the 3D patient scene in the patient preview area', async () => {
+    await renderMainView();
+
+    expect(screen.getByTestId('patient-scene-stub')).toBeInTheDocument();
+    expect(screen.getByTestId('patient-scene-provider-stub')).toHaveAttribute(
+      'data-url',
+      '/3DModels/FinalBaseMesh.obj',
+    );
   });
 
   it('opens Settings (pausing the timer) and closes it via Resume', async () => {
