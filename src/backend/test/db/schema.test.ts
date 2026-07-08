@@ -20,7 +20,6 @@ describe('game schema', () => {
         name: 'Test Patient',
         age: 40,
         sex: 'OTHER',
-        chiefComplaint: 'A changing mole',
         portraitImageUrl: 'https://example.test/portrait.png',
         bodyModelVariant: 'default',
       },
@@ -28,7 +27,7 @@ describe('game schema', () => {
     const gameCase = await prisma.case.create({
       data: {
         patientId: patient.id,
-        difficulty: 'EASY',
+        difficulty: 1,
         correctDiagnosisId: diagnosis.id,
         correctTreatmentId: treatment.id,
         moneyReward: 100,
@@ -36,23 +35,10 @@ describe('game schema', () => {
         resultExplanationText: 'Test explanation',
       },
     });
-    const attentionPoint = await prisma.attentionPoint.create({
-      data: {
-        caseId: gameCase.id,
-        label: 'Left shoulder mole',
-        bodyRegion: 'LEFT_ARM',
-        positionX: 0,
-        positionY: 0,
-        positionZ: 0,
-        hitboxRadius: 1,
-        isKeyFinding: true,
-        sortOrder: 0,
-      },
-    });
     const document = await prisma.caseDocument.create({
       data: {
         caseId: gameCase.id,
-        attentionPointId: attentionPoint.id,
+        attentionPointRegion: 'LEFT_ARM',
         type: 'SKIN_IMAGE',
         title: 'Close-up photo',
         sortOrder: 0,
@@ -70,9 +56,17 @@ describe('game schema', () => {
       },
     });
     const gameSession = await prisma.gameSession.create({ data: { userId: user.id } });
-    const diagnosisAttempt = await prisma.diagnosisAttempt.create({
+    const gameDayLog = await prisma.gameDayLog.create({
       data: {
         gameSessionId: gameSession.id,
+        dayNumber: 1,
+        startingMoney: 0,
+        startedAt: new Date(),
+      },
+    });
+    const diagnosisAttempt = await prisma.diagnosisAttempt.create({
+      data: {
+        gameDayLogId: gameDayLog.id,
         caseId: gameCase.id,
         selectedDiagnosisId: diagnosis.id,
         selectedTreatmentId: treatment.id,
@@ -131,7 +125,6 @@ describe('game schema', () => {
         correctDiagnosis: true,
         correctTreatment: true,
         documents: true,
-        attentionPoints: true,
         hints: true,
         diagnosisAttempts: true,
         chatMessages: true,
@@ -143,11 +136,18 @@ describe('game schema', () => {
     expect(loaded.correctDiagnosis.id).toBe(diagnosis.id);
     expect(loaded.correctTreatment?.id).toBe(treatment.id);
     expect(loaded.documents.map((d) => d.id)).toEqual([document.id]);
-    expect(loaded.attentionPoints.map((a) => a.id)).toEqual([attentionPoint.id]);
+    expect(loaded.documents[0]?.attentionPointRegion).toBe('LEFT_ARM');
     expect(loaded.hints.map((h) => h.id)).toEqual([caseHint.id]);
     expect(loaded.diagnosisAttempts.map((a) => a.id)).toEqual([diagnosisAttempt.id]);
     expect(loaded.chatMessages.map((m) => m.id)).toEqual([chatMessage.id]);
     expect(loaded.gameplayLogs.map((l) => l.id)).toEqual([gameplayLog.id]);
+
+    const loadedDiagnosisAttempt = await prisma.diagnosisAttempt.findUniqueOrThrow({
+      where: { id: diagnosisAttempt.id },
+      include: { gameDayLog: true },
+    });
+    expect(loadedDiagnosisAttempt.gameDayLog.id).toBe(gameDayLog.id);
+    expect(loadedDiagnosisAttempt.gameDayLog.gameSessionId).toBe(gameSession.id);
 
     const loadedOwnedItem = await prisma.ownedItem.findUniqueOrThrow({
       where: { id: ownedItem.id },

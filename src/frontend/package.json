@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "start": "vite preview",
-    "test": "jest",
+    "test": "jest --forceExit",
     "test:e2e": "playwright test",
     "lint": "eslint . --ext .js,.jsx"
   },
@@ -26,10 +26,6 @@
     "esbuild-jest": "^0.5.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.35.0",
-    "identity-obj-proxy": "^3.0.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "prop-types": "^15.8.1",
-    "vite": "^5.4.8"
+    "prop-types": "^15.8.1"
   }
 }
