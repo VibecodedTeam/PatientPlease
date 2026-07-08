@@ -89,6 +89,7 @@ function makeGameDayLog(overrides: Partial<GameDayLogRecord> = {}): GameDayLogRe
     id: 'day-log-uuid',
     dayNumber: 1,
     startingMoney: 0,
+    endingMoney: null,
     endedAt: null,
     ...overrides,
   };
@@ -264,6 +265,7 @@ describe('startRound', () => {
         purchasePrice: 100,
         purchasedOnDay: 2,
         purchasedAt: new Date('2026-07-02T00:00:00.000Z'),
+        isEquipped: true,
       },
     ]);
     prisma.diagnosis.findMany.mockResolvedValue([
@@ -304,6 +306,7 @@ describe('startRound', () => {
           purchasePrice: 100,
           purchasedOnDay: 2,
           purchasedAt: new Date('2026-07-02T00:00:00.000Z'),
+          isEquipped: true,
         },
       ],
       case: {
@@ -360,6 +363,32 @@ describe('startRound', () => {
     expect(result.case).not.toHaveProperty('correctDiagnosisId');
     expect(result.case).not.toHaveProperty('correctTreatmentId');
     expect(result.case).not.toHaveProperty('resultExplanationText');
+  });
+
+  it('passes ownedItems.isEquipped through unmodified', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.ownedItem.findMany.mockResolvedValue([
+      {
+        id: 'owned-item-uuid',
+        shopItem: {
+          id: 'shop-item-uuid',
+          sku: '89898',
+          name: 'Handbook',
+          description: 'book about ai',
+          itemType: 'HANDBOOK',
+          iconImageUrl: 'https://cdn.example.test/handbook.png',
+        },
+        purchasePrice: 100,
+        purchasedOnDay: 2,
+        purchasedAt: new Date('2026-07-02T00:00:00.000Z'),
+        isEquipped: false,
+      },
+    ]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(result.ownedItems[0]?.isEquipped).toBe(false);
   });
 
   it('does not create a new GameDayLog when one is already open (resume path)', async () => {
