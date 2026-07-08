@@ -30,6 +30,33 @@ No request body.
 | Session is `ACTIVE`/`PAUSED` but has no open `GameDayLog`             | 409    | `{ "error": "no_open_day" }`                                          |
 | Success                                                               | 200    | `{ "gameSession": { ...same shape as /api/v1/round's gameSession } }` |
 
+## `POST /api/v1/day/end`
+
+Ends the caller's currently open day, entering the night phase. Does **not** create the next
+day's `GameDayLog` — that still happens lazily on the next `POST /api/v1/round` call. The
+session's `status` is untouched (stays `ACTIVE`) — there is deliberately no `GameSessionStatus`
+value for "night"; night-ness is derived from whether the latest `GameDayLog` has `endedAt` set
+(see `docs/api/shop.md`/`docs/api/inventory.md`).
+
+### Request
+
+    POST /api/v1/day/end
+    Cookie: session=<...>
+
+No request body.
+
+### Response
+
+| Condition                                                        | Status | Body                                                                                          |
+| ----------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| No/invalid session cookie                                          | 401    | `{ "error": "unauthenticated" }`                                                                |
+| No `GameSession`, or latest one is not `ACTIVE`                    | 409    | `{ "error": "no_active_game" }`                                                                 |
+| Session is `ACTIVE` but has no open `GameDayLog`                   | 409    | `{ "error": "no_open_day" }`                                                                    |
+| Success                                                            | 200    | `{ "gameSession": { ... }, "dayLog": { "id", "dayNumber", "startingMoney", "endingMoney", "endedAt" } }` |
+
+Calling this twice in a row is safe: the second call finds no open day log and returns
+`409 no_open_day`, which doubles as an "you're already at night" signal.
+
 ## Related
 
 - Routes: `src/backend/src/routes/day.ts`

@@ -23,6 +23,7 @@ export interface GamePrismaClient {
       data: {
         pausedAt?: Date | null;
         endedAt?: Date;
+        endingMoney?: number;
         casesAttempted?: number;
         casesCorrect?: number;
         penaltyApplied?: boolean;
@@ -90,6 +91,16 @@ function toGameSessionResponse(record: GameSessionRecord): GameSessionRecord {
     status: record.status,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
+  };
+}
+
+function toGameDayLogResponse(record: GameDayLogRecord): GameDayLogRecord {
+  return {
+    id: record.id,
+    dayNumber: record.dayNumber,
+    startingMoney: record.startingMoney,
+    endingMoney: record.endingMoney,
+    endedAt: record.endedAt,
   };
 }
 
@@ -178,4 +189,22 @@ export async function resetDay(
   });
 
   return toGameSessionResponse(updatedSession);
+}
+
+export async function endDay(
+  prisma: GamePrismaClient,
+  userId: string,
+): Promise<{ gameSession: GameSessionRecord; dayLog: GameDayLogRecord }> {
+  const session = await requireActiveGameSession(prisma, userId);
+  const openDayLog = await requireOpenGameDayLog(prisma, session.id);
+
+  const updatedDayLog = await prisma.gameDayLog.update({
+    where: { id: openDayLog.id },
+    data: { endedAt: new Date(), endingMoney: session.money },
+  });
+
+  return {
+    gameSession: toGameSessionResponse(session),
+    dayLog: toGameDayLogResponse(updatedDayLog),
+  };
 }
