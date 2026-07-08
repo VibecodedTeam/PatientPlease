@@ -1,0 +1,159 @@
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  background: radial-gradient(circle at top, rgba(224, 164, 88, 0.05), transparent 55%),
+    radial-gradient(circle at bottom, rgba(127, 184, 148, 0.04), transparent 60%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.012) 0px,
+      rgba(255, 255, 255, 0.012) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    var(--color-bg);
+  box-shadow: inset 0 0 180px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes hudPausedGlow {
+  0%,
+  100% {
+    box-shadow: var(--shadow-panel), 0 0 0 rgba(224, 87, 90, 0);
+  }
+  50% {
+    box-shadow: var(--shadow-panel), 0 0 14px rgba(224, 87, 90, 0.4);
+  }
+}
+
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: min(420px, 100%);
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(180deg, #181c28, #12141c);
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--color-ok);
+  border-radius: 0.6rem;
+  box-shadow: var(--shadow-panel), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hudPaused {
+  border-color: var(--color-danger);
+  animation: hudPausedGlow 2s ease-in-out infinite;
+}
+
+.readouts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.timer {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+  color: var(--color-ok);
+  text-shadow: 0 0 8px var(--color-ok-glow);
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.timerPaused {
+  color: var(--color-danger);
+  text-shadow: 0 0 8px var(--color-warn-glow);
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.statusDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.statusDotRunning {
+  background: var(--color-ok);
+  box-shadow: 0 0 6px var(--color-ok-glow);
+}
+
+@keyframes statusDotPausedPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.statusDotPaused {
+  background: var(--color-danger);
+  box-shadow: 0 0 8px var(--color-warn-glow);
+  animation: statusDotPausedPulse 1.6s ease-in-out infinite;
+}
+
+.status {
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  transition: color 0.2s ease;
+}
+
+.statusPaused {
+  color: var(--color-danger);
+}
+
+.settingsButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem 0.4rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.settingsButton:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.settingsButton:active {
+  transform: scale(0.96);
+}
+
+.gearIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--color-bg-elevated);
+  font-size: 1rem;
+}
+
+.stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-style: italic;
+  letter-spacing: 0.04em;
+  opacity: 0.65;
+}
