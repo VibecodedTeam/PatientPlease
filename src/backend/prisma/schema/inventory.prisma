@@ -32,6 +32,7 @@ model OwnedItem {
   purchasePrice  Int
   purchasedOnDay Int
   purchasedAt    DateTime    @default(now())
+  isEquipped     Boolean     @default(false)
 
   @@unique([gameSessionId, shopItemId])
   @@index([shopItemId])
