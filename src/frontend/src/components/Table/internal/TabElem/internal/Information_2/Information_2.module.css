@@ -2,22 +2,22 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  flex: 0 0 204px;
+  flex: 204 1 0;
+  min-width: 0;
   box-sizing: border-box;
 }
 
 .card {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  height: 350px;
+  margin: 0 auto;
   box-sizing: border-box;
-  padding: 20px;
   background-color: #eef1e6;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
   border-radius: 6px;
   overflow: hidden;
-  align-items: flex-start
 }
 
 .content {
@@ -27,9 +27,12 @@
   text-align: center;
   gap: 12px;
   width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .title {
+  margin: 0;
   width: 100%;
   box-sizing: border-box;
   padding: 10px 12px;
@@ -38,7 +41,6 @@
   color: #eef1e6;
   background: linear-gradient(135deg, #5d6b4a, #37402a);
   letter-spacing: 0.02em;
-  border-radius: 4px;
 }
 
 .body {

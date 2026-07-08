@@ -2,8 +2,9 @@
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  flex: 0 0 632px;
-  gap: 14px;
+  flex: 632 1 0;
+  min-width: 0;
+  gap: 20px;
   padding: 10px 12px;
   box-sizing: border-box;
   height: 100%;

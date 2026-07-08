@@ -41,8 +41,7 @@
 .documentsArea {
   min-height: 0;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  align-items: stretch;
   overflow: auto;
   background: #1c1512;
   border-top: 1px solid #221b16;

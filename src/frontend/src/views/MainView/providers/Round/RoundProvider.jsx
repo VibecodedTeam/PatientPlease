@@ -28,7 +28,7 @@ export function RoundProvider({ children }) {
     let isCancelled = false;
 
     mockClient
-      .get('/src/data/round_data.json')
+      .get('/data/round_data.json')
       .then((data) => {
         if (!isCancelled) setRound(data);
       })
