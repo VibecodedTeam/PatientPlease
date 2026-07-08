@@ -12,15 +12,17 @@ describe('seed', () => {
   it('seeds at least 20 rows into every catalog and case table', async () => {
     await seed();
 
-    const [diagnoses, treatments, shopItems, patients, cases, documents, hints] = await Promise.all([
-      prisma.diagnosis.count(),
-      prisma.treatment.count(),
-      prisma.shopItem.count(),
-      prisma.patient.count(),
-      prisma.case.count(),
-      prisma.caseDocument.count(),
-      prisma.caseHint.count(),
-    ]);
+    const [diagnoses, treatments, shopItems, patients, cases, documents, hints] = await Promise.all(
+      [
+        prisma.diagnosis.count(),
+        prisma.treatment.count(),
+        prisma.shopItem.count(),
+        prisma.patient.count(),
+        prisma.case.count(),
+        prisma.caseDocument.count(),
+        prisma.caseHint.count(),
+      ],
+    );
 
     expect(diagnoses).toBeGreaterThanOrEqual(20);
     expect(treatments).toBeGreaterThanOrEqual(20);
@@ -53,7 +55,10 @@ describe('seed', () => {
     const firstCount = await prisma.diagnosis.count();
 
     await seed();
-    const [secondDiagnosis] = await prisma.diagnosis.findMany({ orderBy: { code: 'asc' }, take: 1 });
+    const [secondDiagnosis] = await prisma.diagnosis.findMany({
+      orderBy: { code: 'asc' },
+      take: 1,
+    });
     const secondCount = await prisma.diagnosis.count();
 
     expect(secondCount).toBe(firstCount);
@@ -66,7 +71,10 @@ describe('seed', () => {
     const firstCount = await prisma.diagnosis.count();
 
     await seed({ force: true });
-    const [secondDiagnosis] = await prisma.diagnosis.findMany({ orderBy: { code: 'asc' }, take: 1 });
+    const [secondDiagnosis] = await prisma.diagnosis.findMany({
+      orderBy: { code: 'asc' },
+      take: 1,
+    });
     const secondCount = await prisma.diagnosis.count();
 
     expect(secondCount).toBe(firstCount);
