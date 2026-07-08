@@ -36,6 +36,8 @@ jobs:
       GOOGLE_CLIENT_ID: test-client-id.apps.googleusercontent.com
       COOKIE_SECRET: ci-only-insecure-secret-change-me
       FRONTEND_ORIGIN: http://localhost:4173
+      GEMINI_API_KEY: ci-not-a-real-gemini-key
+      GOOGLE_SPEECH_API_KEY: ci-not-a-real-speech-key
 
     steps:
       - uses: actions/checkout@v4

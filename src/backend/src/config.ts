@@ -48,3 +48,36 @@ export function resolveSessionTtlMs(value: string | undefined): number {
   }
   return parsed;
 }
+
+export function resolveGeminiApiKey(value: string | undefined): string {
+  if (!value) {
+    throw new Error('GEMINI_API_KEY environment variable is not set');
+  }
+  return value;
+}
+
+export function resolveGoogleSpeechApiKey(value: string | undefined): string {
+  if (!value) {
+    throw new Error('GOOGLE_SPEECH_API_KEY environment variable is not set');
+  }
+  return value;
+}
+
+const DEFAULT_GEMINI_MODEL = 'gemini-2.0-flash';
+
+export function resolveGeminiModel(value: string | undefined): string {
+  return value ? value : DEFAULT_GEMINI_MODEL;
+}
+
+const DEFAULT_CHAT_AUDIO_MAX_BYTES = 10 * 1024 * 1024;
+
+export function resolveChatAudioMaxBytes(value: string | undefined): number {
+  if (!value) {
+    return DEFAULT_CHAT_AUDIO_MAX_BYTES;
+  }
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) {
+    throw new Error('CHAT_AUDIO_MAX_BYTES environment variable must be a number');
+  }
+  return parsed;
+}

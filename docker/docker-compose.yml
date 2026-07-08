@@ -26,6 +26,8 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-test-client-id.apps.googleusercontent.com}
       COOKIE_SECRET: ${COOKIE_SECRET:-dev-only-insecure-secret-change-me}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4173}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-docker-dev-not-a-real-gemini-key}
+      GOOGLE_SPEECH_API_KEY: ${GOOGLE_SPEECH_API_KEY:-docker-dev-not-a-real-speech-key}
     ports:
       - "4000:4000"
     depends_on:

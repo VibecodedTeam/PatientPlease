@@ -1,7 +1,11 @@
 import {
+  resolveChatAudioMaxBytes,
   resolveCookieSecret,
   resolveFrontendOrigin,
+  resolveGeminiApiKey,
+  resolveGeminiModel,
   resolveGoogleClientId,
+  resolveGoogleSpeechApiKey,
   resolvePort,
   resolveSessionTtlMs,
 } from '../src/config.js';
@@ -104,6 +108,74 @@ describe('resolveSessionTtlMs', () => {
   it('throws when SESSION_TTL_MS is not a number', () => {
     expect(() => resolveSessionTtlMs('thirty-days')).toThrow(
       'SESSION_TTL_MS environment variable must be a number',
+    );
+  });
+});
+
+describe('resolveGeminiApiKey', () => {
+  it('returns the value when GEMINI_API_KEY is set', () => {
+    expect(resolveGeminiApiKey('test-key')).toBe('test-key');
+  });
+
+  it('throws when GEMINI_API_KEY is unset', () => {
+    expect(() => resolveGeminiApiKey(undefined)).toThrow(
+      'GEMINI_API_KEY environment variable is not set',
+    );
+  });
+
+  it('throws when GEMINI_API_KEY is an empty string', () => {
+    expect(() => resolveGeminiApiKey('')).toThrow('GEMINI_API_KEY environment variable is not set');
+  });
+});
+
+describe('resolveGoogleSpeechApiKey', () => {
+  it('returns the value when GOOGLE_SPEECH_API_KEY is set', () => {
+    expect(resolveGoogleSpeechApiKey('test-key')).toBe('test-key');
+  });
+
+  it('throws when GOOGLE_SPEECH_API_KEY is unset', () => {
+    expect(() => resolveGoogleSpeechApiKey(undefined)).toThrow(
+      'GOOGLE_SPEECH_API_KEY environment variable is not set',
+    );
+  });
+
+  it('throws when GOOGLE_SPEECH_API_KEY is an empty string', () => {
+    expect(() => resolveGoogleSpeechApiKey('')).toThrow(
+      'GOOGLE_SPEECH_API_KEY environment variable is not set',
+    );
+  });
+});
+
+describe('resolveGeminiModel', () => {
+  it('returns the value when GEMINI_MODEL is set', () => {
+    expect(resolveGeminiModel('gemini-1.5-pro')).toBe('gemini-1.5-pro');
+  });
+
+  it('falls back to the default when GEMINI_MODEL is unset', () => {
+    expect(resolveGeminiModel(undefined)).toBe('gemini-2.0-flash');
+  });
+
+  it('falls back to the default when GEMINI_MODEL is an empty string', () => {
+    expect(resolveGeminiModel('')).toBe('gemini-2.0-flash');
+  });
+});
+
+describe('resolveChatAudioMaxBytes', () => {
+  it('returns the parsed value when CHAT_AUDIO_MAX_BYTES is set', () => {
+    expect(resolveChatAudioMaxBytes('1000')).toBe(1000);
+  });
+
+  it('falls back to 10MB when CHAT_AUDIO_MAX_BYTES is unset', () => {
+    expect(resolveChatAudioMaxBytes(undefined)).toBe(10 * 1024 * 1024);
+  });
+
+  it('falls back to 10MB when CHAT_AUDIO_MAX_BYTES is an empty string', () => {
+    expect(resolveChatAudioMaxBytes('')).toBe(10 * 1024 * 1024);
+  });
+
+  it('throws when CHAT_AUDIO_MAX_BYTES is not a number', () => {
+    expect(() => resolveChatAudioMaxBytes('lots')).toThrow(
+      'CHAT_AUDIO_MAX_BYTES environment variable must be a number',
     );
   });
 });
