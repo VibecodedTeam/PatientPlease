@@ -1,0 +1,174 @@
+import React from 'react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ApiProvider } from '../../../providers/Api';
+import { AuthProvider, useAuth } from '../../../providers/Auth';
+import { GameSessionProvider, useGameSession } from '../../../views/MainView/providers/GameSession';
+import { Settings } from '../../../components/Settings';
+
+const USER = { id: '1', email: 'user@example.test', name: 'Test User', avatarUrl: null };
+
+function StatusReadout() {
+  const { isPaused, elapsedSeconds } = useGameSession();
+  return (
+    <div>
+      <span data-testid="isPaused">{String(isPaused)}</span>
+      <span data-testid="elapsed">{elapsedSeconds}</span>
+    </div>
+  );
+}
+
+// Mirrors AuthGate's real contract: Settings only ever mounts once auth has
+// resolved to a signed-in user, so this test renders it the same way rather
+// than asserting on the impossible-in-production momentary null-user render.
+function AuthenticatedGate({ children }) {
+  const { status } = useAuth();
+  if (status !== 'authenticated') return null;
+  return children;
+}
+
+function mockFetchSequence(...responses) {
+  const queue = [...responses];
+  // Each call gets its own Response instance — a Response body can only be
+  // read once, and multiple calls in these tests (pause on mount, then
+  // logout/reset) would otherwise share and exhaust the same mocked body.
+  global.fetch = jest.fn(() =>
+    Promise.resolve(queue.length ? queue.shift() : new Response('{}', { status: 200 })),
+  );
+}
+
+function authenticatedResponse() {
+  return new Response(JSON.stringify({ user: USER }), { status: 200 });
+}
+
+function findRequestByPath(pathname) {
+  const call = global.fetch.mock.calls.find(([request]) => new URL(request.url).pathname === pathname);
+  return call ? call[0] : undefined;
+}
+
+function renderSettings({ onClose = jest.fn(), autoPaused = false } = {}) {
+  return render(
+    <ApiProvider baseUrl="http://api.test">
+      <AuthProvider>
+        <GameSessionProvider>
+          <AuthenticatedGate>
+            <StatusReadout />
+            <Settings onClose={onClose} autoPaused={autoPaused} />
+          </AuthenticatedGate>
+        </GameSessionProvider>
+      </AuthProvider>
+    </ApiProvider>,
+  );
+}
+
+describe('Settings', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="root"></div><div id="overlay-root"></div>';
+  });
+
+  it('pauses the game session on mount and shows the logged-in user', async () => {
+    mockFetchSequence(authenticatedResponse());
+    renderSettings();
+
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    expect(screen.getByTestId('isPaused')).toHaveTextContent('true');
+    await waitFor(() => expect(findRequestByPath('/api/v1/game/pause')).toBeDefined());
+    expect(findRequestByPath('/api/v1/game/pause').method).toBe('POST');
+  });
+
+  it('shows the auto-paused notice only when autoPaused is true', async () => {
+    mockFetchSequence(authenticatedResponse());
+    renderSettings({ autoPaused: true });
+
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    expect(screen.getByText('Game paused because you left the tab.')).toBeInTheDocument();
+  });
+
+  it('calls onClose and resumes the session when Resume is clicked', async () => {
+    mockFetchSequence(authenticatedResponse());
+    const onClose = jest.fn();
+    renderSettings({ onClose });
+
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Resume'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls the real logout() when Log out is clicked', async () => {
+    const user = userEvent.setup();
+    mockFetchSequence(authenticatedResponse());
+    renderSettings();
+
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Log out'));
+
+    await waitFor(() => expect(findRequestByPath('/auth/logout')).toBeDefined());
+    expect(findRequestByPath('/auth/logout').method).toBe('POST');
+  });
+
+  it('confirming "Back to start of day" resets the day and closes Settings', async () => {
+    const user = userEvent.setup();
+    mockFetchSequence(authenticatedResponse());
+    const onClose = jest.fn();
+    renderSettings({ onClose });
+
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Back to start of day'));
+    expect(
+      screen.getByText('Return to the start of the day? Your progress today will be lost.'),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByText('Confirm'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(findRequestByPath('/api/v1/day/reset')).toBeDefined());
+    expect(findRequestByPath('/api/v1/day/reset').method).toBe('POST');
+  });
+
+  it('confirming "Back to start of game" resets the game and closes Settings', async () => {
+    const user = userEvent.setup();
+    mockFetchSequence(authenticatedResponse());
+    const onClose = jest.fn();
+    renderSettings({ onClose });
+
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Back to start of game'));
+    expect(
+      screen.getByText('Return to the start of the game? All progress will be lost.'),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByText('Confirm'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(findRequestByPath('/api/v1/game/reset')).toBeDefined());
+    expect(findRequestByPath('/api/v1/game/reset').method).toBe('POST');
+  });
+
+  it('cancelling a reset confirmation keeps Settings open without resetting', async () => {
+    const user = userEvent.setup();
+    mockFetchSequence(authenticatedResponse());
+    const onClose = jest.fn();
+    renderSettings({ onClose });
+
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Back to start of game'));
+    await user.click(screen.getByText('Cancel'));
+
+    expect(screen.queryByText('Return to the start of the game? All progress will be lost.')).not.toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByText('Settings')).toBeInTheDocument();
+  });
+
+  it('toggles the music setting locally', async () => {
+    mockFetchSequence(authenticatedResponse());
+    renderSettings();
+
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    const toggle = screen.getByLabelText('Toggle music');
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+});

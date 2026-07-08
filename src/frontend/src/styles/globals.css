@@ -17,4 +17,19 @@ body {
   --color-ink: #212129;
   --color-maroon: #531516;
   --color-teal: #075247;
+
+  --color-bg: #12141c;
+  --color-bg-elevated: #1c2030;
+  --color-border: #2e3348;
+  --color-text: #e6e8f0;
+  --color-text-muted: #9099b3;
+  --color-accent: #e0a458;
+  --color-accent-hover: #f0b56c;
+  --color-danger: #e0575a;
+  --color-danger-hover: #ec6f72;
+  --color-ok: #7fb894;
+  --color-ok-hover: #93c8a6;
+  --color-paper: #201d19;
+  --color-paper-line: rgba(230, 232, 240, 0.05);
+  --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.55);
 }
