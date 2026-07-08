@@ -10,17 +10,10 @@
   grid-column: 1;
   grid-row: 1 / span 2;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #4a4038;
-  font-size: 0.8rem;
-  font-style: italic;
+  min-width: 0;
+  min-height: 0;
   background: #14100e;
   border-right: 1px solid #221b16;
-}
-
-.patientArea::after {
-  content: 'Patient preview (coming soon)';
 }
 
 .rightColumn {

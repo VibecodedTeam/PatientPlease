@@ -1,5 +1,6 @@
 import React from 'react';
+import { Shop } from '../../components/Shop';
 
 export function NightView() {
-  return <div>Night View</div>;
+  return <Shop />;
 }
