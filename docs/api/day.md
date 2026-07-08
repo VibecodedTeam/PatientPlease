@@ -38,6 +38,15 @@ session's `status` is untouched (stays `ACTIVE`) — there is deliberately no `G
 value for "night"; night-ness is derived from whether the latest `GameDayLog` has `endedAt` set
 (see `docs/api/shop.md`/`docs/api/inventory.md`).
 
+Ending a day also finalizes its statistics: `casesAttempted`/`casesCorrect` are counted from
+that day's `DiagnosisAttempt` rows, `thresholdMet` compares `endingMoney` (the session's current
+`money`) against `GameSession.studentLoanThreshold` (`null` if no threshold is configured), and
+`penaltyApplied` is `true` exactly when a threshold is configured and missed.
+`GameSession.consecutiveBadDiagnosisCount` resets to `0` on a day where every attempted case was
+diagnosed correctly (including a zero-attempt day), and otherwise increases by that day's number
+of incorrect diagnoses. None of this yet feeds back into `POST /api/v1/round` or otherwise gates
+play — see `docs/superpowers/specs/2026-07-08-day-statistics-design.md`.
+
 ### Request
 
     POST /api/v1/day/end
@@ -47,12 +56,12 @@ No request body.
 
 ### Response
 
-| Condition                                                        | Status | Body                                                                                          |
-| ----------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
-| No/invalid session cookie                                          | 401    | `{ "error": "unauthenticated" }`                                                                |
-| No `GameSession`, or latest one is not `ACTIVE`                    | 409    | `{ "error": "no_active_game" }`                                                                 |
-| Session is `ACTIVE` but has no open `GameDayLog`                   | 409    | `{ "error": "no_open_day" }`                                                                    |
-| Success                                                            | 200    | `{ "gameSession": { ... }, "dayLog": { "id", "dayNumber", "startingMoney", "endingMoney", "endedAt" } }` |
+| Condition                                          | Status | Body                                                                                                                                                             |
+| --------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No/invalid session cookie                            | 401    | `{ "error": "unauthenticated" }`                                                                                                                                 |
+| No `GameSession`, or latest one is not `ACTIVE`      | 409    | `{ "error": "no_active_game" }`                                                                                                                                  |
+| Session is `ACTIVE` but has no open `GameDayLog`     | 409    | `{ "error": "no_open_day" }`                                                                                                                                     |
+| Success                                              | 200    | `{ "gameSession": { ..., "consecutiveBadDiagnosisCount" }, "dayLog": { "id", "dayNumber", "startingMoney", "endingMoney", "casesAttempted", "casesCorrect", "thresholdMet", "penaltyApplied", "endedAt" } }` |
 
 Calling this twice in a row is safe: the second call finds no open day log and returns
 `409 no_open_day`, which doubles as an "you're already at night" signal.
@@ -64,3 +73,4 @@ Calling this twice in a row is safe: the second call finds no open day log and r
 - App wiring: `src/backend/src/app.ts`
 - Tests: `src/backend/test/routes/day.test.ts`, `src/backend/test/services/game.test.ts`
 - Design spec: `docs/superpowers/specs/2026-07-08-game-pause-reset-endpoints-design.md`
+- Design spec: `docs/superpowers/specs/2026-07-08-day-statistics-design.md`
