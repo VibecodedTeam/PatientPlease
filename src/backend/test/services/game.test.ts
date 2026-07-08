@@ -298,6 +298,7 @@ describe('endDay', () => {
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
     prisma.diagnosisAttempt.count.mockResolvedValueOnce(3).mockResolvedValueOnce(2);
+    prisma.gameSession.update.mockResolvedValue(session);
     const endedLog = makeGameDayLog({
       id: 'open-log-uuid',
       endingMoney: 75,
@@ -337,6 +338,7 @@ describe('endDay', () => {
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
     prisma.diagnosisAttempt.count.mockResolvedValueOnce(1).mockResolvedValueOnce(1);
+    prisma.gameSession.update.mockResolvedValue(session);
     prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
     await endDay(prisma, 'user-uuid');
@@ -354,6 +356,7 @@ describe('endDay', () => {
     prisma.gameSession.findFirst.mockResolvedValue(session);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
     prisma.diagnosisAttempt.count.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+    prisma.gameSession.update.mockResolvedValue(session);
     prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
     await endDay(prisma, 'user-uuid');
@@ -365,11 +368,64 @@ describe('endDay', () => {
     );
   });
 
+  it('resets consecutiveBadDiagnosisCount to 0 when casesCorrect equals casesAttempted', async () => {
+    const prisma = createMockPrisma();
+    const session = makeSession({ money: 60, consecutiveBadDiagnosisCount: 3 });
+    prisma.gameSession.findFirst.mockResolvedValue(session);
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.diagnosisAttempt.count.mockResolvedValueOnce(2).mockResolvedValueOnce(2);
+    prisma.gameSession.update.mockResolvedValue(makeSession({ consecutiveBadDiagnosisCount: 0 }));
+    prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+
+    const result = await endDay(prisma, 'user-uuid');
+
+    expect(prisma.gameSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-uuid' },
+      data: { consecutiveBadDiagnosisCount: 0 },
+    });
+    expect(result.gameSession.consecutiveBadDiagnosisCount).toBe(0);
+  });
+
+  it('increments consecutiveBadDiagnosisCount by the number of wrong diagnoses today', async () => {
+    const prisma = createMockPrisma();
+    const session = makeSession({ money: 60, consecutiveBadDiagnosisCount: 1 });
+    prisma.gameSession.findFirst.mockResolvedValue(session);
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.diagnosisAttempt.count.mockResolvedValueOnce(3).mockResolvedValueOnce(1);
+    prisma.gameSession.update.mockResolvedValue(makeSession({ consecutiveBadDiagnosisCount: 3 }));
+    prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+
+    await endDay(prisma, 'user-uuid');
+
+    expect(prisma.gameSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-uuid' },
+      data: { consecutiveBadDiagnosisCount: 3 },
+    });
+  });
+
+  it('resets consecutiveBadDiagnosisCount to 0 when the day has zero attempts', async () => {
+    const prisma = createMockPrisma();
+    const session = makeSession({ money: 60, consecutiveBadDiagnosisCount: 4 });
+    prisma.gameSession.findFirst.mockResolvedValue(session);
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.diagnosisAttempt.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
+    prisma.gameSession.update.mockResolvedValue(makeSession({ consecutiveBadDiagnosisCount: 0 }));
+    prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+
+    await endDay(prisma, 'user-uuid');
+
+    expect(prisma.gameSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-uuid' },
+      data: { consecutiveBadDiagnosisCount: 0 },
+    });
+  });
+
   it('never leaks the gameSessionId column present on the raw GameDayLog row', async () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
     prisma.diagnosisAttempt.count.mockResolvedValue(0);
+    prisma.gameSession.update.mockResolvedValue(makeSession());
     prisma.gameDayLog.update.mockResolvedValue({
       ...makeGameDayLog({ id: 'open-log-uuid' }),
       gameSessionId: 'session-uuid',
@@ -382,12 +438,13 @@ describe('endDay', () => {
 
   it('never leaks the userId column present on the raw GameSession row', async () => {
     const prisma = createMockPrisma();
-    prisma.gameSession.findFirst.mockResolvedValue({
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+    prisma.diagnosisAttempt.count.mockResolvedValue(0);
+    prisma.gameSession.update.mockResolvedValue({
       ...makeSession(),
       userId: 'user-uuid',
     } as GameSessionRecord);
-    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
-    prisma.diagnosisAttempt.count.mockResolvedValue(0);
     prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
     const result = await endDay(prisma, 'user-uuid');
