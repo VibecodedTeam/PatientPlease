@@ -332,4 +332,86 @@ describe('POST /api/v1/day/end', () => {
     expect(second.statusCode).toBe(409);
     expect(second.json()).toEqual({ error: 'no_open_day' });
   });
+
+  it('computes casesAttempted/casesCorrect/thresholdMet/penaltyApplied and updates consecutiveBadDiagnosisCount', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const { gameSession, gameDayLog } = await createActiveSessionWithOpenDay(userId, 80);
+    await prisma.gameSession.update({
+      where: { id: gameSession.id },
+      data: { studentLoanThreshold: 100 },
+    });
+
+    const diagnosis = await prisma.diagnosis.create({
+      data: { code: 'MELANOMA', name: 'Melanoma', description: 'test', category: 'MALIGNANT' },
+    });
+    const patient = await prisma.patient.create({
+      data: {
+        name: 'Jan Kowalski',
+        age: 52,
+        sex: 'MALE',
+        portraitImageUrl: 'https://cdn.example.test/jan.png',
+        bodyModelVariant: 'male_average_01',
+      },
+    });
+    const gameCase = await prisma.case.create({
+      data: {
+        patientId: patient.id,
+        difficulty: 1,
+        correctDiagnosisId: diagnosis.id,
+        moneyReward: 50,
+        moneyPenalty: 20,
+        resultExplanationText: 'It was melanoma.',
+      },
+    });
+    await prisma.diagnosisAttempt.createMany({
+      data: [
+        {
+          gameDayLogId: gameDayLog.id,
+          caseId: gameCase.id,
+          selectedDiagnosisId: diagnosis.id,
+          isDiagnosisCorrect: true,
+          moneyDelta: 50,
+        },
+        {
+          gameDayLogId: gameDayLog.id,
+          caseId: gameCase.id,
+          selectedDiagnosisId: diagnosis.id,
+          isDiagnosisCorrect: false,
+          moneyDelta: -20,
+        },
+      ],
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/day/end',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{
+      gameSession: { consecutiveBadDiagnosisCount: number };
+      dayLog: {
+        casesAttempted: number;
+        casesCorrect: number;
+        thresholdMet: boolean;
+        penaltyApplied: boolean;
+      };
+    }>();
+    expect(body.dayLog.casesAttempted).toBe(2);
+    expect(body.dayLog.casesCorrect).toBe(1);
+    expect(body.dayLog.thresholdMet).toBe(false);
+    expect(body.dayLog.penaltyApplied).toBe(true);
+    expect(body.gameSession.consecutiveBadDiagnosisCount).toBe(1);
+
+    const updatedDayLog = await prisma.gameDayLog.findUniqueOrThrow({
+      where: { id: gameDayLog.id },
+    });
+    expect(updatedDayLog.casesAttempted).toBe(2);
+    expect(updatedDayLog.casesCorrect).toBe(1);
+    expect(updatedDayLog.thresholdMet).toBe(false);
+    expect(updatedDayLog.penaltyApplied).toBe(true);
+  });
 });
