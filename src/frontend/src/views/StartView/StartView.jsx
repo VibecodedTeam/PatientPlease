@@ -13,7 +13,7 @@ export function StartView() {
 
   function handlePlay() {
     if (status === 'authenticated') {
-      navigate('/');
+      navigate('/game');
       return;
     }
     setShowLogin(true);
@@ -21,7 +21,7 @@ export function StartView() {
 
   function handleCredential(credential) {
     login(credential)
-      .then(() => navigate('/'))
+      .then(() => navigate('/game'))
       .catch((err) => console.error('Google sign-in failed', err));
   }
 
