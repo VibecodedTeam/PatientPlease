@@ -367,6 +367,66 @@ describe('POST /api/v1/chat', () => {
     expect(response.json()).toEqual({ error: 'transcription_failed' });
   });
 
+  it('uses the mock LLM and never calls Gemini when CHAT_LLM_PROVIDER=mock, without needing GEMINI_API_KEY', async () => {
+    const fetchSpy = jest.spyOn(globalThis, 'fetch');
+    const previousProvider = process.env['CHAT_LLM_PROVIDER'];
+    const previousApiKey = process.env['GEMINI_API_KEY'];
+    process.env['CHAT_LLM_PROVIDER'] = 'mock';
+    delete process.env['GEMINI_API_KEY'];
+
+    try {
+      // No geminiClient override here — this exercises app.ts's real default wiring.
+      app = buildApp({
+        googleClient: createGoogleClient(VALID_PAYLOAD),
+        transcriptionClient: createFakeTranscriptionClient('unused'),
+      });
+      await app.ready();
+      const { cookie, userId } = await signIn(app);
+      const diagnosis = await createDiagnosis();
+      const treatment = await createTreatment();
+      const gameCase = await createCase(diagnosis.id, treatment.id);
+      const gameSession = await prisma.gameSession.create({ data: { userId } });
+
+      const form = new FormData();
+      form.append('gameSessionId', gameSession.id);
+      form.append('caseId', gameCase.id);
+      form.append('text', 'Does it itch?');
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/chat',
+        headers: { cookie },
+        payload: form,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json<{ chatMessages: { sender: string; content: string }[] }>();
+      expect(body.chatMessages[1]).toMatchObject({
+        sender: 'PATIENT',
+        content: 'Nie jestem pewien, ale mogę powiedzieć, co zauważyłem.',
+      });
+
+      const stored = await prisma.chatMessage.findMany({
+        where: { gameSessionId: gameSession.id, caseId: gameCase.id },
+      });
+      expect(stored).toHaveLength(2);
+      expect(fetchSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('generativelanguage.googleapis.com'),
+        expect.anything(),
+      );
+    } finally {
+      fetchSpy.mockRestore();
+      if (previousProvider === undefined) {
+        delete process.env['CHAT_LLM_PROVIDER'];
+      } else {
+        process.env['CHAT_LLM_PROVIDER'] = previousProvider;
+      }
+      if (previousApiKey !== undefined) {
+        process.env['GEMINI_API_KEY'] = previousApiKey;
+      }
+    }
+  });
+
   it('returns 502 when Gemini fails', async () => {
     const geminiClient: GeminiClient = {
       generateReply: jest.fn(() => Promise.reject(new GeminiError('quota exceeded'))),

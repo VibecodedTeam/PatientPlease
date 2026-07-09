@@ -81,3 +81,21 @@ export function resolveChatAudioMaxBytes(value: string | undefined): number {
   }
   return parsed;
 }
+
+export type ChatLlmProvider = 'gemini' | 'mock';
+
+/**
+ * Selects which client backs POST /api/v1/chat's replies. "mock" is local/dev only —
+ * it skips Gemini entirely (no network call, no GEMINI_API_KEY needed) so chat can
+ * still be exercised manually when the Gemini free-tier quota returns 429. Defaults
+ * to "gemini" so production/default behavior is unaffected when unset.
+ */
+export function resolveChatLlmProvider(value: string | undefined): ChatLlmProvider {
+  if (!value || value === 'gemini') {
+    return 'gemini';
+  }
+  if (value === 'mock') {
+    return 'mock';
+  }
+  throw new Error('CHAT_LLM_PROVIDER environment variable must be "gemini" or "mock"');
+}

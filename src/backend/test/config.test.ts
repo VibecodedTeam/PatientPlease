@@ -1,5 +1,6 @@
 import {
   resolveChatAudioMaxBytes,
+  resolveChatLlmProvider,
   resolveCookieSecret,
   resolveFrontendOrigin,
   resolveGeminiApiKey,
@@ -176,6 +177,30 @@ describe('resolveChatAudioMaxBytes', () => {
   it('throws when CHAT_AUDIO_MAX_BYTES is not a number', () => {
     expect(() => resolveChatAudioMaxBytes('lots')).toThrow(
       'CHAT_AUDIO_MAX_BYTES environment variable must be a number',
+    );
+  });
+});
+
+describe('resolveChatLlmProvider', () => {
+  it('defaults to "gemini" when CHAT_LLM_PROVIDER is unset', () => {
+    expect(resolveChatLlmProvider(undefined)).toBe('gemini');
+  });
+
+  it('defaults to "gemini" when CHAT_LLM_PROVIDER is an empty string', () => {
+    expect(resolveChatLlmProvider('')).toBe('gemini');
+  });
+
+  it('returns "gemini" when CHAT_LLM_PROVIDER is explicitly set to "gemini"', () => {
+    expect(resolveChatLlmProvider('gemini')).toBe('gemini');
+  });
+
+  it('returns "mock" when CHAT_LLM_PROVIDER is set to "mock"', () => {
+    expect(resolveChatLlmProvider('mock')).toBe('mock');
+  });
+
+  it('throws when CHAT_LLM_PROVIDER is set to an unrecognized value', () => {
+    expect(() => resolveChatLlmProvider('chatgpt')).toThrow(
+      'CHAT_LLM_PROVIDER environment variable must be "gemini" or "mock"',
     );
   });
 });

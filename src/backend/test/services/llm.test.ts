@@ -1,5 +1,10 @@
 import { jest } from '@jest/globals';
-import { GeminiError, createGeminiClient, type FetchLike } from '../../src/services/llm.js';
+import {
+  GeminiError,
+  createGeminiClient,
+  createMockGeminiClient,
+  type FetchLike,
+} from '../../src/services/llm.js';
 
 function jsonResponse(status: number, body: unknown) {
   return { ok: status >= 200 && status < 300, status, json: () => Promise.resolve(body) };
@@ -76,5 +81,21 @@ describe('createGeminiClient', () => {
         contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
       }),
     ).rejects.toThrow('Gemini returned an empty reply');
+  });
+});
+
+describe('createMockGeminiClient', () => {
+  it('returns a fixed patient-style reply without calling fetch', async () => {
+    const fetchSpy = jest.spyOn(globalThis, 'fetch');
+    const client = createMockGeminiClient();
+
+    const reply = await client.generateReply({
+      systemInstruction: 'You are the patient.',
+      contents: [{ role: 'user', parts: [{ text: 'Does it itch?' }] }],
+    });
+
+    expect(reply).toBe('Nie jestem pewien, ale mogę powiedzieć, co zauważyłem.');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 });

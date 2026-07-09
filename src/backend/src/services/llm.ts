@@ -79,3 +79,19 @@ export function createGeminiClient(options: CreateGeminiClientOptions): GeminiCl
     },
   };
 }
+
+const MOCK_PATIENT_REPLY = 'Nie jestem pewien, ale mogę powiedzieć, co zauważyłem.';
+
+/**
+ * Local/dev-only stand-in for the real Gemini client: returns a fixed patient-style
+ * reply and never makes a network call. Selected via CHAT_LLM_PROVIDER=mock so the
+ * chat UI/backend can still be exercised manually when the Gemini free-tier quota
+ * returns 429. Must never be selected in production — the default provider is Gemini.
+ */
+export function createMockGeminiClient(): GeminiClient {
+  return {
+    generateReply(): Promise<string> {
+      return Promise.resolve(MOCK_PATIENT_REPLY);
+    },
+  };
+}

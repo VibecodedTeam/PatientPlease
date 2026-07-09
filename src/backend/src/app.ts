@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import {
   resolveChatAudioMaxBytes,
+  resolveChatLlmProvider,
   resolveCookieSecret,
   resolveFrontendOrigin,
   resolveGeminiApiKey,
@@ -22,7 +23,7 @@ import inventoryRoutes from './routes/inventory.js';
 import roundRoutes from './routes/round.js';
 import shopRoutes from './routes/shop.js';
 import type { GoogleIdTokenVerifier } from './services/auth.js';
-import { createGeminiClient, type GeminiClient } from './services/llm.js';
+import { createGeminiClient, createMockGeminiClient, type GeminiClient } from './services/llm.js';
 import { createGoogleSpeechClient, type TranscriptionClient } from './services/transcription.js';
 
 export interface BuildAppOptions {
@@ -41,8 +42,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const googleClientId = resolveGoogleClientId(process.env['GOOGLE_CLIENT_ID']);
   const sessionTtlMs = resolveSessionTtlMs(process.env['SESSION_TTL_MS']);
   const frontendOrigin = resolveFrontendOrigin(process.env['FRONTEND_ORIGIN']);
-  const geminiApiKey = resolveGeminiApiKey(process.env['GEMINI_API_KEY']);
-  const geminiModel = resolveGeminiModel(process.env['GEMINI_MODEL']);
+  const chatLlmProvider = resolveChatLlmProvider(process.env['CHAT_LLM_PROVIDER']);
   const googleSpeechApiKey = resolveGoogleSpeechApiKey(process.env['GOOGLE_SPEECH_API_KEY']);
   const chatAudioMaxBytes = resolveChatAudioMaxBytes(process.env['CHAT_AUDIO_MAX_BYTES']);
 
@@ -63,7 +63,13 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     transcriptionClient:
       options.transcriptionClient ?? createGoogleSpeechClient({ apiKey: googleSpeechApiKey }),
     geminiClient:
-      options.geminiClient ?? createGeminiClient({ apiKey: geminiApiKey, model: geminiModel }),
+      options.geminiClient ??
+      (chatLlmProvider === 'mock'
+        ? createMockGeminiClient()
+        : createGeminiClient({
+            apiKey: resolveGeminiApiKey(process.env['GEMINI_API_KEY']),
+            model: resolveGeminiModel(process.env['GEMINI_MODEL']),
+          })),
   });
   app.register(shopRoutes);
   app.register(inventoryRoutes);
