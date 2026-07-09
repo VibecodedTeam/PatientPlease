@@ -3,6 +3,7 @@ import {
   ChatCaseNotFoundError,
   ChatGameSessionNotFoundError,
   sendChatMessage,
+  type ChatCaseDocumentRecord,
   type ChatCaseRecord,
   type ChatGameSessionRecord,
   type ChatMessageRecord,
@@ -18,7 +19,32 @@ function createMockPrisma() {
       findMany: jest.fn<ChatPrismaClient['chatMessage']['findMany']>(),
       create: jest.fn<ChatPrismaClient['chatMessage']['create']>(),
     },
+    caseDocumentReveal: {
+      findMany: jest.fn<ChatPrismaClient['caseDocumentReveal']['findMany']>(),
+      create: jest.fn<ChatPrismaClient['caseDocumentReveal']['create']>(),
+    },
   };
+}
+
+function makeDocument(overrides: Partial<ChatCaseDocumentRecord> = {}): ChatCaseDocumentRecord {
+  return {
+    id: 'doc-1',
+    attentionPointRegion: null,
+    type: 'PHOTO',
+    title: 'Photo',
+    documentDate: null,
+    sortOrder: 1,
+    imageUrl: null,
+    imageWidthPx: null,
+    imageHeightPx: null,
+    imageAltText: 'A photo',
+    content: null,
+    ...overrides,
+  };
+}
+
+function makeSelectDocumentIds(ids: string[] = []) {
+  return jest.fn<(input: GenerateReplyInput) => Promise<string[]>>().mockResolvedValue(ids);
 }
 
 function makeGameSession(overrides: Partial<ChatGameSessionRecord> = {}): ChatGameSessionRecord {
@@ -54,7 +80,10 @@ describe('sendChatMessage', () => {
     await expect(
       sendChatMessage(
         prisma,
-        { generateReply: jest.fn<(input: GenerateReplyInput) => Promise<string>>() },
+        {
+          generateReply: jest.fn<(input: GenerateReplyInput) => Promise<string>>(),
+          selectDocumentIds: makeSelectDocumentIds(),
+        },
         {
           userId: 'user-uuid',
           gameSessionId: 'session-uuid',
@@ -72,7 +101,10 @@ describe('sendChatMessage', () => {
     await expect(
       sendChatMessage(
         prisma,
-        { generateReply: jest.fn<(input: GenerateReplyInput) => Promise<string>>() },
+        {
+          generateReply: jest.fn<(input: GenerateReplyInput) => Promise<string>>(),
+          selectDocumentIds: makeSelectDocumentIds(),
+        },
         {
           userId: 'user-uuid',
           gameSessionId: 'session-uuid',
@@ -91,7 +123,10 @@ describe('sendChatMessage', () => {
     await expect(
       sendChatMessage(
         prisma,
-        { generateReply: jest.fn<(input: GenerateReplyInput) => Promise<string>>() },
+        {
+          generateReply: jest.fn<(input: GenerateReplyInput) => Promise<string>>(),
+          selectDocumentIds: makeSelectDocumentIds(),
+        },
         {
           userId: 'user-uuid',
           gameSessionId: 'session-uuid',
@@ -121,13 +156,14 @@ describe('sendChatMessage', () => {
           sortOrder: 3,
         }),
       );
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
     const generateReply = jest
       .fn<(input: GenerateReplyInput) => Promise<string>>()
       .mockResolvedValue('Yes, at night.');
 
     const result = await sendChatMessage(
       prisma,
-      { generateReply },
+      { generateReply, selectDocumentIds: makeSelectDocumentIds() },
       {
         userId: 'user-uuid',
         gameSessionId: 'session-uuid',
@@ -178,13 +214,14 @@ describe('sendChatMessage', () => {
     prisma.chatMessage.create
       .mockResolvedValueOnce(makeMessage({ id: 'player-msg', sortOrder: 1 }))
       .mockResolvedValueOnce(makeMessage({ id: 'patient-msg', sender: 'PATIENT', sortOrder: 2 }));
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
     const generateReply = jest
       .fn<(input: GenerateReplyInput) => Promise<string>>()
       .mockResolvedValue('I do not know.');
 
     await sendChatMessage(
       prisma,
-      { generateReply },
+      { generateReply, selectDocumentIds: makeSelectDocumentIds() },
       { userId: 'user-uuid', gameSessionId: 'session-uuid', caseId: 'case-uuid', playerText: 'Hi' },
     );
 
@@ -203,13 +240,14 @@ describe('sendChatMessage', () => {
     prisma.chatMessage.create
       .mockResolvedValueOnce(makeMessage({ id: 'player-msg', sortOrder: 1 }))
       .mockResolvedValueOnce(makeMessage({ id: 'patient-msg', sender: 'PATIENT', sortOrder: 2 }));
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
     const generateReply = jest
       .fn<(input: GenerateReplyInput) => Promise<string>>()
       .mockResolvedValue('Hi there.');
 
     await sendChatMessage(
       prisma,
-      { generateReply },
+      { generateReply, selectDocumentIds: makeSelectDocumentIds() },
       { userId: 'user-uuid', gameSessionId: 'session-uuid', caseId: 'case-uuid', playerText: 'Hi' },
     );
 
@@ -230,6 +268,102 @@ describe('sendChatMessage', () => {
         content: 'Hi there.',
         sortOrder: 2,
       },
+    });
+  });
+
+  describe('document reveal', () => {
+    function setUpRevealCase(
+      options: {
+        documents?: ChatCaseDocumentRecord[];
+        priorReveals?: { caseDocumentId: string }[];
+        selectedIds?: string[];
+      } = {},
+    ) {
+      const prisma = createMockPrisma();
+      prisma.gameSession.findUnique.mockResolvedValue(makeGameSession());
+      prisma.case.findUnique.mockResolvedValue(
+        makeCase({
+          documents: options.documents ?? [
+            makeDocument({ id: 'doc-1' }),
+            makeDocument({ id: 'doc-2', title: 'History' }),
+          ],
+        }),
+      );
+      prisma.chatMessage.findMany.mockResolvedValue([]);
+      prisma.chatMessage.create
+        .mockResolvedValueOnce(makeMessage({ id: 'player-msg', sortOrder: 1 }))
+        .mockResolvedValueOnce(
+          makeMessage({
+            id: 'patient-msg',
+            sender: 'PATIENT',
+            content: 'It itches at night.',
+            sortOrder: 2,
+          }),
+        );
+      prisma.caseDocumentReveal.findMany.mockResolvedValue(options.priorReveals ?? []);
+
+      const createdReveals: { gameSessionId: string; caseId: string; caseDocumentId: string }[] =
+        [];
+      prisma.caseDocumentReveal.create.mockImplementation((args) => {
+        createdReveals.push(args.data);
+        return Promise.resolve({ id: `reveal-${args.data.caseDocumentId}` });
+      });
+
+      const generateReply = jest
+        .fn<(input: GenerateReplyInput) => Promise<string>>()
+        .mockResolvedValue('It itches at night.');
+      const selectDocumentIds = makeSelectDocumentIds(options.selectedIds ?? []);
+
+      const deps = { generateReply, selectDocumentIds };
+      const input = {
+        userId: 'user-uuid',
+        gameSessionId: 'session-uuid',
+        caseId: 'case-uuid',
+        playerText: 'Does it itch?',
+      };
+
+      return { prisma, deps, input, createdReveals };
+    }
+
+    it('reveals documents the selection returns, persists them, and returns them mapped', async () => {
+      const { prisma, deps, input, createdReveals } = setUpRevealCase({ selectedIds: ['doc-1'] });
+
+      const result = await sendChatMessage(prisma, deps, input);
+
+      expect(result.revealedDocuments.map((d) => d.id)).toEqual(['doc-1']);
+      expect(createdReveals).toEqual([
+        { gameSessionId: input.gameSessionId, caseId: input.caseId, caseDocumentId: 'doc-1' },
+      ]);
+    });
+
+    it('drops hallucinated ids not belonging to the case', async () => {
+      const { prisma, deps, input } = setUpRevealCase({ selectedIds: ['doc-1', 'ghost'] });
+
+      const result = await sendChatMessage(prisma, deps, input);
+
+      expect(result.revealedDocuments.map((d) => d.id)).toEqual(['doc-1']);
+    });
+
+    it('does not re-reveal a document already revealed this session', async () => {
+      const { prisma, deps, input, createdReveals } = setUpRevealCase({
+        priorReveals: [{ caseDocumentId: 'doc-1' }],
+        selectedIds: ['doc-1'],
+      });
+
+      const result = await sendChatMessage(prisma, deps, input);
+
+      expect(result.revealedDocuments).toEqual([]);
+      expect(createdReveals).toEqual([]);
+    });
+
+    it('degrades gracefully to [] when selectDocumentIds throws', async () => {
+      const { prisma, deps, input } = setUpRevealCase();
+      deps.selectDocumentIds = jest.fn(() => Promise.reject(new Error('gemini down')));
+
+      const result = await sendChatMessage(prisma, deps, input);
+
+      expect(result.patientMessage.content).toBeDefined();
+      expect(result.revealedDocuments).toEqual([]);
     });
   });
 });

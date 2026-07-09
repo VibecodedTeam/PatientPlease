@@ -1,4 +1,9 @@
-import { buildCasePrompt, type CasePromptChatMessage, type ChatSenderValue } from './casePrompt.js';
+import {
+  buildCasePrompt,
+  buildDocumentSelectionPrompt,
+  type CasePromptChatMessage,
+  type ChatSenderValue,
+} from './casePrompt.js';
 import type { GenerateReplyInput } from './llm.js';
 
 export interface ChatMessageRecord {
@@ -22,11 +27,20 @@ export interface ChatPatientRecord {
 }
 
 export interface ChatCaseDocumentRecord {
+  id: string;
+  attentionPointRegion: string | null;
   type: string;
   title: string;
-  content: unknown;
+  documentDate: Date | null;
+  sortOrder: number;
+  imageUrl: string | null;
+  imageWidthPx: number | null;
+  imageHeightPx: number | null;
   imageAltText: string | null;
+  content: unknown;
 }
+
+export type RevealedDocumentRecord = ChatCaseDocumentRecord;
 
 export interface ChatCaseRecord {
   id: string;
@@ -61,6 +75,14 @@ export interface ChatPrismaClient {
       };
     }): Promise<ChatMessageRecord>;
   };
+  caseDocumentReveal: {
+    findMany(args: {
+      where: { gameSessionId: string; caseId: string };
+    }): Promise<{ caseDocumentId: string }[]>;
+    create(args: {
+      data: { gameSessionId: string; caseId: string; caseDocumentId: string };
+    }): Promise<{ id: string }>;
+  };
 }
 
 export class ChatGameSessionNotFoundError extends Error {
@@ -86,11 +108,13 @@ export interface SendChatMessageInput {
 
 export interface SendChatMessageDeps {
   generateReply(input: GenerateReplyInput): Promise<string>;
+  selectDocumentIds(input: GenerateReplyInput): Promise<string[]>;
 }
 
 export interface SendChatMessageResult {
   playerMessage: ChatMessageRecord;
   patientMessage: ChatMessageRecord;
+  revealedDocuments: RevealedDocumentRecord[];
 }
 
 function toPromptHistory(messages: ChatMessageRecord[]): CasePromptChatMessage[] {
@@ -150,5 +174,61 @@ export async function sendChatMessage(
     },
   });
 
-  return { playerMessage, patientMessage };
+  let revealedDocuments: RevealedDocumentRecord[];
+  try {
+    const selectionPrompt = buildDocumentSelectionPrompt(
+      gameCase.documents.map((d) => ({
+        id: d.id,
+        type: d.type,
+        title: d.title,
+        content: d.content,
+        imageAltText: d.imageAltText,
+      })),
+      replyText,
+      input.playerText,
+    );
+    const selectedIds = await deps.selectDocumentIds(selectionPrompt);
+
+    const validIds = new Set(gameCase.documents.map((d) => d.id));
+    const alreadyRevealed = new Set(
+      (
+        await prisma.caseDocumentReveal.findMany({
+          where: { gameSessionId: input.gameSessionId, caseId: input.caseId },
+        })
+      ).map((r) => r.caseDocumentId),
+    );
+    const toReveal = [...new Set(selectedIds)].filter(
+      (id) => validIds.has(id) && !alreadyRevealed.has(id),
+    );
+
+    for (const caseDocumentId of toReveal) {
+      await prisma.caseDocumentReveal.create({
+        data: { gameSessionId: input.gameSessionId, caseId: input.caseId, caseDocumentId },
+      });
+    }
+    const revealSet = new Set(toReveal);
+    revealedDocuments = gameCase.documents
+      .filter((d) => revealSet.has(d.id))
+      .map(toRevealedDocument);
+  } catch {
+    revealedDocuments = [];
+  }
+
+  return { playerMessage, patientMessage, revealedDocuments };
+}
+
+function toRevealedDocument(document: ChatCaseDocumentRecord): RevealedDocumentRecord {
+  return {
+    id: document.id,
+    attentionPointRegion: document.attentionPointRegion,
+    type: document.type,
+    title: document.title,
+    documentDate: document.documentDate,
+    sortOrder: document.sortOrder,
+    imageUrl: document.imageUrl,
+    imageWidthPx: document.imageWidthPx,
+    imageHeightPx: document.imageHeightPx,
+    imageAltText: document.imageAltText,
+    content: document.content,
+  };
 }

@@ -97,7 +97,10 @@ export default function chatRoutes(fastify: FastifyInstance, opts: ChatRoutesOpt
     try {
       const result = await sendChatMessage(
         prisma,
-        { generateReply: (input) => opts.geminiClient.generateReply(input) },
+        {
+          generateReply: (input) => opts.geminiClient.generateReply(input),
+          selectDocumentIds: (input) => opts.geminiClient.selectRelevantDocumentIds(input),
+        },
         { userId: user.id, gameSessionId, caseId, playerText },
       );
       return await reply
