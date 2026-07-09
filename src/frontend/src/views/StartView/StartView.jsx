@@ -169,7 +169,7 @@ export function StartView() {
         <SunGraphic />
 
         <div
-          className={`${styles['sca-hero-bg-dot']} ${styles['dot-tl']}`}
+          className={styles['sca-hero-bg-dot']}
           style={{ width: 260, height: 260, marginTop: -60, marginLeft: -80 }}
         />
         <div
