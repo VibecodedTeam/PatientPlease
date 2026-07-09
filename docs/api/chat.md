@@ -35,9 +35,31 @@ exist). The raw audio file is never stored; only its transcript is persisted.
   "chatMessages": [
     { "id": "uuid", "sender": "PLAYER", "content": "Does it itch?", "sentAt": "iso-datetime", "sortOrder": 2 },
     { "id": "uuid", "sender": "PATIENT", "content": "Yes, especially at night.", "sentAt": "iso-datetime", "sortOrder": 3 }
+  ],
+  "revealedDocuments": [
+    {
+      "id": "uuid",
+      "attentionPointRegion": "LEFT_ARM", // BodyRegion string, or null
+      "type": "SKIN_IMAGE",
+      "title": "Left shoulder — day 1",
+      "documentDate": "iso-datetime-or-null",
+      "sortOrder": 1,
+      "imageUrl": "https://cdn.example.com/skin/lesion_01.png",
+      "imageWidthPx": 1024,
+      "imageHeightPx": 768,
+      "imageAltText": "Asymmetric brown lesion, ~8mm",
+      "content": null
+    }
   ]
 }
 ```
+
+`revealedDocuments` holds only the case documents newly unlocked by *this* turn's patient reply
+— the same per-document shape `POST /api/v1/round` uses for `case.documents` (see
+`docs/api/round.md`). Documents already revealed in a prior turn of this game session are never
+returned again. Document reveal is best-effort: if the underlying classification call fails or
+returns nothing usable, `revealedDocuments` is simply `[]` — this never turns a successful reply
+into a non-200 response.
 
 ## Orchestration
 
@@ -57,7 +79,15 @@ exist). The raw audio file is never stored; only its transcript is persisted.
    just-persisted player message.
 8. Call Gemini for a reply (`502` on failure) and persist it as a new `ChatMessage`
    (`sender: PATIENT`).
-9. Return both new messages.
+9. Best-effort document reveal: build a second, classifier-only Gemini prompt from the case's
+   documents plus the just-generated patient reply, and ask it which document ids the reply
+   relates to. Drop any returned id that isn't one of the case's real document ids (guards
+   against hallucination), drop any id already revealed in a prior turn of this game session
+   (dedupe), then persist a `CaseDocumentReveal` row for each surviving id and return those
+   documents as `revealedDocuments`, in the case's document order. If the classification call
+   throws for any reason, catch it and return `revealedDocuments: []` — this step never affects
+   the `200` status or the chat messages already persisted in step 8.
+10. Return both new chat messages and `revealedDocuments`.
 
 ## Related
 
