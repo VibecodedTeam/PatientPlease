@@ -3,11 +3,26 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { ApiProvider } from '../providers/Api';
 import { AuthProvider } from '../providers/Auth';
-import { AppRoutes } from '../AppRoutes';
+
+// This file uses React.createElement instead of JSX: esbuild-jest routes any
+// file containing a `jest.mock(` call through an extra babel pass that strips
+// the `React` import binding before the JSX pass runs, which would crash JSX
+// with "React is not defined". We need jest.mock below to stub the 3D scene.
+//
+// jsdom has no WebGL, so MainView's real Three.js PatientScene throws when the
+// authenticated /game route mounts it. This is a routing test, not a 3D test.
+jest.mock('../components/PatientScene', () => ({
+  PatientScene: () => require('react').createElement('div', { 'data-testid': 'patient-scene' }),
+  PatientSceneProvider: ({ children }) => children,
+}));
+
+const { AppRoutes } = require('../AppRoutes');
+
+const h = React.createElement;
 
 function LocationProbe() {
   const location = useLocation();
-  return <div data-testid="location">{location.pathname}</div>;
+  return h('div', { 'data-testid': 'location' }, location.pathname);
 }
 
 // Fresh Response per call so multi-fetch renders (e.g. /auth/me + a view's
@@ -16,9 +31,7 @@ function mockAuth(authenticated) {
   global.fetch = jest.fn().mockImplementation(() =>
     Promise.resolve(
       authenticated
-        ? new Response(JSON.stringify({ user: { id: '1', name: 'Test User' } }), {
-            status: 200,
-          })
+        ? new Response(JSON.stringify({ user: { id: '1', name: 'Test User' } }), { status: 200 })
         : new Response('', { status: 401 }),
     ),
   );
@@ -26,14 +39,20 @@ function mockAuth(authenticated) {
 
 function renderAt(path) {
   return render(
-    <ApiProvider baseUrl="http://api.test">
-      <AuthProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <AppRoutes googleClientId="test-client-id" />
-          <LocationProbe />
-        </MemoryRouter>
-      </AuthProvider>
-    </ApiProvider>,
+    h(
+      ApiProvider,
+      { baseUrl: 'http://api.test' },
+      h(
+        AuthProvider,
+        null,
+        h(
+          MemoryRouter,
+          { initialEntries: [path] },
+          h(AppRoutes, { googleClientId: 'test-client-id' }),
+          h(LocationProbe),
+        ),
+      ),
+    ),
   );
 }
 
