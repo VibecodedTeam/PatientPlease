@@ -24,12 +24,6 @@ export function AuthGate({ googleClientId, children }) {
 
   return (
     <div className={styles.gate}>
-      <header className={styles.header}>
-        <span>{user.name}</span>
-        <button type="button" onClick={() => logout()}>
-          Logout
-        </button>
-      </header>
       <div className={styles.content}>{children}</div>
     </div>
   );
