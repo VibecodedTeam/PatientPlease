@@ -27,7 +27,8 @@ services:
       COOKIE_SECRET: ${COOKIE_SECRET:-dev-only-insecure-secret-change-me}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4173}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-docker-dev-not-a-real-gemini-key}
-      GOOGLE_SPEECH_API_KEY: ${GOOGLE_SPEECH_API_KEY:-docker-dev-not-a-real-speech-key}
+      WHISPER_BASE_URL: ${WHISPER_BASE_URL:-http://localhost:8000/v1}
+      WHISPER_MODEL: ${WHISPER_MODEL:-whisper-1}
     ports:
       - "4000:4000"
     depends_on:

@@ -37,7 +37,8 @@ jobs:
       COOKIE_SECRET: ci-only-insecure-secret-change-me
       FRONTEND_ORIGIN: http://localhost:4173
       GEMINI_API_KEY: ci-not-a-real-gemini-key
-      GOOGLE_SPEECH_API_KEY: ci-not-a-real-speech-key
+      WHISPER_BASE_URL: http://localhost:8000/v1
+      WHISPER_MODEL: whisper-1
 
     steps:
       - uses: actions/checkout@v4

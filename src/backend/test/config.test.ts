@@ -6,9 +6,11 @@ import {
   resolveGeminiApiKey,
   resolveGeminiModel,
   resolveGoogleClientId,
-  resolveGoogleSpeechApiKey,
   resolvePort,
   resolveSessionTtlMs,
+  resolveWhisperApiKey,
+  resolveWhisperBaseUrl,
+  resolveWhisperModel,
 } from '../src/config.js';
 
 describe('resolvePort', () => {
@@ -129,21 +131,30 @@ describe('resolveGeminiApiKey', () => {
   });
 });
 
-describe('resolveGoogleSpeechApiKey', () => {
-  it('returns the value when GOOGLE_SPEECH_API_KEY is set', () => {
-    expect(resolveGoogleSpeechApiKey('test-key')).toBe('test-key');
+describe('resolveWhisperBaseUrl', () => {
+  it('returns the value when set', () => {
+    expect(resolveWhisperBaseUrl('http://localhost:8000/v1')).toBe('http://localhost:8000/v1');
   });
-
-  it('throws when GOOGLE_SPEECH_API_KEY is unset', () => {
-    expect(() => resolveGoogleSpeechApiKey(undefined)).toThrow(
-      'GOOGLE_SPEECH_API_KEY environment variable is not set',
-    );
+  it('throws when unset', () => {
+    expect(() => resolveWhisperBaseUrl(undefined)).toThrow(/WHISPER_BASE_URL/);
   });
+});
 
-  it('throws when GOOGLE_SPEECH_API_KEY is an empty string', () => {
-    expect(() => resolveGoogleSpeechApiKey('')).toThrow(
-      'GOOGLE_SPEECH_API_KEY environment variable is not set',
-    );
+describe('resolveWhisperModel', () => {
+  it('defaults to whisper-1 when unset', () => {
+    expect(resolveWhisperModel(undefined)).toBe('whisper-1');
+  });
+  it('returns the value when set', () => {
+    expect(resolveWhisperModel('Systran/faster-whisper-base')).toBe('Systran/faster-whisper-base');
+  });
+});
+
+describe('resolveWhisperApiKey', () => {
+  it('returns undefined when unset (local servers need no key)', () => {
+    expect(resolveWhisperApiKey(undefined)).toBeUndefined();
+  });
+  it('returns the value when set', () => {
+    expect(resolveWhisperApiKey('sk-test')).toBe('sk-test');
   });
 });
 

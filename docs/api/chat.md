@@ -26,7 +26,7 @@ exist). The raw audio file is never stored; only its transcript is persisted.
 | Missing `gameSessionId`/`caseId`, both/neither `text`+`audio`, unsupported audio mime type, or audio exceeds the size limit | 400 | `{ "error": "invalid_input", "message": "..." }` |
 | `gameSessionId` does not exist or does not belong to the caller | 404 | `{ "error": "game_session_not_found" }` |
 | `caseId` does not exist | 404 | `{ "error": "case_not_found" }` |
-| Google Speech-to-Text request failed | 502 | `{ "error": "transcription_failed" }` |
+| Whisper transcription request failed | 502 | `{ "error": "transcription_failed" }` |
 | Gemini request failed | 502 | `{ "error": "llm_failed" }` |
 | Success | 200 | see shape below |
 
@@ -44,7 +44,8 @@ exist). The raw audio file is never stored; only its transcript is persisted.
 1. Resolve the caller (`request.getCurrentUser()`) — `401` if absent.
 2. Parse the multipart body. Exactly one of `text`/`audio` must be present — `400` otherwise.
 3. If `audio`: validate its mime type against `audio/webm`, `audio/wav`, `audio/mpeg`, `audio/ogg`
-   (`400` if unsupported or oversized), then transcribe it via Google Cloud Speech-to-Text
+   (`400` if unsupported or oversized), then transcribe it via an open-source Whisper server
+   (OpenAI-compatible `/audio/transcriptions` endpoint, configured via `WHISPER_BASE_URL`)
    (`502` on failure). The transcript becomes the player's message text.
 4. Look up the `GameSession` by `gameSessionId` and confirm it belongs to the caller (`404`
    otherwise). Look up the `Case` by `caseId` (`404` if missing).
@@ -62,8 +63,8 @@ exist). The raw audio file is never stored; only its transcript is persisted.
 
 - Route: `src/backend/src/routes/chat.ts`
 - Business logic: `src/backend/src/services/chat.ts`, `src/backend/src/services/casePrompt.ts`
-- External clients: `src/backend/src/services/transcription.ts` (Google Speech-to-Text),
-  `src/backend/src/services/llm.ts` (Gemini)
+- External clients: `src/backend/src/services/transcription.ts` (Whisper, OpenAI-compatible
+  `/audio/transcriptions` endpoint), `src/backend/src/services/llm.ts` (Gemini)
 - App wiring: `src/backend/src/app.ts`
 - Tests: `src/backend/test/routes/chat.test.ts`, `src/backend/test/services/chat.test.ts`,
   `src/backend/test/services/casePrompt.test.ts`, `src/backend/test/services/transcription.test.ts`,

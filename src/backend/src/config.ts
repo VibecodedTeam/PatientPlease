@@ -56,11 +56,21 @@ export function resolveGeminiApiKey(value: string | undefined): string {
   return value;
 }
 
-export function resolveGoogleSpeechApiKey(value: string | undefined): string {
+export function resolveWhisperBaseUrl(value: string | undefined): string {
   if (!value) {
-    throw new Error('GOOGLE_SPEECH_API_KEY environment variable is not set');
+    throw new Error('WHISPER_BASE_URL environment variable is not set');
   }
-  return value;
+  return value.replace(/\/+$/, '');
+}
+
+const DEFAULT_WHISPER_MODEL = 'whisper-1';
+
+export function resolveWhisperModel(value: string | undefined): string {
+  return value ? value : DEFAULT_WHISPER_MODEL;
+}
+
+export function resolveWhisperApiKey(value: string | undefined): string | undefined {
+  return value ? value : undefined;
 }
 
 const DEFAULT_GEMINI_MODEL = 'gemini-2.0-flash';

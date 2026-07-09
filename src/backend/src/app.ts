@@ -9,8 +9,10 @@ import {
   resolveGeminiApiKey,
   resolveGeminiModel,
   resolveGoogleClientId,
-  resolveGoogleSpeechApiKey,
   resolveSessionTtlMs,
+  resolveWhisperApiKey,
+  resolveWhisperBaseUrl,
+  resolveWhisperModel,
 } from './config.js';
 import cookiePlugin from './plugins/cookie.js';
 import currentUserPlugin from './plugins/current-user.js';
@@ -24,12 +26,12 @@ import roundRoutes from './routes/round.js';
 import shopRoutes from './routes/shop.js';
 import type { GoogleIdTokenVerifier } from './services/auth.js';
 import { createGeminiClient, createMockGeminiClient, type GeminiClient } from './services/llm.js';
-import { createGoogleSpeechClient, type TranscriptionClient } from './services/transcription.js';
+import { createWhisperClient, type TranscriptionClient } from './services/transcription.js';
 
 export interface BuildAppOptions {
   /** Overrides the real google-auth-library OAuth2Client — used by tests to avoid real network calls to Google. */
   googleClient?: GoogleIdTokenVerifier;
-  /** Overrides the real Google Speech-to-Text client — used by tests to avoid real network calls. */
+  /** Overrides the real Whisper transcription client — used by tests to avoid real network calls. */
   transcriptionClient?: TranscriptionClient;
   /** Overrides the real Gemini client — used by tests to avoid real network calls. */
   geminiClient?: GeminiClient;
@@ -43,7 +45,9 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const sessionTtlMs = resolveSessionTtlMs(process.env['SESSION_TTL_MS']);
   const frontendOrigin = resolveFrontendOrigin(process.env['FRONTEND_ORIGIN']);
   const chatLlmProvider = resolveChatLlmProvider(process.env['CHAT_LLM_PROVIDER']);
-  const googleSpeechApiKey = resolveGoogleSpeechApiKey(process.env['GOOGLE_SPEECH_API_KEY']);
+  const whisperBaseUrl = resolveWhisperBaseUrl(process.env['WHISPER_BASE_URL']);
+  const whisperModel = resolveWhisperModel(process.env['WHISPER_MODEL']);
+  const whisperApiKey = resolveWhisperApiKey(process.env['WHISPER_API_KEY']);
   const chatAudioMaxBytes = resolveChatAudioMaxBytes(process.env['CHAT_AUDIO_MAX_BYTES']);
 
   app.register(cors, { origin: frontendOrigin, credentials: true });
@@ -61,7 +65,12 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   app.register(dayRoutes);
   app.register(chatRoutes, {
     transcriptionClient:
-      options.transcriptionClient ?? createGoogleSpeechClient({ apiKey: googleSpeechApiKey }),
+      options.transcriptionClient ??
+      createWhisperClient({
+        baseUrl: whisperBaseUrl,
+        model: whisperModel,
+        ...(whisperApiKey ? { apiKey: whisperApiKey } : {}),
+      }),
     geminiClient:
       options.geminiClient ??
       (chatLlmProvider === 'mock'

@@ -7,9 +7,9 @@ export interface TranscriptionClient {
   transcribe(input: TranscriptionAudioInput): Promise<string>;
 }
 
-export type FetchLike = (
+export type WhisperFetchLike = (
   input: string,
-  init: { method: string; headers: Record<string, string>; body: string },
+  init: { method: string; headers: Record<string, string>; body: FormData },
 ) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
 
 export const ALLOWED_CHAT_AUDIO_MIME_TYPES = new Set([
@@ -19,11 +19,11 @@ export const ALLOWED_CHAT_AUDIO_MIME_TYPES = new Set([
   'audio/ogg',
 ]);
 
-const MIME_TO_ENCODING: Record<string, string> = {
-  'audio/webm': 'WEBM_OPUS',
-  'audio/wav': 'LINEAR16',
-  'audio/mpeg': 'MP3',
-  'audio/ogg': 'OGG_OPUS',
+const MIME_TO_FILENAME: Record<string, string> = {
+  'audio/webm': 'clip.webm',
+  'audio/wav': 'clip.wav',
+  'audio/mpeg': 'clip.mp3',
+  'audio/ogg': 'clip.ogg',
 };
 
 export class TranscriptionError extends Error {
@@ -33,60 +33,61 @@ export class TranscriptionError extends Error {
   }
 }
 
-export interface CreateGoogleSpeechClientOptions {
-  apiKey: string;
+export interface CreateWhisperClientOptions {
+  baseUrl: string;
+  model: string;
+  apiKey?: string;
   languageCode?: string;
-  fetchImpl?: FetchLike;
+  fetchImpl?: WhisperFetchLike;
 }
 
-export function createGoogleSpeechClient(
-  options: CreateGoogleSpeechClientOptions,
-): TranscriptionClient {
+export function createWhisperClient(options: CreateWhisperClientOptions): TranscriptionClient {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const languageCode = options.languageCode ?? 'en-US';
 
   return {
     async transcribe(input: TranscriptionAudioInput): Promise<string> {
-      const encoding = MIME_TO_ENCODING[input.mimeType];
-      if (!encoding) {
+      const filename = MIME_TO_FILENAME[input.mimeType];
+      if (!filename) {
         throw new TranscriptionError(`Unsupported audio mime type: ${input.mimeType}`);
+      }
+
+      const form = new FormData();
+      form.append('model', options.model);
+      form.append('response_format', 'json');
+      if (options.languageCode) {
+        form.append('language', options.languageCode);
+      }
+      form.append(
+        'file',
+        new Blob([Uint8Array.from(input.buffer)], { type: input.mimeType }),
+        filename,
+      );
+
+      const headers: Record<string, string> = {};
+      if (options.apiKey) {
+        headers.Authorization = `Bearer ${options.apiKey}`;
       }
 
       let response: { ok: boolean; status: number; json(): Promise<unknown> };
       try {
-        response = await fetchImpl(
-          `https://speech.googleapis.com/v1/speech:recognize?key=${options.apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              config: { encoding, languageCode },
-              audio: { content: input.buffer.toString('base64') },
-            }),
-          },
-        );
+        response = await fetchImpl(`${options.baseUrl}/audio/transcriptions`, {
+          method: 'POST',
+          headers,
+          body: form,
+        });
       } catch (error) {
-        throw new TranscriptionError('Failed to reach Google Speech-to-Text', { cause: error });
+        throw new TranscriptionError('Failed to reach the Whisper server', { cause: error });
       }
 
       if (!response.ok) {
-        throw new TranscriptionError(`Google Speech-to-Text returned ${response.status}`);
+        throw new TranscriptionError(`Whisper server returned ${response.status}`);
       }
 
-      const body = (await response.json()) as {
-        results?: { alternatives?: { transcript?: string }[] }[];
-      };
-
-      const transcript = body.results
-        ?.map((result) => result.alternatives?.[0]?.transcript ?? '')
-        .filter(Boolean)
-        .join(' ')
-        .trim();
-
+      const body = (await response.json()) as { text?: string };
+      const transcript = body.text?.trim();
       if (!transcript) {
-        throw new TranscriptionError('Google Speech-to-Text returned an empty transcript');
+        throw new TranscriptionError('Whisper server returned an empty transcript');
       }
-
       return transcript;
     },
   };
