@@ -93,6 +93,34 @@ describe('PatientScene', () => {
     expect(placedRegions).toEqual(['HEAD', 'OTHER']);
   });
 
+  it('replaces old dots instead of accumulating them when documents changes', () => {
+    const actualThree = jest.requireActual('three');
+    const model = new actualThree.Group();
+    model.add(new actualThree.Mesh(new actualThree.BoxGeometry(1, 1, 1)));
+
+    const { rerender } = renderWithSceneContext(
+      { model, status: 'success', error: null },
+      { documents: [{ id: 'd1', attentionPointRegion: 'HEAD' }] },
+    );
+
+    rerender(
+      React.createElement(
+        PatientSceneContext.Provider,
+        { value: { model, status: 'success', error: null } },
+        React.createElement(PatientScene, {
+          documents: [{ id: 'd2', attentionPointRegion: 'CHEST' }],
+        }),
+      ),
+    );
+
+    const placedRegions = model.children
+      .filter((child) => child.userData.isKropka)
+      .map((child) => child.userData.bodyRegion)
+      .sort();
+
+    expect(placedRegions).toEqual(['CHEST']);
+  });
+
   function makeDot(actualThree, color = 0x00ff00) {
     const dot = new actualThree.Mesh(
       new actualThree.SphereGeometry(0.1),

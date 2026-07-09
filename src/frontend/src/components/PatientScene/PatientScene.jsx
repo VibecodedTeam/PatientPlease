@@ -12,7 +12,7 @@ import styles from './PatientScene.module.css';
 
 const DOT_COLOR = 0xffff00;
 
-export function PatientScene({ documents }) {
+export function PatientScene({ documents = [] }) {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -160,6 +160,16 @@ export function PatientScene({ documents }) {
 
     return () => {
       scene.remove(model);
+      // Dots are added as children of `model` (see dodajKropke), not the
+      // scene, so removing `model` from the scene doesn't detach them —
+      // without this, the next run's traverse would re-collect these same
+      // (disposed) dots alongside a freshly-created batch, accumulating
+      // duplicates every time this effect re-runs.
+      dotsRef.current.forEach((dot) => {
+        model.remove(dot);
+        dot.geometry?.dispose();
+        dot.material?.dispose();
+      });
       dotsRef.current = [];
       model.traverse((child) => {
         if (child.isMesh) {
@@ -188,8 +198,4 @@ PatientScene.propTypes = {
       attentionPointRegion: PropTypes.string,
     }),
   ),
-};
-
-PatientScene.defaultProps = {
-  documents: [],
 };

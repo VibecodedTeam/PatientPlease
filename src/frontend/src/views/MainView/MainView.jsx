@@ -1,16 +1,30 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './MainView.module.css';
 import { PatientScene, PatientSceneProvider } from '../../components/PatientScene';
 import { Wall } from '../../components/Wall';
 import { Table } from '../../components/Table';
 import { Settings } from '../../components/Settings';
+import { ResultPopup } from '../../components/ResultPopup';
+import { StatisticsPopup } from '../../components/StatisticsPopup';
 import { RoundProvider, useRound } from './providers/Round';
 import { DocumentTableProvider } from '../../components/Table/providers/DocumentTable';
 import { GameSessionProvider, useGameSession } from './providers/GameSession';
+import { ResultsProvider, useResults } from './providers/Results';
+import { StatisticsProvider, useStatistics } from './providers/Statistics';
+
+// Stable fallback so PatientScene's documents prop keeps the same reference
+// across re-renders while round is still loading — a fresh [] literal here
+// would otherwise re-trigger PatientScene's model-setup effect on every
+// unrelated re-render (e.g. GameSession's per-second timer tick).
+const NO_DOCUMENTS = [];
 
 function MainViewContent() {
+  const navigate = useNavigate();
   const { elapsedSeconds, isPaused } = useGameSession();
   const { round } = useRound();
+  const { isOpen: isResultOpen, result, closeResult } = useResults();
+  const { isOpen: isStatisticsOpen, statistics, closeStatistics } = useStatistics();
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [settingsAutoOpened, setSettingsAutoOpened] = useState(false);
 
@@ -33,6 +47,11 @@ function MainViewContent() {
   function handleCloseSettings() {
     setSettingsOpen(false);
     setSettingsAutoOpened(false);
+  }
+
+  function handleCloseStatistics() {
+    closeStatistics();
+    navigate('/night');
   }
 
   return (
@@ -64,7 +83,7 @@ function MainViewContent() {
       <div className={styles.mainView}>
         <section className={styles.patientArea} aria-label="Patient preview area">
           <PatientSceneProvider url="/3DModels/FinalBaseMesh.obj">
-            <PatientScene documents={round?.case?.documents ?? []} />
+            <PatientScene documents={round?.case?.documents ?? NO_DOCUMENTS} />
           </PatientSceneProvider>
         </section>
         <div className={styles.rightColumn}>
@@ -79,6 +98,18 @@ function MainViewContent() {
       {isSettingsOpen && (
         <Settings onClose={handleCloseSettings} autoPaused={settingsAutoOpened} />
       )}
+      {isResultOpen && result && (
+        <ResultPopup
+          isCorrect={result.isCorrect}
+          moneyDelta={result.moneyDelta}
+          onClose={closeResult}
+        />
+      )}
+      {/* Deferred while a ResultPopup is open, so the player always sees
+          their diagnosis result before the day-end popup can cover it. */}
+      {isStatisticsOpen && statistics && !isResultOpen && (
+        <StatisticsPopup statistics={statistics} onClose={handleCloseStatistics} />
+      )}
     </div>
   );
 }
@@ -86,11 +117,15 @@ function MainViewContent() {
 export function MainView() {
   return (
     <GameSessionProvider>
-      <RoundProvider>
-        <DocumentTableProvider>
-          <MainViewContent />
-        </DocumentTableProvider>
-      </RoundProvider>
+      <StatisticsProvider>
+        <RoundProvider>
+          <ResultsProvider>
+            <DocumentTableProvider>
+              <MainViewContent />
+            </DocumentTableProvider>
+          </ResultsProvider>
+        </RoundProvider>
+      </StatisticsProvider>
     </GameSessionProvider>
   );
 }
