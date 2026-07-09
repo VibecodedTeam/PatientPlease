@@ -94,6 +94,7 @@ describe('POST /api/v1/round', () => {
   let app: FastifyInstance;
 
   afterEach(async () => {
+    await prisma.caseExamination.deleteMany({});
     await prisma.diagnosisAttempt.deleteMany({});
     await prisma.gameDayLog.deleteMany({});
     await prisma.ownedItem.deleteMany({});
@@ -261,5 +262,57 @@ describe('POST /api/v1/round', () => {
       where: { id: firstBody.gameSession.id },
     });
     expect(gameSession.status).toBe('COMPLETED');
+  });
+
+  it('hides an EXAMINATION_RESULTS document until a successful CaseExamination exists for it', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    const gameCase = await createCase(diagnosis.id, treatment.id);
+    const shopItem = await prisma.shopItem.create({
+      data: {
+        sku: 'biopsy-1',
+        name: 'Biopsy',
+        description: 'test',
+        itemType: 'EXAMINATION',
+        price: 20,
+        content: { timeCostMs: 60000 },
+      },
+    });
+    await prisma.caseDocument.create({
+      data: {
+        caseId: gameCase.id,
+        type: 'EXAMINATION_RESULTS',
+        title: 'Biopsy results',
+        sortOrder: 2,
+        content: { shopItemId: shopItem.id },
+      },
+    });
+
+    const first = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const firstBody = first.json<{
+      gameSession: { id: string };
+      case: { documents: { type: string }[] };
+    }>();
+    expect(firstBody.case.documents.map((document) => document.type)).not.toContain(
+      'EXAMINATION_RESULTS',
+    );
+
+    await prisma.caseExamination.create({
+      data: {
+        gameSessionId: firstBody.gameSession.id,
+        caseId: gameCase.id,
+        shopItemId: shopItem.id,
+        isSuccessful: true,
+      },
+    });
+
+    const second = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const secondBody = second.json<{ case: { documents: { type: string }[] } }>();
+    expect(secondBody.case.documents.map((document) => document.type)).toContain(
+      'EXAMINATION_RESULTS',
+    );
   });
 });

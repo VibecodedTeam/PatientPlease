@@ -53,6 +53,24 @@ export interface GameDayLogRecord {
   thresholdMet: boolean | null;
   penaltyApplied: boolean | null;
   startedAt: Date;
+  pausedAt: Date | null;
+  totalPausedMs: number;
+  extraElapsedMs: number;
+  endedAt: Date | null;
+}
+
+/** Client-facing subset of GameDayLogRecord — pausedAt/totalPausedMs/extraElapsedMs are
+ * pause/time-accounting internals, never exposed in API responses. */
+export interface GameDayLogResponse {
+  id: string;
+  dayNumber: number;
+  startingMoney: number;
+  endingMoney: number | null;
+  casesAttempted: number;
+  casesCorrect: number;
+  thresholdMet: boolean | null;
+  penaltyApplied: boolean | null;
+  startedAt: Date;
   endedAt: Date | null;
 }
 
@@ -135,6 +153,10 @@ export interface RoundPrismaClient {
     create(args: {
       data: { gameSessionId: string; dayNumber: number; startingMoney: number; startedAt: Date };
     }): Promise<GameDayLogRecord>;
+    update(args: {
+      where: { id: string };
+      data: { pausedAt: null; totalPausedMs: number };
+    }): Promise<GameDayLogRecord>;
   };
   ownedItem: {
     findMany(args: {
@@ -148,6 +170,12 @@ export interface RoundPrismaClient {
   };
   treatment: {
     findMany(args: { orderBy: { name: 'asc' } }): Promise<TreatmentRecord[]>;
+  };
+  caseExamination: {
+    findMany(args: {
+      where: { gameSessionId: string; caseId: string; isSuccessful: true };
+      select: { shopItemId: true };
+    }): Promise<{ shopItemId: string }[]>;
   };
 }
 
@@ -191,7 +219,23 @@ export async function resolveGameSession(
   }
 
   if (latest.status === 'PAUSED') {
-    return prisma.gameSession.update({ where: { id: latest.id }, data: { status: 'ACTIVE' } });
+    const updated = await prisma.gameSession.update({
+      where: { id: latest.id },
+      data: { status: 'ACTIVE' },
+    });
+    const openDayLog = await prisma.gameDayLog.findFirst({
+      where: { gameSessionId: latest.id, endedAt: null },
+    });
+    if (openDayLog?.pausedAt) {
+      await prisma.gameDayLog.update({
+        where: { id: openDayLog.id },
+        data: {
+          pausedAt: null,
+          totalPausedMs: openDayLog.totalPausedMs + (Date.now() - openDayLog.pausedAt.getTime()),
+        },
+      });
+    }
+    return updated;
   }
 
   if (latest.status === 'GAME_OVER' || latest.status === 'COMPLETED') {
@@ -273,7 +317,21 @@ export async function resolveOpenGameDayLog(
   });
 }
 
-function toCaseResponse(record: CaseRecord): RoundResponse['case'] {
+function isVisibleDocument(
+  document: CaseDocumentRecord,
+  visibleExaminationShopItemIds: Set<string>,
+): boolean {
+  if (document.type !== 'EXAMINATION_RESULTS') {
+    return true;
+  }
+  const shopItemId = (document.content as { shopItemId?: string } | null)?.shopItemId;
+  return shopItemId !== undefined && visibleExaminationShopItemIds.has(shopItemId);
+}
+
+function toCaseResponse(
+  record: CaseRecord,
+  visibleExaminationShopItemIds: Set<string>,
+): RoundResponse['case'] {
   return {
     id: record.id,
     difficulty: record.difficulty,
@@ -288,19 +346,21 @@ function toCaseResponse(record: CaseRecord): RoundResponse['case'] {
       portraitImageUrl: record.patient.portraitImageUrl,
       bodyModelVariant: record.patient.bodyModelVariant,
     },
-    documents: record.documents.map((document) => ({
-      id: document.id,
-      attentionPointRegion: document.attentionPointRegion,
-      type: document.type,
-      title: document.title,
-      documentDate: document.documentDate,
-      sortOrder: document.sortOrder,
-      imageUrl: document.imageUrl,
-      imageWidthPx: document.imageWidthPx,
-      imageHeightPx: document.imageHeightPx,
-      imageAltText: document.imageAltText,
-      content: document.content,
-    })),
+    documents: record.documents
+      .filter((document) => isVisibleDocument(document, visibleExaminationShopItemIds))
+      .map((document) => ({
+        id: document.id,
+        attentionPointRegion: document.attentionPointRegion,
+        type: document.type,
+        title: document.title,
+        documentDate: document.documentDate,
+        sortOrder: document.sortOrder,
+        imageUrl: document.imageUrl,
+        imageWidthPx: document.imageWidthPx,
+        imageHeightPx: document.imageHeightPx,
+        imageAltText: document.imageAltText,
+        content: document.content,
+      })),
   };
 }
 
@@ -356,7 +416,7 @@ export async function startRound(
 
   await resolveOpenGameDayLog(prisma, session.id, session.money);
 
-  const [ownedItems, diagnoses, treatments] = await Promise.all([
+  const [ownedItems, diagnoses, treatments, successfulExaminations] = await Promise.all([
     prisma.ownedItem.findMany({
       where: { gameSessionId: session.id },
       include: { shopItem: true },
@@ -364,12 +424,19 @@ export async function startRound(
     }),
     prisma.diagnosis.findMany({ orderBy: { name: 'asc' } }),
     prisma.treatment.findMany({ orderBy: { name: 'asc' } }),
+    prisma.caseExamination.findMany({
+      where: { gameSessionId: session.id, caseId: nextCase.id, isSuccessful: true },
+      select: { shopItemId: true },
+    }),
   ]);
+  const visibleExaminationShopItemIds = new Set(
+    successfulExaminations.map((examination) => examination.shopItemId),
+  );
 
   return {
     gameSession: toGameSessionResponse(session),
     ownedItems: ownedItems.map(toOwnedItemResponse),
-    case: toCaseResponse(nextCase),
+    case: toCaseResponse(nextCase, visibleExaminationShopItemIds),
     diagnosisOptions: diagnoses.map(toDiagnosisResponse),
     treatmentOptions: treatments.map(toTreatmentResponse),
   };
