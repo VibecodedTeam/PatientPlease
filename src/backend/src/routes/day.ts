@@ -1,6 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../db/prisma.js';
-import { NoActiveGameError, NoOpenDayError, endDay, resetDay } from '../services/game.js';
+import {
+  DayNotElapsedError,
+  NoActiveGameError,
+  NoOpenDayError,
+  endDay,
+  resetDay,
+} from '../services/game.js';
 
 export default function dayRoutes(fastify: FastifyInstance): void {
   fastify.post('/api/v1/day/reset', async (request, reply) => {
@@ -38,6 +44,9 @@ export default function dayRoutes(fastify: FastifyInstance): void {
       }
       if (error instanceof NoOpenDayError) {
         return reply.status(409).send({ error: 'no_open_day' });
+      }
+      if (error instanceof DayNotElapsedError) {
+        return reply.status(409).send({ error: 'day_not_elapsed', remainingMs: error.remainingMs });
       }
       throw error;
     }

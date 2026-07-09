@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../src/app.js';
 import { prisma } from '../../src/db/prisma.js';
 import type { GoogleIdTokenVerifier } from '../../src/services/auth.js';
+import { pickIndexForSeed } from '../../src/services/round.js';
 
 function extractSessionCookie(response: {
   headers: { 'set-cookie'?: string | string[] | undefined };
@@ -203,6 +204,26 @@ describe('POST /api/v1/round', () => {
       where: { gameSessionId: firstBody.gameSession.id },
     });
     expect(dayLogCount).toBe(1);
+  });
+
+  it('breaks ties at the lowest difficulty deterministically by session id, and stays on that case until diagnosed', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    const caseA = await createCase(diagnosis.id, treatment.id);
+    const caseB = await createCase(diagnosis.id, treatment.id);
+    const candidates = [caseA, caseB].sort((a, b) => (a.id < b.id ? -1 : 1));
+
+    const first = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const firstBody = first.json<{ gameSession: { id: string }; case: { id: string } }>();
+    const expectedIndex = pickIndexForSeed(firstBody.gameSession.id, candidates.length);
+    expect(firstBody.case.id).toBe(candidates[expectedIndex]?.id);
+
+    const second = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const secondBody = second.json<{ case: { id: string } }>();
+    expect(secondBody.case.id).toBe(firstBody.case.id);
   });
 
   it('returns 409 and marks the session COMPLETED once every active Case has a DiagnosisAttempt in this session', async () => {
