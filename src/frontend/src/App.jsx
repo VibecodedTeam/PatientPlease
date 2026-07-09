@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ApiProvider } from './providers/Api';
 import { AuthProvider } from './providers/Auth';
 import { AuthGate } from './components/AuthGate';
@@ -17,15 +17,23 @@ export default function App() {
   return (
     <ApiProvider baseUrl={API_BASE_URL}>
       <AuthProvider>
-        <AuthGate googleClientId={GOOGLE_CLIENT_ID}>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<MainView />} />
-              <Route path="/night" element={<NightView />} />
-               <Route path="/start" element={<StartView />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthGate>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<StartView />} />
+            <Route
+              path="/game/*"
+              element={
+                <AuthGate googleClientId={GOOGLE_CLIENT_ID}>
+                  <Routes>
+                    <Route index element={<Navigate to="main" replace />} />
+                    <Route path="main" element={<MainView />} />
+                    <Route path="night" element={<NightView />} />
+                  </Routes>
+                </AuthGate>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
       </AuthProvider>
     </ApiProvider>
   );
