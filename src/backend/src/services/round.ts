@@ -201,6 +201,20 @@ export class NoCasesRemainingError extends Error {
   }
 }
 
+export class GameCompletedError extends Error {
+  constructor(message = 'GameSession is already completed') {
+    super(message);
+    this.name = 'GameCompletedError';
+  }
+}
+
+export class GameOverError extends Error {
+  constructor(message = 'GameSession is already over') {
+    super(message);
+    this.name = 'GameOverError';
+  }
+}
+
 const NEW_SESSION_DEFAULTS = { money: 0, consecutiveBadDiagnosisCount: 0 } as const;
 
 export async function resolveGameSession(
@@ -238,10 +252,14 @@ export async function resolveGameSession(
     return updated;
   }
 
-  if (latest.status === 'GAME_OVER' || latest.status === 'COMPLETED') {
-    return prisma.gameSession.create({
-      data: { userId, ...NEW_SESSION_DEFAULTS, status: 'ACTIVE' },
-    });
+  // A finished game is terminal: surface it as such instead of silently
+  // spawning a fresh money:0 session, which would wipe the player's money and
+  // replay every case (case selection is scoped by gameSessionId).
+  if (latest.status === 'COMPLETED') {
+    throw new GameCompletedError();
+  }
+  if (latest.status === 'GAME_OVER') {
+    throw new GameOverError();
   }
 
   return latest;

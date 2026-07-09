@@ -107,4 +107,59 @@ describe('NightShopProvider', () => {
     await waitFor(() => expect(screen.getByText('total 0')).toBeInTheDocument()); // selection cleared after refetch
     await waitFor(() => expect(screen.getByText('money 60')).toBeInTheDocument());
   });
+
+  it('reconciles selection against the reloaded catalog after a partial purchase failure', async () => {
+    const user = userEvent.setup();
+    const TWO_ITEMS = {
+      money: 100,
+      items: [
+        { id: 'x', sku: 'X', name: 'ItemX', description: 'd', itemType: 'HANDBOOK', price: 40, unlockDay: null, iconImageUrl: null, owned: false },
+        { id: 'y', sku: 'Y', name: 'ItemY', description: 'd', itemType: 'EQUIPMENT', price: 30, unlockDay: null, iconImageUrl: null, owned: false },
+      ],
+    };
+    const purchases = [];
+    let xOwned = false;
+    global.fetch = jest.fn().mockImplementation((input) => {
+      const url = typeof input === 'string' ? input : input.url;
+      if (url.endsWith('/api/v1/shop/purchase')) {
+        purchases.push(true);
+        if (purchases.length === 2) {
+          // The second purchase (item y) fails mid-loop.
+          return Promise.resolve(new Response('boom', { status: 500 }));
+        }
+        // The first purchase (item x) succeeds and is now owned.
+        xOwned = true;
+        return Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 60 }, ownedItem: { id: 'x' } }), { status: 200 }));
+      }
+      // GET /api/v1/shop reflects x's ownership + debited money once purchased.
+      const items = TWO_ITEMS.items.map((it) => (it.id === 'x' ? { ...it, owned: xOwned } : it));
+      return Promise.resolve(new Response(JSON.stringify({ money: xOwned ? 60 : 100, items }), { status: 200 }));
+    });
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <NightShopProvider>
+          <Probe />
+        </NightShopProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => screen.getByText('money 100'));
+
+    await user.click(screen.getByTestId('item-x'));
+    await user.click(screen.getByTestId('item-y'));
+    expect(screen.getByText('total 70')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('buy'));
+
+    // After the failure, the already-purchased x is dropped from the selection
+    // (owned), leaving only the still-unowned y — total reflects y alone, not 70.
+    await waitFor(() => expect(screen.getByText('total 30')).toBeInTheDocument());
+    expect(screen.getByTestId('item-x')).toBeDisabled(); // owned → not selectable
+    expect(purchases.length).toBe(2);
+
+    // Retrying does NOT re-POST the already-owned x: exactly one more purchase call.
+    await user.click(screen.getByTestId('buy'));
+    await waitFor(() => expect(purchases.length).toBe(3));
+    await waitFor(() => expect(screen.getByText('total 0')).toBeInTheDocument());
+  });
 });

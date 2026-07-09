@@ -29,32 +29,18 @@ export function NightShopProvider({ children }) {
       .then((data) => {
         setCatalog(data);
         setError(null);
+        return data;
       })
-      .catch((err) => setError(err))
+      .catch((err) => {
+        setError(err);
+        return null;
+      })
       .finally(() => setIsLoading(false));
   }, [api]);
 
   useEffect(() => {
-    let isCancelled = false;
-    setIsLoading(true);
-    api
-      .get('/api/v1/shop')
-      .then((data) => {
-        if (!isCancelled) {
-          setCatalog(data);
-          setError(null);
-        }
-      })
-      .catch((err) => {
-        if (!isCancelled) setError(err);
-      })
-      .finally(() => {
-        if (!isCancelled) setIsLoading(false);
-      });
-    return () => {
-      isCancelled = true;
-    };
-  }, [api]);
+    loadCatalog();
+  }, [loadCatalog]);
 
   const items = useMemo(() => catalog?.items ?? [], [catalog]);
   const money = catalog?.money ?? 0;
@@ -105,8 +91,17 @@ export function NightShopProvider({ children }) {
       await loadCatalog();
     } catch (err) {
       setBuyError(err);
-      // Resync from the server so money/owned reflect any partial success.
-      await loadCatalog();
+      // Resync from the server so money/owned reflect any partial success, then
+      // drop from the selection any item that is now owned or no longer present
+      // — otherwise already-purchased items stay "selected", double-counting the
+      // cart total and getting re-POSTed (item_already_owned) on the next Buy.
+      const latest = await loadCatalog();
+      if (latest) {
+        const selectable = new Set(
+          (latest.items ?? []).filter((item) => !item.owned).map((item) => item.id),
+        );
+        setSelectedIds((previous) => new Set([...previous].filter((id) => selectable.has(id))));
+      }
     } finally {
       setIsBuying(false);
     }

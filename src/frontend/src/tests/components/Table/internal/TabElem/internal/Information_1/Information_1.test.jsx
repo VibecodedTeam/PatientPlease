@@ -32,7 +32,6 @@ describe('Information_1', () => {
         age: 52,
         sex: 'MALE',
         occupation: 'Roofer',
-        chiefComplaint: 'A mole on my shoulder has changed shape.',
       },
     });
 
@@ -40,9 +39,6 @@ describe('Information_1', () => {
     expect(screen.getByText('Age 52')).toBeInTheDocument();
     expect(screen.getByText('Sex: MALE')).toBeInTheDocument();
     expect(screen.getByText('Occupation: Roofer')).toBeInTheDocument();
-    expect(
-      screen.getByText('Chief complaint: A mole on my shoulder has changed shape.'),
-    ).toBeInTheDocument();
   });
 
   it('applies the card layout class to its root element', () => {

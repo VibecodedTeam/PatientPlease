@@ -1,5 +1,7 @@
 import { jest } from '@jest/globals';
 import {
+  GameCompletedError,
+  GameOverError,
   NoCasesRemainingError,
   pickIndexForSeed,
   resolveGameSession,
@@ -206,23 +208,24 @@ describe('resolveGameSession', () => {
     expect(prisma.gameDayLog.update).not.toHaveBeenCalled();
   });
 
-  it.each(['GAME_OVER', 'COMPLETED'] as const)(
-    'creates a fresh session when the latest one is %s',
-    async (status) => {
-      const prisma = createMockPrisma();
-      prisma.gameSession.findFirst.mockResolvedValue(makeSession({ status }));
-      const created = makeSession({ id: 'fresh-session-uuid' });
-      prisma.gameSession.create.mockResolvedValue(created);
+  it('throws GameCompletedError and creates no new session when the latest is COMPLETED', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession({ status: 'COMPLETED' }));
 
-      const result = await resolveGameSession(prisma, 'user-uuid');
+    await expect(resolveGameSession(prisma, 'user-uuid')).rejects.toThrow(GameCompletedError);
+    // A finished game must NOT silently spawn a fresh money:0 session and replay.
+    expect(prisma.gameSession.create).not.toHaveBeenCalled();
+    expect(prisma.gameSession.update).not.toHaveBeenCalled();
+  });
 
-      expect(prisma.gameSession.create).toHaveBeenCalledWith({
-        data: { userId: 'user-uuid', money: 0, consecutiveBadDiagnosisCount: 0, status: 'ACTIVE' },
-      });
-      expect(prisma.gameSession.update).not.toHaveBeenCalled();
-      expect(result).toEqual(created);
-    },
-  );
+  it('throws GameOverError and creates no new session when the latest is GAME_OVER', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession({ status: 'GAME_OVER' }));
+
+    await expect(resolveGameSession(prisma, 'user-uuid')).rejects.toThrow(GameOverError);
+    expect(prisma.gameSession.create).not.toHaveBeenCalled();
+    expect(prisma.gameSession.update).not.toHaveBeenCalled();
+  });
 });
 
 describe('pickIndexForSeed', () => {

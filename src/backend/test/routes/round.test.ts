@@ -264,6 +264,49 @@ describe('POST /api/v1/round', () => {
     expect(gameSession.status).toBe('COMPLETED');
   });
 
+  it('returns 409 game_completed for a COMPLETED session without wiping money or spawning a new session', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const completed = await prisma.gameSession.create({
+      data: { userId, money: 250, status: 'COMPLETED' },
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/round',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'game_completed' });
+    // No new session created, and the finished session's money is untouched.
+    const sessions = await prisma.gameSession.findMany({ where: { userId } });
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]?.id).toBe(completed.id);
+    expect(sessions[0]?.money).toBe(250);
+  });
+
+  it('returns 409 game_over for a GAME_OVER session without spawning a new session', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    await prisma.gameSession.create({
+      data: { userId, money: 0, status: 'GAME_OVER' },
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/round',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'game_over' });
+    const sessions = await prisma.gameSession.findMany({ where: { userId } });
+    expect(sessions).toHaveLength(1);
+  });
+
   it('hides an EXAMINATION_RESULTS document until a successful CaseExamination exists for it', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();

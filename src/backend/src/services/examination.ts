@@ -51,6 +51,7 @@ export interface ExaminationPrismaClient {
       where: { caseId: string; type: 'EXAMINATION_RESULTS' };
     }): Promise<{ id: string; content: unknown }[]>;
   };
+  $transaction<T>(fn: (tx: ExaminationPrismaClient) => Promise<T>): Promise<T>;
 }
 
 export class CaseNotFoundError extends Error {
@@ -170,21 +171,30 @@ export async function orderExamination(
   );
 
   const timeCostMs = (shopItem.content as { timeCostMs?: number } | null)?.timeCostMs ?? 0;
-  await prisma.gameDayLog.update({
-    where: { id: openDayLog.id },
-    data: { extraElapsedMs: openDayLog.extraElapsedMs + timeCostMs },
-  });
 
-  let updatedSession = session;
-  if (!isSuccessful) {
-    updatedSession = await prisma.gameSession.update({
-      where: { id: session.id },
-      data: { money: session.money - EXAMINATION_FAILURE_PENALTY_MONEY },
+  // Time cost, failure penalty, and the examination record commit together so a
+  // failed create can't leave the player charged/time-docked with no record —
+  // which would let the same examination be re-ordered and penalized again.
+  const { updatedSession, created } = await prisma.$transaction(async (tx) => {
+    await tx.gameDayLog.update({
+      where: { id: openDayLog.id },
+      data: { extraElapsedMs: openDayLog.extraElapsedMs + timeCostMs },
     });
-  }
 
-  const created = await prisma.caseExamination.create({
-    data: { gameSessionId: session.id, caseId, shopItemId, isSuccessful },
+    let txSession = session;
+    if (!isSuccessful) {
+      txSession = await tx.gameSession.update({
+        where: { id: session.id },
+        // Floor at zero: the penalty must never push the balance negative.
+        data: { money: Math.max(0, session.money - EXAMINATION_FAILURE_PENALTY_MONEY) },
+      });
+    }
+
+    const txCreated = await tx.caseExamination.create({
+      data: { gameSessionId: session.id, caseId, shopItemId, isSuccessful },
+    });
+
+    return { updatedSession: txSession, created: txCreated };
   });
 
   return {

@@ -38,7 +38,16 @@ function createMockPrisma() {
     caseDocument: {
       findMany: jest.fn<ExaminationPrismaClient['caseDocument']['findMany']>(),
     },
+    $transaction: jest.fn() as unknown as ExaminationPrismaClient['$transaction'],
   };
+}
+
+// The mock transaction just runs the callback against the same mock client,
+// so tests can keep asserting on the individual writes directly.
+function primeTransaction(prisma: ReturnType<typeof createMockPrisma>) {
+  prisma.$transaction = jest.fn((fn: (tx: ExaminationPrismaClient) => Promise<unknown>) =>
+    fn(prisma as unknown as ExaminationPrismaClient),
+  ) as unknown as ExaminationPrismaClient['$transaction'];
 }
 
 function makeSession(overrides: Partial<GameSessionRecord> = {}): GameSessionRecord {
@@ -82,6 +91,7 @@ describe('orderExamination', () => {
     prisma.gameDayLog.update.mockResolvedValue({ id: 'open-log-uuid' });
     prisma.caseDocument.findMany.mockResolvedValue([]);
     prisma.caseExamination.create.mockResolvedValue(makeCaseExamination());
+    primeTransaction(prisma);
   }
 
   it('throws NoActiveGameError when there is no active GameSession', async () => {
@@ -213,7 +223,7 @@ describe('orderExamination', () => {
     expect(result.gameSession.money).toBe(100);
   });
 
-  it('unmatched: creates an unsuccessful CaseExamination, still adds timeCostMs, and deducts the penalty with no clamping', async () => {
+  it('unmatched: creates an unsuccessful CaseExamination, still adds timeCostMs, and floors the penalty at zero', async () => {
     const prisma = createMockPrisma();
     primeHappyPath(prisma);
     prisma.gameSession.findFirst.mockResolvedValue(makeSession({ money: 10 }));
@@ -221,15 +231,14 @@ describe('orderExamination', () => {
       { id: 'doc-uuid', content: { shopItemId: 'other-shop-item-uuid' } },
     ]);
     prisma.caseExamination.create.mockResolvedValue(makeCaseExamination({ isSuccessful: false }));
-    prisma.gameSession.update.mockResolvedValue(
-      makeSession({ money: 10 - EXAMINATION_FAILURE_PENALTY_MONEY }),
-    );
+    prisma.gameSession.update.mockResolvedValue(makeSession({ money: 0 }));
 
     const result = await orderExamination(prisma, 'user-uuid', 'case-uuid', 'shop-item-uuid');
 
+    // money 10, penalty 25 → floored to 0, never negative.
     expect(prisma.gameSession.update).toHaveBeenCalledWith({
       where: { id: 'session-uuid' },
-      data: { money: 10 - EXAMINATION_FAILURE_PENALTY_MONEY },
+      data: { money: 0 },
     });
     expect(prisma.gameDayLog.update).toHaveBeenCalledWith({
       where: { id: 'open-log-uuid' },
@@ -244,8 +253,42 @@ describe('orderExamination', () => {
       },
     });
     expect(result.caseExamination.isSuccessful).toBe(false);
-    expect(result.gameSession.money).toBe(10 - EXAMINATION_FAILURE_PENALTY_MONEY);
-    expect(result.gameSession.money).toBeLessThan(0);
+    expect(result.gameSession.money).toBe(0);
+    expect(result.gameSession.money).toBeGreaterThanOrEqual(0);
+  });
+
+  it('deducts the full penalty when the player can afford it', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession({ money: 100 }));
+    prisma.caseDocument.findMany.mockResolvedValue([
+      { id: 'doc-uuid', content: { shopItemId: 'other-shop-item-uuid' } },
+    ]);
+    prisma.caseExamination.create.mockResolvedValue(makeCaseExamination({ isSuccessful: false }));
+    prisma.gameSession.update.mockResolvedValue(
+      makeSession({ money: 100 - EXAMINATION_FAILURE_PENALTY_MONEY }),
+    );
+
+    await orderExamination(prisma, 'user-uuid', 'case-uuid', 'shop-item-uuid');
+
+    expect(prisma.gameSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-uuid' },
+      data: { money: 100 - EXAMINATION_FAILURE_PENALTY_MONEY },
+    });
+  });
+
+  it('performs its writes inside a single transaction', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.caseDocument.findMany.mockResolvedValue([
+      { id: 'doc-uuid', content: { shopItemId: 'other-shop-item-uuid' } },
+    ]);
+    prisma.caseExamination.create.mockResolvedValue(makeCaseExamination({ isSuccessful: false }));
+    prisma.gameSession.update.mockResolvedValue(makeSession({ money: 75 }));
+
+    await orderExamination(prisma, 'user-uuid', 'case-uuid', 'shop-item-uuid');
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
   it('treats a ShopItem with no content.timeCostMs as a zero time cost', async () => {
