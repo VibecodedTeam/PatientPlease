@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../src/app.js';
+import { MIN_DAY_DURATION_MS } from '../../src/config.js';
 import { prisma } from '../../src/db/prisma.js';
 import type { GoogleIdTokenVerifier } from '../../src/services/auth.js';
 
@@ -37,14 +38,20 @@ async function signIn(app: FastifyInstance): Promise<{ cookie: string; userId: s
   return { cookie: extractSessionCookie(response), userId: body.user.id };
 }
 
-async function createActiveSessionWithOpenDay(userId: string, money = 100) {
+async function createActiveSessionWithOpenDay(
+  userId: string,
+  money = 100,
+  // Far enough in the past that endDay's minimum-duration gate doesn't trip by default;
+  // tests exercising that gate pass a recent startedAt explicitly.
+  startedAt: Date = new Date(Date.now() - MIN_DAY_DURATION_MS - 1000),
+) {
   const gameSession = await prisma.gameSession.create({ data: { userId, money } });
   const gameDayLog = await prisma.gameDayLog.create({
     data: {
       gameSessionId: gameSession.id,
       dayNumber: 1,
       startingMoney: money,
-      startedAt: new Date(),
+      startedAt,
     },
   });
   return { gameSession, gameDayLog };
@@ -282,6 +289,30 @@ describe('POST /api/v1/day/end', () => {
 
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({ error: 'no_open_day' });
+  });
+
+  it('returns 409 day_not_elapsed when the day was opened less than MIN_DAY_DURATION_MS ago', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const { gameDayLog } = await createActiveSessionWithOpenDay(userId, 80, new Date());
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/day/end',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(409);
+    const body = response.json<{ error: string; remainingMs: number }>();
+    expect(body.error).toBe('day_not_elapsed');
+    expect(body.remainingMs).toBeGreaterThan(0);
+    expect(body.remainingMs).toBeLessThanOrEqual(MIN_DAY_DURATION_MS);
+
+    const stillOpen = await prisma.gameDayLog.findUniqueOrThrow({
+      where: { id: gameDayLog.id },
+    });
+    expect(stillOpen.endedAt).toBeNull();
   });
 
   it('stamps endedAt/endingMoney and returns both gameSession and dayLog', async () => {

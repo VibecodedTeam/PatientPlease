@@ -1,3 +1,4 @@
+import { MIN_DAY_DURATION_MS } from '../config.js';
 import type { GameDayLogRecord, GameSessionRecord, GameSessionStatusValue } from './round.js';
 
 export type { GameDayLogRecord, GameSessionRecord };
@@ -59,6 +60,13 @@ export class NoOpenDayError extends Error {
   }
 }
 
+export class DayNotElapsedError extends Error {
+  constructor(public readonly remainingMs: number) {
+    super('Minimum day duration has not elapsed yet');
+    this.name = 'DayNotElapsedError';
+  }
+}
+
 async function findLatestGameSession(
   prisma: GamePrismaClient,
   userId: string,
@@ -114,6 +122,7 @@ function toGameDayLogResponse(record: GameDayLogRecord): GameDayLogRecord {
     casesCorrect: record.casesCorrect,
     thresholdMet: record.thresholdMet,
     penaltyApplied: record.penaltyApplied,
+    startedAt: record.startedAt,
     endedAt: record.endedAt,
   };
 }
@@ -217,6 +226,11 @@ export async function endDay(
 ): Promise<{ gameSession: GameSessionRecord; dayLog: GameDayLogRecord }> {
   const session = await requireActiveGameSession(prisma, userId);
   const openDayLog = await requireOpenGameDayLog(prisma, session.id);
+
+  const elapsedMs = Date.now() - openDayLog.startedAt.getTime();
+  if (elapsedMs < MIN_DAY_DURATION_MS) {
+    throw new DayNotElapsedError(MIN_DAY_DURATION_MS - elapsedMs);
+  }
 
   const attempts = await prisma.diagnosisAttempt.findMany({
     where: { gameDayLogId: openDayLog.id },
