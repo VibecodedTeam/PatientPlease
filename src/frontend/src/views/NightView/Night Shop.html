@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: #A89E96; }
+  a:hover { color: #c3bab2; }
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+
+<div data-screen-label="Night Shop" style="min-height:100vh;width:100%;background:#212129;background-image:radial-gradient(130% 120% at 50% -10%, #2a3242 0%, #1a1a20 100%);font-family:'IBM Plex Sans',system-ui,sans-serif;color:#EDE9E5;display:flex;flex-direction:column;align-items:center;padding:32px 24px 40px;">
+
+  <!-- ===== Top bar ===== -->
+  <header style="width:100%;max-width:960px;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:16px;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:8px;color:#A89E96;font-size:13px;font-weight:500;letter-spacing:.02em;">
+      <span style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:#384254;align-items:center;justify-content:center;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A89E96" stroke-width="2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-6 6c0 4 6 9 6 9s6-5 6-9a6 6 0 0 0-6-6z"/><circle cx="12" cy="9" r="1.5" fill="#A89E96" stroke="none"/></svg>
+      </span>
+      End of shift
+    </div>
+
+    <div style="text-align:center;">
+      <h1 style="margin:0;font-family:'IBM Plex Serif',serif;font-weight:600;font-size:30px;letter-spacing:-.01em;color:#EDE9E5;">Shop for Items</h1>
+      <p style="margin:5px 0 0;font-size:13px;color:#A89E96;letter-spacing:.01em;">Restock your practice before tomorrow's patients</p>
+    </div>
+
+    <div style="justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:4px;background:#193447;border:1px solid #384254;border-radius:12px;padding:10px 16px;box-shadow:0 2px 6px rgba(0,0,0,.25);">
+      <span style="font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8c8279;">Balance</span>
+      <span style="display:flex;align-items:center;gap:7px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#A89E96" stroke="#8c8279" stroke-width="1.5"/><text x="12" y="16" text-anchor="middle" font-family="IBM Plex Serif, serif" font-size="11" font-weight="600" fill="#212129">$</text></svg>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:#EDE9E5;">{{ fundsLabel }}</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- ===== Item cards ===== -->
+  <main style="width:100%;max-width:960px;margin-top:22px;display:flex;flex-direction:column;gap:14px;">
+    <sc-for list="{{ rows }}" as="item" hint-placeholder-count="3">
+      <div style="{{ item.cardStyle }}">
+        <!-- cover art -->
+        <div style="flex:0 0 auto;width:70px;height:94px;border-radius:6px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,.35);background:#234152;">
+          <image-slot id="{{ item.slotId }}" shape="rect" placeholder="Cover art"></image-slot>
+        </div>
+
+        <!-- text -->
+        <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+            <h2 style="margin:0;font-family:'IBM Plex Serif',serif;font-size:18px;font-weight:600;color:#EDE9E5;">{{ item.title }}</h2>
+            <span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8c8279;">{{ item.category }}</span>
+          </div>
+          <p style="margin:0;font-size:13.5px;line-height:1.5;color:#A89E96;max-width:52ch;text-wrap:pretty;">{{ item.flavor }}</p>
+        </div>
+
+        <!-- price + selector -->
+        <div style="flex:0 0 auto;display:flex;align-items:center;gap:20px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:{{ item.priceColor }};min-width:56px;text-align:right;">{{ item.priceLabel }}</span>
+          <sc-if value="{{ item.owned }}" hint-placeholder-val="{{ false }}">
+            <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#9ec4b9;padding:8px 12px;background:#073B33;border-radius:999px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ec4b9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              In library
+            </span>
+          </sc-if>
+          <sc-if value="{{ item.selectable }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ item.onToggle }}" aria-label="Toggle selection" style="{{ item.dotStyle }}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#212129" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" style="{{ item.checkStyle }}"><path d="M20 6 9 17l-5-5"/></svg>
+            </button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+  </main>
+
+  <!-- ===== Summary ===== -->
+  <div style="width:100%;max-width:960px;margin-top:18px;display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#193447;border:1px solid #384254;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.25);">
+    <span style="font-size:14px;color:#A89E96;">{{ selectionLabel }}</span>
+    <span style="display:flex;align-items:baseline;gap:10px;">
+      <span style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8c8279;">Cart total</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:{{ totalColor }};">{{ totalLabel }}</span>
+    </span>
+  </div>
+
+  <!-- ===== Action ===== -->
+  <div style="margin-top:26px;display:flex;flex-direction:column;align-items:center;gap:10px;min-height:76px;">
+    <button onClick="{{ onAction }}" disabled="{{ actionDisabled }}" style="{{ actionStyle }}">{{ actionLabel }}</button>
+    <span style="font-size:12.5px;font-weight:500;min-height:16px;color:{{ hintColor }};">{{ actionHint }}</span>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1024,&quot;height&quot;:720},&quot;startingFunds&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:120,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:10,&quot;max&quot;:500,&quot;step&quot;:5,&quot;unit&quot;:&quot;$&quot;,&quot;section&quot;:&quot;Shop&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#A89E96&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#A89E96&quot;,&quot;#073B33&quot;,&quot;#384254&quot;,&quot;#531516&quot;],&quot;section&quot;:&quot;Shop&quot;},&quot;currency&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;$&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Shop&quot;}}">
+class Component extends DCLogic {
+  // ---- EASY TO EXTEND: add a new object here and it appears in the shop ----
+  catalog() {
+    return [
+      { id: 'h1', slotId: 'shop-cover-1', title: 'Atlas of Dermoscopy',            category: 'Handbook', price: 45, flavor: 'High-resolution reference for reading pigment networks and vascular patterns under magnification.' },
+      { id: 'h2', slotId: 'shop-cover-2', title: 'Clinical Guide to Skin Cancer',  category: 'Handbook', price: 60, flavor: 'ABCDE criteria, staging tables, and differential diagnosis, worked chapter by chapter.' },
+      { id: 'h3', slotId: 'shop-cover-3', title: 'Sun & Skin: UV Exposure Manual', category: 'Handbook', price: 80, flavor: 'Cumulative-dose charts and phototype risk tables for reading patient sun-history records.' },
+    ];
+  }
+
+  state = { funds: undefined, ownedIds: [], selectedIds: [], flash: '' };
+
+  componentDidUpdate(prev) {
+    // Re-demo cleanly when the starting-funds tweak changes
+    if (prev.startingFunds !== this.props.startingFunds) {
+      this.setState({ funds: undefined, ownedIds: [], selectedIds: [], flash: '' });
+    }
+  }
+
+  cur() { return this.props.currency ?? '$'; }
+  startFunds() { return this.props.startingFunds ?? 120; }
+  funds() { return this.state.funds ?? this.startFunds(); }
+
+  toggle(id) {
+    this.setState(s => {
+      const on = s.selectedIds.includes(id);
+      return {
+        selectedIds: on ? s.selectedIds.filter(x => x !== id) : [...s.selectedIds, id],
+        flash: '',
+      };
+    });
+  }
+
+  total() {
+    return this.catalog()
+      .filter(i => this.state.selectedIds.includes(i.id))
+      .reduce((s, i) => s + i.price, 0);
+  }
+
+  buy() {
+    const total = this.total();
+    if (!this.state.selectedIds.length || total > this.funds()) return;
+    const n = this.state.selectedIds.length;
+    this.setState(s => ({
+      funds: this.funds() - total,
+      ownedIds: [...s.ownedIds, ...s.selectedIds],
+      selectedIds: [],
+      flash: `Added ${n} ${n === 1 ? 'handbook' : 'handbooks'} to your library`,
+    }));
+  }
+
+  renderVals() {
+    const cur = this.cur();
+    const accent = this.props.accent ?? '#A89E96';
+    const funds = this.funds();
+    const total = this.total();
+    const anySelected = this.state.selectedIds.length > 0;
+    const canAfford = total <= funds;
+
+    const rows = this.catalog().map(it => {
+      const owned = this.state.ownedIds.includes(it.id);
+      const selected = this.state.selectedIds.includes(it.id);
+      const cardStyle = [
+        'display:flex', 'align-items:center', 'gap:20px', 'padding:16px 20px',
+        'border-radius:14px', 'transition:border-color .15s, box-shadow .15s, background .15s',
+        owned ? 'background:#16232f' : 'background:#193447',
+        'border:1px solid ' + (selected ? accent : '#384254'),
+        selected ? 'box-shadow:0 0 0 3px ' + accent + '3a, 0 4px 14px rgba(0,0,0,.3)'
+                 : 'box-shadow:0 2px 6px rgba(0,0,0,.22)',
+        owned ? 'opacity:.72' : 'opacity:1',
+      ].join(';');
+
+      const dotStyle = [
+        'width:30px', 'height:30px', 'border-radius:50%', 'cursor:pointer', 'padding:0',
+        'display:inline-flex', 'align-items:center', 'justify-content:center',
+        'transition:background .15s, border-color .15s',
+        'border:2px solid ' + (selected ? accent : '#4a5568'),
+        'background:' + (selected ? accent : '#212129'),
+      ].join(';');
+
+      return {
+        ...it,
+        owned,
+        selectable: !owned,
+        priceLabel: cur + it.price,
+        priceColor: owned ? '#7f776f' : '#EDE9E5',
+        cardStyle,
+        dotStyle,
+        checkStyle: { opacity: selected ? 1 : 0, transition: 'opacity .12s' },
+        onToggle: () => this.toggle(it.id),
+      };
+    });
+
+    // Action button state machine
+    let actionLabel, actionDisabled, actionHint, hintColor, actionStyle;
+    const base = 'font-family:IBM Plex Sans,sans-serif;font-size:16px;font-weight:600;letter-spacing:.01em;padding:14px 52px;border-radius:12px;transition:background .15s, box-shadow .15s, transform .05s;';
+    if (!anySelected) {
+      actionLabel = 'Skip';
+      actionDisabled = false;
+      actionHint = this.state.flash || 'End the shift without buying';
+      hintColor = this.state.flash ? '#9ec4b9' : '#7f776f';
+      actionStyle = base + 'cursor:pointer;border:1px solid #4a5568;background:#193447;color:#cfc7bf;box-shadow:0 2px 6px rgba(0,0,0,.25);';
+    } else if (!canAfford) {
+      actionLabel = 'Buy';
+      actionDisabled = true;
+      actionHint = 'Insufficient funds — remove an item (over by ' + cur + (total - funds) + ')';
+      hintColor = '#c9756e';
+      actionStyle = base + 'cursor:not-allowed;border:1px solid #531516;background:#2a1719;color:#8a6d6a;box-shadow:none;';
+    } else {
+      actionLabel = 'Buy · ' + cur + total;
+      actionDisabled = false;
+      actionHint = cur + (funds - total) + ' will remain';
+      hintColor = '#A89E96';
+      actionStyle = base + 'cursor:pointer;border:1px solid transparent;background:' + accent + ';color:#212129;font-weight:700;box-shadow:0 4px 14px ' + accent + '55;';
+    }
+
+    const nSel = this.state.selectedIds.length;
+    return {
+      fundsLabel: String(funds),
+      rows,
+      selectionLabel: nSel === 0 ? 'No items selected' : nSel + (nSel === 1 ? ' item selected' : ' items selected'),
+      totalLabel: cur + total,
+      totalColor: anySelected ? (canAfford ? '#EDE9E5' : '#c9756e') : '#7f776f',
+      onAction: () => (anySelected ? this.buy() : null),
+      actionLabel, actionDisabled, actionHint, hintColor, actionStyle,
+    };
+  }
+}
+</script>
+</body>
+</html>
