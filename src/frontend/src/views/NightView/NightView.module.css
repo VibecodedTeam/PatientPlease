@@ -181,13 +181,30 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  cursor: default;
+  cursor: pointer;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 2px solid #4a5568;
   background: #212129;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.selectDot:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.selectDotSelected {
+  border-color: #6ee7b7;
+  background: #6ee7b7;
+}
+
+.stateMessage {
+  color: #8c8279;
+  font-family: 'IBM Plex Sans', sans-serif;
+  padding: 24px 0;
 }
 
 .summary {

@@ -1,33 +1,42 @@
 import React from 'react';
 import styles from './NightView.module.css';
+import { NightShopProvider, useNightShop } from './providers/NightShop';
 
-const CATALOG = [
-  {
-    id: 'h1',
-    title: 'Atlas of Dermoscopy',
-    category: 'Handbook',
-    price: 45,
-    flavor: 'High-resolution reference for reading pigment networks and vascular patterns under magnification.',
-  },
-  {
-    id: 'h2',
-    title: 'Clinical Guide to Skin Cancer',
-    category: 'Handbook',
-    price: 60,
-    flavor: 'ABCDE criteria, staging tables, and differential diagnosis, worked chapter by chapter.',
-  },
-  {
-    id: 'h3',
-    title: 'Sun & Skin: UV Exposure Manual',
-    category: 'Handbook',
-    price: 80,
-    flavor: 'Cumulative-dose charts and phototype risk tables for reading patient sun-history records.',
-  },
-];
+const ITEM_TYPE_LABELS = {
+  HANDBOOK: 'Handbook',
+  EQUIPMENT: 'Equipment',
+  PLOT_ITEM: 'Plot Item',
+};
 
-const STARTING_FUNDS = 120;
+function itemTypeLabel(itemType) {
+  return ITEM_TYPE_LABELS[itemType] ?? itemType;
+}
 
-export function NightView() {
+function selectionLabel(count) {
+  if (count === 0) return 'No items selected';
+  if (count === 1) return '1 item selected';
+  return `${count} items selected`;
+}
+
+function NightShopScreen() {
+  const {
+    items,
+    money,
+    isLoading,
+    error,
+    selectedIds,
+    selectedTotal,
+    remaining,
+    isSelected,
+    canToggle,
+    toggleItem,
+    buySelected,
+    isBuying,
+    buyError,
+  } = useNightShop();
+
+  const selectedCount = selectedIds.size;
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -55,46 +64,80 @@ export function NightView() {
                 $
               </text>
             </svg>
-            {STARTING_FUNDS}
+            {money}
           </span>
         </div>
       </header>
 
       <main className={styles.catalog}>
-        {CATALOG.map((item) => (
-          <div className={styles.card} key={item.id}>
-            <div className={styles.cardCover} />
+        {isLoading && <p className={styles.stateMessage}>Loading the shop…</p>}
+        {!isLoading && error && (
+          <p className={styles.stateMessage}>Couldn&apos;t load the shop. Try again.</p>
+        )}
+        {!isLoading && !error && items.length === 0 && (
+          <p className={styles.stateMessage}>Nothing in stock right now.</p>
+        )}
+        {!isLoading &&
+          !error &&
+          items.map((item) => {
+            const selected = isSelected(item.id);
+            return (
+              <div className={styles.card} key={item.id}>
+                <div className={styles.cardCover} />
 
-            <div className={styles.cardBody}>
-              <div className={styles.cardHeading}>
-                <h2 className={styles.cardTitle}>{item.title}</h2>
-                <span className={styles.cardCategory}>{item.category}</span>
+                <div className={styles.cardBody}>
+                  <div className={styles.cardHeading}>
+                    <h2 className={styles.cardTitle}>{item.name}</h2>
+                    <span className={styles.cardCategory}>{itemTypeLabel(item.itemType)}</span>
+                  </div>
+                  <p className={styles.cardFlavor}>{item.description}</p>
+                </div>
+
+                <div className={styles.cardTrailing}>
+                  <span className={styles.cardPrice}>${item.price}</span>
+                  <button
+                    type="button"
+                    aria-label={item.owned ? `${item.name} owned` : `Select ${item.name}`}
+                    className={`${styles.selectDot}${selected ? ` ${styles.selectDotSelected}` : ''}`}
+                    aria-pressed={selected}
+                    disabled={!canToggle(item)}
+                    onClick={() => toggleItem(item)}
+                  />
+                </div>
               </div>
-              <p className={styles.cardFlavor}>{item.flavor}</p>
-            </div>
-
-            <div className={styles.cardTrailing}>
-              <span className={styles.cardPrice}>${item.price}</span>
-              <span className={styles.selectDot} aria-hidden="true" />
-            </div>
-          </div>
-        ))}
+            );
+          })}
       </main>
 
       <div className={styles.summary}>
-        <span className={styles.summaryLabel}>No items selected</span>
+        <span className={styles.summaryLabel}>{selectionLabel(selectedCount)}</span>
         <span className={styles.total}>
           <span className={styles.totalLabel}>Cart total</span>
-          <span className={styles.totalValue}>$0</span>
+          <span className={styles.totalValue}>${selectedTotal}</span>
         </span>
       </div>
 
       <div className={styles.action}>
-        <button type="button" className={styles.actionButton} disabled>
-          Skip
+        <button
+          type="button"
+          className={styles.actionButton}
+          disabled={selectedCount === 0 || isBuying}
+          onClick={() => buySelected()}
+        >
+          {isBuying ? 'Buying…' : 'Buy'}
         </button>
-        <span className={styles.actionHint}>End the shift without buying</span>
+        <span className={styles.actionHint}>
+          {buyError ? 'Purchase failed — try again' : `Remaining balance $${remaining}`}
+        </span>
       </div>
     </div>
+  );
+}
+
+export function NightView() {
+  return (
+    <NightShopProvider>
+      <NightShopScreen />
+    </NightShopProvider>
   );
 }
