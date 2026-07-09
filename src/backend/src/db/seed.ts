@@ -467,6 +467,46 @@ const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
     description: 'A guide to capturing consistent, diagnostic-quality clinical photos.',
   },
   {
+    sku: 'exam-punch-biopsy',
+    name: 'Punch Biopsy',
+    itemType: 'EXAMINATION',
+    price: 140,
+    description: 'A small tissue sample sent to pathology for a definitive histological read.',
+    content: { timeCostMs: 90_000 },
+  },
+  {
+    sku: 'exam-dermoscopy',
+    name: 'Dermoscopy Imaging',
+    itemType: 'EXAMINATION',
+    price: 80,
+    description: 'Magnified, polarized imaging that reveals a lesion’s sub-surface structures.',
+    content: { timeCostMs: 30_000 },
+  },
+  {
+    sku: 'exam-skin-scraping-koh',
+    name: 'Skin Scraping (KOH Prep)',
+    itemType: 'EXAMINATION',
+    price: 60,
+    description: 'A potassium-hydroxide prep of scraped scale to confirm a fungal infection.',
+    content: { timeCostMs: 45_000 },
+  },
+  {
+    sku: 'exam-bacterial-culture',
+    name: 'Bacterial Culture & Sensitivity',
+    itemType: 'EXAMINATION',
+    price: 100,
+    description: 'A swab cultured to identify a bacterial pathogen and its antibiotic sensitivity.',
+    content: { timeCostMs: 120_000 },
+  },
+  {
+    sku: 'exam-patch-test',
+    name: 'Allergy Patch Test',
+    itemType: 'EXAMINATION',
+    price: 90,
+    description: 'A panel of allergens applied to the skin to identify a contact allergen.',
+    content: { timeCostMs: 60_000 },
+  },
+  {
     sku: 'plot-loan-notice',
     name: 'Overdue Loan Notice',
     itemType: 'PLOT_ITEM',
@@ -617,6 +657,7 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
   const diagnoses = await prisma.diagnosis.findMany({ orderBy: { code: 'asc' } });
   const treatments = await prisma.treatment.findMany({ orderBy: { code: 'asc' } });
   const shopItems = await prisma.shopItem.findMany({ orderBy: { sku: 'asc' } });
+  const examinationItems = shopItems.filter((item) => item.itemType === 'EXAMINATION');
 
   for (let i = 0; i < CASE_COUNT; i++) {
     const diagnosis = diagnoses[i % diagnoses.length]!;
@@ -667,6 +708,23 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
         title: 'Patient history',
         sortOrder: 1,
         content: { note: `Relevant history for ${patient.name}'s case.` },
+      },
+    });
+
+    // The one examination that "pays off" for this case: ordering it in the day
+    // phase succeeds and reveals this document. `content.shopItemId` is the link
+    // orderExamination checks; any other examination on this case fails.
+    const examinationItem = examinationItems[i % examinationItems.length]!;
+    await prisma.caseDocument.create({
+      data: {
+        caseId: caseRecord.id,
+        type: 'EXAMINATION_RESULTS',
+        title: `${examinationItem.name} results`,
+        sortOrder: 2,
+        content: {
+          shopItemId: examinationItem.id,
+          findings: `${examinationItem.name} for ${patient.name}: findings consistent with ${diagnosis.name}.`,
+        },
       },
     });
 
