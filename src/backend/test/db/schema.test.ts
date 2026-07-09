@@ -163,4 +163,63 @@ describe('game schema', () => {
     expect(loadedUser.sessions.map((s) => s.id)).toEqual([userSession.id]);
     expect(loadedUser.gameSessions.map((g) => g.id)).toEqual([gameSession.id]);
   });
+
+  it('persists a CaseDocumentReveal and enforces one reveal per (session, document)', async () => {
+    const diagnosis = await prisma.diagnosis.create({
+      data: {
+        code: 'test-reveal-melanoma',
+        name: 'Melanoma',
+        description: 'test',
+        category: 'MALIGNANT',
+      },
+    });
+    const patient = await prisma.patient.create({
+      data: {
+        name: 'Reveal Test Patient',
+        age: 35,
+        sex: 'OTHER',
+        portraitImageUrl: 'https://example.test/portrait.png',
+        bodyModelVariant: 'default',
+      },
+    });
+    const gameCase = await prisma.case.create({
+      data: {
+        patientId: patient.id,
+        difficulty: 1,
+        correctDiagnosisId: diagnosis.id,
+        moneyReward: 100,
+        moneyPenalty: 50,
+        resultExplanationText: 'Test explanation',
+      },
+    });
+    const document = await prisma.caseDocument.create({
+      data: {
+        caseId: gameCase.id,
+        attentionPointRegion: 'RIGHT_ARM',
+        type: 'SKIN_IMAGE',
+        title: 'Close-up photo',
+        sortOrder: 0,
+        imageUrl: 'https://example.test/lesion.png',
+      },
+    });
+    const user = await prisma.user.create({
+      data: {
+        googleId: 'test-google-id-reveal',
+        email: 'test-reveal@example.test',
+        name: 'Reveal Test User',
+      },
+    });
+    const gameSession = await prisma.gameSession.create({ data: { userId: user.id } });
+
+    const reveal = await prisma.caseDocumentReveal.create({
+      data: { gameSessionId: gameSession.id, caseId: gameCase.id, caseDocumentId: document.id },
+    });
+    expect(reveal.id).toBeDefined();
+
+    await expect(
+      prisma.caseDocumentReveal.create({
+        data: { gameSessionId: gameSession.id, caseId: gameCase.id, caseDocumentId: document.id },
+      }),
+    ).rejects.toThrow();
+  });
 });
