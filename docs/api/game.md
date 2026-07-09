@@ -6,7 +6,12 @@ game or abandon the whole save. See `docs/api/day.md` for resetting just the cur
 ## `POST /api/v1/game/pause`
 
 Pauses the caller's active game (stamps `pausedAt` on the open `GameDayLog` and flips the
-`GameSession` to `PAUSED`). The next call to `POST /api/v1/round` flips it back to `ACTIVE`.
+`GameSession` to `PAUSED`). The next call to `POST /api/v1/round` flips it back to `ACTIVE` —
+and that's also where the paused duration gets accounted for: `resolveGameSession`
+(`src/backend/src/services/round.ts`) adds `now - pausedAt` into the day log's `totalPausedMs`
+and clears `pausedAt`, so pausing a second (or third) time in the same day doesn't lose track of
+the first pause's duration. See `docs/api/day.md` for how `totalPausedMs` feeds into the
+end-of-day elapsed-time floor.
 
 ### Request
 

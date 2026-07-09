@@ -49,6 +49,35 @@ describe('seed', () => {
     }
   });
 
+  it('seeds EXAMINATION shop items and links every EXAMINATION_RESULTS document to one', async () => {
+    await seed();
+
+    const examinationItems = await prisma.shopItem.findMany({
+      where: { itemType: 'EXAMINATION' },
+    });
+    expect(examinationItems.length).toBeGreaterThanOrEqual(3);
+    // Every examination carries a numeric time cost in `content` — orderExamination
+    // reads `content.timeCostMs` to dock the day clock.
+    for (const item of examinationItems) {
+      expect(typeof (item.content as { timeCostMs?: unknown } | null)?.timeCostMs).toBe('number');
+    }
+
+    const resultDocuments = await prisma.caseDocument.findMany({
+      where: { type: 'EXAMINATION_RESULTS' },
+    });
+    expect(resultDocuments.length).toBeGreaterThan(0);
+
+    // Each EXAMINATION_RESULTS doc must name a real examination item in
+    // `content.shopItemId` — that link is what makes ordering that examination
+    // "successful" and reveals the document in the round payload.
+    const examinationIds = new Set(examinationItems.map((item) => item.id));
+    for (const document of resultDocuments) {
+      const shopItemId = (document.content as { shopItemId?: string } | null)?.shopItemId;
+      expect(shopItemId).toBeDefined();
+      expect(examinationIds.has(shopItemId as string)).toBe(true);
+    }
+  });
+
   it('by default, calling seed again on an already-seeded database is a no-op', async () => {
     await seed();
     const [firstDiagnosis] = await prisma.diagnosis.findMany({ orderBy: { code: 'asc' }, take: 1 });

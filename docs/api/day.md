@@ -47,15 +47,31 @@ diagnosed correctly (including a zero-attempt day), and otherwise increases by t
 of incorrect diagnoses. None of this yet feeds back into `POST /api/v1/round` or otherwise gates
 play — see `docs/superpowers/specs/2026-07-08-day-statistics-design.md`.
 
-The day must have been open for at least `MIN_DAY_DURATION_MS` (10 minutes;
-`src/backend/src/config.ts`) before it can be ended — a server-side anti-cheat check against the
-open `GameDayLog`'s `startedAt`, independent of whatever timer the frontend displays. This is a
+The day must have reached at least `MIN_DAY_DURATION_MS` (10 minutes;
+`src/backend/src/constants.ts`) of **effective elapsed time** before it can be ended — a
+server-side anti-cheat check, independent of whatever timer the frontend displays. This is a
 hard minimum, not a forced maximum: the frontend is expected to run its own ~10-minute countdown
 and call this endpoint once it elapses (after letting the player finish whatever patient they
 were already examining), but the backend only ever verifies "has enough time passed," never
-"has too much." Time spent with the session `PAUSED` (`POST /api/v1/game/pause`) still counts
-toward the 10 minutes — the timer is not frozen by pausing; this is acceptable because `endDay`
-already requires `status === 'ACTIVE'`, so a currently-paused session can't call it anyway.
+"has too much."
+
+Effective elapsed time is not simply `Date.now() - GameDayLog.startedAt` — it accounts for time
+spent paused and time added by in-game actions:
+
+    effectiveElapsedMs = (now - startedAt) - totalPausedMs + extraElapsedMs
+
+- `totalPausedMs` accumulates every pause/resume cycle: `POST /api/v1/game/pause` stamps
+  `pausedAt`, and the *next* resume (the implicit `PAUSED` → `ACTIVE` transition inside
+  `POST /api/v1/round`, see `docs/api/game.md`) adds `now - pausedAt` into `totalPausedMs` and
+  clears `pausedAt` back to `null`. This is cumulative across any number of pause cycles within
+  the same day — pausing a second (or third) time no longer clobbers the first pause's duration.
+- `extraElapsedMs` accumulates time added by ordering an examination
+  (`POST /api/v1/examinations`, see `docs/api/examinations.md`) — each `ShopItem`'s
+  `content.timeCostMs` is added on top, so ordering examinations lets the floor be reached
+  sooner, the same direction as time already passing.
+
+The calculation lives in `computeEffectiveElapsedMs` (`src/backend/src/services/dayElapsed.ts`),
+shared by `endDay` and the examination-ordering service.
 
 ### Request
 
