@@ -84,3 +84,48 @@ export function buildCasePrompt(
 
   return { systemInstruction, contents };
 }
+
+export interface DocumentSelectionDocument {
+  id: string;
+  type: string;
+  title: string;
+  content: unknown;
+  imageAltText: string | null;
+}
+
+function formatSelectionDocument(document: DocumentSelectionDocument): string {
+  const detail = document.content
+    ? JSON.stringify(document.content)
+    : (document.imageAltText ?? '');
+  return `- id=${document.id} [${document.type}] ${document.title}: ${detail}`;
+}
+
+/**
+ * Second-stage prompt: given the case's patient-visible documents and the patient's latest
+ * spoken reply, ask Gemini which documents that reply relates to. Returns a structured prompt
+ * whose expected response is a JSON array of document ids drawn ONLY from the provided list.
+ * Carries no answer-key/diagnosis facts — it only ever sees the same patient-visible documents.
+ */
+export function buildDocumentSelectionPrompt(
+  documents: DocumentSelectionDocument[],
+  patientReply: string,
+  playerText: string,
+): CasePrompt {
+  const documentLines = documents.map(formatSelectionDocument).join('\n');
+  const systemInstruction = [
+    'You are a silent classifier for a medical case game. You never talk to the user.',
+    'You are given a list of case documents (each with an id) and the latest exchange between a doctor and a patient.',
+    'Return the ids of the documents whose information is referenced by, corroborated by, or directly relevant to the PATIENT reply.',
+    'Only return ids that appear verbatim in the list below. If none are relevant, return an empty array.',
+    'Respond with ONLY a JSON array of id strings, e.g. ["<id>", "<id>"]. No prose, no explanation.',
+    'Documents:',
+    documentLines || '(none)',
+  ].join('\n\n');
+
+  const contents: GeminiContent[] = [
+    { role: 'user', parts: [{ text: `Doctor asked: ${playerText}` }] },
+    { role: 'user', parts: [{ text: `Patient replied: ${patientReply}` }] },
+  ];
+
+  return { systemInstruction, contents };
+}

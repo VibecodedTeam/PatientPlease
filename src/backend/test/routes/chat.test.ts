@@ -30,7 +30,10 @@ function createGoogleClient(payload: Record<string, unknown> | undefined): Googl
 }
 
 function createFakeGeminiClient(reply: string): GeminiClient {
-  return { generateReply: jest.fn(() => Promise.resolve(reply)) };
+  return {
+    generateReply: jest.fn(() => Promise.resolve(reply)),
+    selectRelevantDocumentIds: jest.fn(() => Promise.resolve([])),
+  };
 }
 
 function createFakeTranscriptionClient(transcript: string): TranscriptionClient {
@@ -240,7 +243,10 @@ describe('POST /api/v1/chat', () => {
     const generateReply = jest.fn<GeminiClient['generateReply']>(() =>
       Promise.resolve('It itches at night.'),
     );
-    const geminiClient: GeminiClient = { generateReply };
+    const geminiClient: GeminiClient = {
+      generateReply,
+      selectRelevantDocumentIds: jest.fn(() => Promise.resolve([])),
+    };
     app = buildApp({
       googleClient: createGoogleClient(VALID_PAYLOAD),
       geminiClient,
@@ -291,7 +297,10 @@ describe('POST /api/v1/chat', () => {
     const generateReply = jest.fn<GeminiClient['generateReply']>(() =>
       Promise.resolve('It itches at night.'),
     );
-    const geminiClient: GeminiClient = { generateReply };
+    const geminiClient: GeminiClient = {
+      generateReply,
+      selectRelevantDocumentIds: jest.fn(() => Promise.resolve([])),
+    };
     app = buildApp({
       googleClient: createGoogleClient(VALID_PAYLOAD),
       geminiClient,
@@ -430,6 +439,7 @@ describe('POST /api/v1/chat', () => {
   it('returns 502 when Gemini fails', async () => {
     const geminiClient: GeminiClient = {
       generateReply: jest.fn(() => Promise.reject(new GeminiError('quota exceeded'))),
+      selectRelevantDocumentIds: jest.fn(() => Promise.resolve([])),
     };
     app = buildApp({
       googleClient: createGoogleClient(VALID_PAYLOAD),

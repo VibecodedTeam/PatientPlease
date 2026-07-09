@@ -1,5 +1,6 @@
 import {
   buildCasePrompt,
+  buildDocumentSelectionPrompt,
   type CasePromptCase,
   type CasePromptChatMessage,
   type CasePromptPatient,
@@ -126,5 +127,43 @@ describe('buildCasePrompt', () => {
     expect(prompt.systemInstruction).not.toContain(
       'It was melanoma because of the ABCDE criteria.',
     );
+  });
+});
+
+describe('buildDocumentSelectionPrompt', () => {
+  const documents = [
+    {
+      id: 'doc-1',
+      type: 'SKIN_IMAGE',
+      title: 'Left shoulder photo',
+      content: null,
+      imageAltText: 'Asymmetric brown lesion',
+    },
+    {
+      id: 'doc-2',
+      type: 'DISEASE_HISTORY',
+      title: 'History',
+      content: { text: 'Noticed 3 months ago' },
+      imageAltText: null,
+    },
+  ];
+
+  it('lists every document id and instructs a JSON-array-of-ids response', () => {
+    const prompt = buildDocumentSelectionPrompt(
+      documents,
+      'I noticed it about three months ago.',
+      'When did you notice it?',
+    );
+    expect(prompt.systemInstruction).toContain('doc-1');
+    expect(prompt.systemInstruction).toContain('doc-2');
+    expect(prompt.systemInstruction.toLowerCase()).toContain('json');
+    expect(prompt.contents.length).toBeGreaterThan(0);
+    expect(prompt.contents.at(-1)?.parts[0]?.text).toContain('three months ago');
+  });
+
+  it('never leaks doctor-only vocabulary into the selection prompt', () => {
+    const prompt = buildDocumentSelectionPrompt(documents, 'reply', 'question');
+    expect(prompt.systemInstruction.toLowerCase()).not.toContain('diagnosis');
+    expect(prompt.systemInstruction.toLowerCase()).not.toContain('treatment');
   });
 });

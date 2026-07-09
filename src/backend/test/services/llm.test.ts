@@ -99,3 +99,70 @@ describe('createMockGeminiClient', () => {
     fetchSpy.mockRestore();
   });
 });
+
+const geminiJsonResponse = (text: string) => ({
+  ok: true,
+  status: 200,
+  json: () => Promise.resolve({ candidates: [{ content: { parts: [{ text }] } }] }),
+});
+
+describe('createGeminiClient.selectRelevantDocumentIds', () => {
+  const input = {
+    systemInstruction: 'classify',
+    contents: [{ role: 'user' as const, parts: [{ text: 'x' }] }],
+  };
+
+  it('parses a JSON array of ids from the response', async () => {
+    const fetchImpl = jest.fn(() => Promise.resolve(geminiJsonResponse('["doc-1","doc-2"]')));
+    const client = createGeminiClient({
+      apiKey: 'k',
+      model: 'gemini-2.0-flash',
+      fetchImpl: fetchImpl,
+    });
+    await expect(client.selectRelevantDocumentIds(input)).resolves.toEqual(['doc-1', 'doc-2']);
+    const sentBody = JSON.parse(
+      (fetchImpl.mock.calls[0] as unknown as [string, { body: string }])[1].body,
+    ) as { generationConfig: { responseMimeType: string } };
+    expect(sentBody.generationConfig.responseMimeType).toBe('application/json');
+  });
+
+  it('returns [] when the model returns an empty array', async () => {
+    const fetchImpl = jest.fn(() => Promise.resolve(geminiJsonResponse('[]')));
+    const client = createGeminiClient({
+      apiKey: 'k',
+      model: 'gemini-2.0-flash',
+      fetchImpl: fetchImpl,
+    });
+    await expect(client.selectRelevantDocumentIds(input)).resolves.toEqual([]);
+  });
+
+  it('throws GeminiError on non-ok response', async () => {
+    const fetchImpl = jest.fn(() =>
+      Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) }),
+    );
+    const client = createGeminiClient({
+      apiKey: 'k',
+      model: 'gemini-2.0-flash',
+      fetchImpl: fetchImpl,
+    });
+    await expect(client.selectRelevantDocumentIds(input)).rejects.toThrow();
+  });
+
+  it('throws GeminiError when the response is not valid JSON array', async () => {
+    const fetchImpl = jest.fn(() => Promise.resolve(geminiJsonResponse('not json')));
+    const client = createGeminiClient({
+      apiKey: 'k',
+      model: 'gemini-2.0-flash',
+      fetchImpl: fetchImpl,
+    });
+    await expect(client.selectRelevantDocumentIds(input)).rejects.toThrow();
+  });
+});
+
+describe('createMockGeminiClient.selectRelevantDocumentIds', () => {
+  it('returns an empty array without calling the network', async () => {
+    await expect(
+      createMockGeminiClient().selectRelevantDocumentIds({ systemInstruction: '', contents: [] }),
+    ).resolves.toEqual([]);
+  });
+});

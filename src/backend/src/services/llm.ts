@@ -21,6 +21,7 @@ export interface GenerateReplyInput {
 
 export interface GeminiClient {
   generateReply(input: GenerateReplyInput): Promise<string>;
+  selectRelevantDocumentIds(input: GenerateReplyInput): Promise<string[]>;
 }
 
 export class GeminiError extends Error {
@@ -77,6 +78,62 @@ export function createGeminiClient(options: CreateGeminiClientOptions): GeminiCl
 
       return text;
     },
+
+    async selectRelevantDocumentIds({
+      systemInstruction,
+      contents,
+    }: GenerateReplyInput): Promise<string[]> {
+      if (contents.length === 0) {
+        return [];
+      }
+
+      let response: { ok: boolean; status: number; json(): Promise<unknown> };
+      try {
+        response = await fetchImpl(
+          `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${options.apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: systemInstruction }] },
+              contents,
+              generationConfig: {
+                responseMimeType: 'application/json',
+                responseSchema: { type: 'ARRAY', items: { type: 'STRING' } },
+              },
+            }),
+          },
+        );
+      } catch (error) {
+        throw new GeminiError('Failed to reach Gemini for document selection', { cause: error });
+      }
+
+      if (!response.ok) {
+        throw new GeminiError(`Gemini returned ${response.status}`);
+      }
+
+      const body = (await response.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[];
+      };
+
+      const text = body.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (!text) {
+        return [];
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch (error) {
+        throw new GeminiError('Gemini returned non-JSON document selection', { cause: error });
+      }
+
+      if (!Array.isArray(parsed) || !parsed.every((id) => typeof id === 'string')) {
+        throw new GeminiError('Gemini document selection was not an array of strings');
+      }
+
+      return parsed;
+    },
   };
 }
 
@@ -92,6 +149,10 @@ export function createMockGeminiClient(): GeminiClient {
   return {
     generateReply(): Promise<string> {
       return Promise.resolve(MOCK_PATIENT_REPLY);
+    },
+
+    selectRelevantDocumentIds(): Promise<string[]> {
+      return Promise.resolve([]);
     },
   };
 }
