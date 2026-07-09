@@ -47,6 +47,12 @@ export interface GameDayLogRecord {
   id: string;
   dayNumber: number;
   startingMoney: number;
+  endingMoney: number | null;
+  casesAttempted: number;
+  casesCorrect: number;
+  thresholdMet: boolean | null;
+  penaltyApplied: boolean | null;
+  startedAt: Date;
   endedAt: Date | null;
 }
 
@@ -65,6 +71,7 @@ export interface OwnedItemRecord {
   purchasePrice: number;
   purchasedOnDay: number;
   purchasedAt: Date;
+  isEquipped: boolean;
 }
 
 export interface DiagnosisRecord {
@@ -108,8 +115,17 @@ export interface RoundPrismaClient {
         diagnosisAttempts: { none: { gameDayLog: { gameSessionId: string } } };
       };
       orderBy: { difficulty: 'asc' };
+      select: { difficulty: true };
+    }): Promise<{ difficulty: number } | null>;
+    findMany(args: {
+      where: {
+        isActive: boolean;
+        difficulty: number;
+        diagnosisAttempts: { none: { gameDayLog: { gameSessionId: string } } };
+      };
+      orderBy: { id: 'asc' };
       include: { patient: true; documents: { orderBy: { sortOrder: 'asc' } } };
-    }): Promise<CaseRecord | null>;
+    }): Promise<CaseRecord[]>;
   };
   gameDayLog: {
     findFirst(args: {
@@ -187,18 +203,49 @@ export async function resolveGameSession(
   return latest;
 }
 
+/**
+ * Deterministically maps a seed string to an index in [0, length). Used to break ties among
+ * cases sharing the lowest difficulty: the same gameSessionId always yields the same index for
+ * the same candidate count, so repeat `/round` calls stay on the same undiagnosed case, while
+ * different sessions (and a shrinking candidate set, once a tied case is diagnosed) land on
+ * different indices — "random-looking" across players without needing a stored pointer.
+ */
+export function pickIndexForSeed(seed: string, length: number): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash ^= seed.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return Math.abs(hash) % length;
+}
+
 export async function selectNextCase(
   prisma: RoundPrismaClient,
   gameSessionId: string,
 ): Promise<CaseRecord | null> {
-  return prisma.case.findFirst({
+  const lowest = await prisma.case.findFirst({
     where: {
       isActive: true,
       diagnosisAttempts: { none: { gameDayLog: { gameSessionId } } },
     },
     orderBy: { difficulty: 'asc' },
+    select: { difficulty: true },
+  });
+  if (!lowest) {
+    return null;
+  }
+
+  const candidates = await prisma.case.findMany({
+    where: {
+      isActive: true,
+      difficulty: lowest.difficulty,
+      diagnosisAttempts: { none: { gameDayLog: { gameSessionId } } },
+    },
+    orderBy: { id: 'asc' },
     include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
   });
+
+  return candidates[pickIndexForSeed(gameSessionId, candidates.length)] ?? null;
 }
 
 export async function resolveOpenGameDayLog(
@@ -271,6 +318,7 @@ function toOwnedItemResponse(record: OwnedItemRecord): OwnedItemRecord {
     purchasePrice: record.purchasePrice,
     purchasedOnDay: record.purchasedOnDay,
     purchasedAt: record.purchasedAt,
+    isEquipped: record.isEquipped,
   };
 }
 

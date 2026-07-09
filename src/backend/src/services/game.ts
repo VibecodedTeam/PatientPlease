@@ -1,3 +1,4 @@
+import { MIN_DAY_DURATION_MS } from '../config.js';
 import type { GameDayLogRecord, GameSessionRecord, GameSessionStatusValue } from './round.js';
 
 export type { GameDayLogRecord, GameSessionRecord };
@@ -11,7 +12,11 @@ export interface GamePrismaClient {
     }): Promise<GameSessionRecord | null>;
     update(args: {
       where: { id: string };
-      data: { status?: GameSessionStatusValue; money?: number };
+      data: {
+        status?: GameSessionStatusValue;
+        money?: number;
+        consecutiveBadDiagnosisCount?: number;
+      };
     }): Promise<GameSessionRecord>;
   };
   gameDayLog: {
@@ -23,15 +28,22 @@ export interface GamePrismaClient {
       data: {
         pausedAt?: Date | null;
         endedAt?: Date;
+        endingMoney?: number;
         casesAttempted?: number;
         casesCorrect?: number;
+        thresholdMet?: boolean | null;
         penaltyApplied?: boolean;
       };
     }): Promise<GameDayLogRecord>;
   };
   diagnosisAttempt: {
     deleteMany(args: { where: { gameDayLogId: string } }): Promise<unknown>;
+    findMany(args: {
+      where: { gameDayLogId: string };
+      select: { isDiagnosisCorrect: true };
+    }): Promise<{ isDiagnosisCorrect: boolean }[]>;
   };
+  $transaction<T>(fn: (tx: GamePrismaClient) => Promise<T>): Promise<T>;
 }
 
 export class NoActiveGameError extends Error {
@@ -45,6 +57,13 @@ export class NoOpenDayError extends Error {
   constructor(message = 'GameSession has no open GameDayLog') {
     super(message);
     this.name = 'NoOpenDayError';
+  }
+}
+
+export class DayNotElapsedError extends Error {
+  constructor(public readonly remainingMs: number) {
+    super('Minimum day duration has not elapsed yet');
+    this.name = 'DayNotElapsedError';
   }
 }
 
@@ -90,6 +109,21 @@ function toGameSessionResponse(record: GameSessionRecord): GameSessionRecord {
     status: record.status,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
+  };
+}
+
+function toGameDayLogResponse(record: GameDayLogRecord): GameDayLogRecord {
+  return {
+    id: record.id,
+    dayNumber: record.dayNumber,
+    startingMoney: record.startingMoney,
+    endingMoney: record.endingMoney,
+    casesAttempted: record.casesAttempted,
+    casesCorrect: record.casesCorrect,
+    thresholdMet: record.thresholdMet,
+    penaltyApplied: record.penaltyApplied,
+    startedAt: record.startedAt,
+    endedAt: record.endedAt,
   };
 }
 
@@ -174,8 +208,68 @@ export async function resetDay(
 
   await prisma.gameDayLog.update({
     where: { id: openDayLog.id },
-    data: { casesAttempted: 0, casesCorrect: 0, penaltyApplied: false, pausedAt: null },
+    data: {
+      casesAttempted: 0,
+      casesCorrect: 0,
+      thresholdMet: null,
+      penaltyApplied: false,
+      pausedAt: null,
+    },
   });
 
   return toGameSessionResponse(updatedSession);
+}
+
+export async function endDay(
+  prisma: GamePrismaClient,
+  userId: string,
+): Promise<{ gameSession: GameSessionRecord; dayLog: GameDayLogRecord }> {
+  const session = await requireActiveGameSession(prisma, userId);
+  const openDayLog = await requireOpenGameDayLog(prisma, session.id);
+
+  const elapsedMs = Date.now() - openDayLog.startedAt.getTime();
+  if (elapsedMs < MIN_DAY_DURATION_MS) {
+    throw new DayNotElapsedError(MIN_DAY_DURATION_MS - elapsedMs);
+  }
+
+  const attempts = await prisma.diagnosisAttempt.findMany({
+    where: { gameDayLogId: openDayLog.id },
+    select: { isDiagnosisCorrect: true },
+  });
+  const casesAttempted = attempts.length;
+  const casesCorrect = attempts.filter((attempt) => attempt.isDiagnosisCorrect).length;
+
+  const endingMoney = session.money;
+  const thresholdMet =
+    session.studentLoanThreshold === null ? null : endingMoney >= session.studentLoanThreshold;
+  const penaltyApplied =
+    session.studentLoanThreshold !== null && endingMoney < session.studentLoanThreshold;
+
+  const wrongCount = casesAttempted - casesCorrect;
+  const consecutiveBadDiagnosisCount =
+    casesCorrect === casesAttempted ? 0 : session.consecutiveBadDiagnosisCount + wrongCount;
+
+  const [updatedSession, updatedDayLog] = await prisma.$transaction(async (tx) => {
+    const txUpdatedSession = await tx.gameSession.update({
+      where: { id: session.id },
+      data: { consecutiveBadDiagnosisCount },
+    });
+    const txUpdatedDayLog = await tx.gameDayLog.update({
+      where: { id: openDayLog.id },
+      data: {
+        endedAt: new Date(),
+        endingMoney,
+        casesAttempted,
+        casesCorrect,
+        thresholdMet,
+        penaltyApplied,
+      },
+    });
+    return [txUpdatedSession, txUpdatedDayLog] as const;
+  });
+
+  return {
+    gameSession: toGameSessionResponse(updatedSession),
+    dayLog: toGameDayLogResponse(updatedDayLog),
+  };
 }
