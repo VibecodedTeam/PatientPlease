@@ -86,11 +86,36 @@ async function createCase(diagnosisId: string, treatmentId: string) {
   });
 }
 
+async function createCaseDocuments(caseId: string) {
+  const doc1 = await prisma.caseDocument.create({
+    data: {
+      caseId,
+      attentionPointRegion: 'LEFT_ARM',
+      type: 'SKIN_IMAGE',
+      title: 'Close-up photo',
+      sortOrder: 0,
+      imageUrl: 'https://example.test/lesion.png',
+    },
+  });
+  const doc2 = await prisma.caseDocument.create({
+    data: {
+      caseId,
+      attentionPointRegion: 'RIGHT_ARM',
+      type: 'DISEASE_HISTORY',
+      title: 'Disease history',
+      sortOrder: 1,
+    },
+  });
+  return { doc1, doc2 };
+}
+
 describe('POST /api/v1/chat', () => {
   let app: FastifyInstance;
 
   afterEach(async () => {
     await prisma.chatMessage.deleteMany({});
+    await prisma.caseDocumentReveal.deleteMany({});
+    await prisma.caseDocument.deleteMany({});
     await prisma.case.deleteMany({});
     await prisma.patient.deleteMany({});
     await prisma.gameSession.deleteMany({});
@@ -467,5 +492,128 @@ describe('POST /api/v1/chat', () => {
 
     expect(response.statusCode).toBe(502);
     expect(response.json()).toEqual({ error: 'llm_failed' });
+  });
+
+  it('returns revealedDocuments selected by Gemini on a text turn', async () => {
+    let doc1Id = '';
+    const geminiClient: GeminiClient = {
+      generateReply: jest.fn(() => Promise.resolve('It itches at night.')),
+      selectRelevantDocumentIds: jest.fn(() => Promise.resolve([doc1Id])),
+    };
+    app = buildApp({
+      googleClient: createGoogleClient(VALID_PAYLOAD),
+      geminiClient,
+      transcriptionClient: createFakeTranscriptionClient('unused'),
+    });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    const gameCase = await createCase(diagnosis.id, treatment.id);
+    const { doc1 } = await createCaseDocuments(gameCase.id);
+    doc1Id = doc1.id;
+    const gameSession = await prisma.gameSession.create({ data: { userId } });
+
+    const form = new FormData();
+    form.append('gameSessionId', gameSession.id);
+    form.append('caseId', gameCase.id);
+    form.append('text', 'Does it itch?');
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat',
+      headers: { cookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{ chatMessages: unknown[]; revealedDocuments: { id: string }[] }>();
+    expect(body.chatMessages).toHaveLength(2);
+    expect(body.revealedDocuments.map((d) => d.id)).toEqual([doc1.id]);
+  });
+
+  it('does not re-reveal an already-revealed document on a later turn', async () => {
+    let doc1Id = '';
+    const geminiClient: GeminiClient = {
+      generateReply: jest.fn(() => Promise.resolve('It itches at night.')),
+      selectRelevantDocumentIds: jest.fn(() => Promise.resolve([doc1Id])),
+    };
+    app = buildApp({
+      googleClient: createGoogleClient(VALID_PAYLOAD),
+      geminiClient,
+      transcriptionClient: createFakeTranscriptionClient('unused'),
+    });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    const gameCase = await createCase(diagnosis.id, treatment.id);
+    const { doc1 } = await createCaseDocuments(gameCase.id);
+    doc1Id = doc1.id;
+    const gameSession = await prisma.gameSession.create({ data: { userId } });
+
+    const form = (): FormData => {
+      const f = new FormData();
+      f.append('gameSessionId', gameSession.id);
+      f.append('caseId', gameCase.id);
+      f.append('text', 'Does it itch?');
+      return f;
+    };
+
+    const first = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat',
+      headers: { cookie },
+      payload: form(),
+    });
+    expect(first.statusCode).toBe(200);
+    const firstBody = first.json<{ revealedDocuments: { id: string }[] }>();
+    expect(firstBody.revealedDocuments.map((d) => d.id)).toEqual([doc1.id]);
+
+    const second = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat',
+      headers: { cookie },
+      payload: form(),
+    });
+    expect(second.statusCode).toBe(200);
+    const secondBody = second.json<{ revealedDocuments: unknown[] }>();
+    expect(secondBody.revealedDocuments).toEqual([]);
+  });
+
+  it('returns revealedDocuments: [] when Gemini document selection fails', async () => {
+    const geminiClient: GeminiClient = {
+      generateReply: jest.fn(() => Promise.resolve('It itches at night.')),
+      selectRelevantDocumentIds: jest.fn(() => Promise.reject(new Error('gemini down'))),
+    };
+    app = buildApp({
+      googleClient: createGoogleClient(VALID_PAYLOAD),
+      geminiClient,
+      transcriptionClient: createFakeTranscriptionClient('unused'),
+    });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    const gameCase = await createCase(diagnosis.id, treatment.id);
+    await createCaseDocuments(gameCase.id);
+    const gameSession = await prisma.gameSession.create({ data: { userId } });
+
+    const form = new FormData();
+    form.append('gameSessionId', gameSession.id);
+    form.append('caseId', gameCase.id);
+    form.append('text', 'Does it itch?');
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat',
+      headers: { cookie },
+      payload: form,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{ chatMessages: unknown[]; revealedDocuments: unknown[] }>();
+    expect(body.chatMessages).toHaveLength(2);
+    expect(body.revealedDocuments).toEqual([]);
   });
 });

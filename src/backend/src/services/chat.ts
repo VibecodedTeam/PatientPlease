@@ -57,7 +57,7 @@ export interface ChatPrismaClient {
   case: {
     findUnique(args: {
       where: { id: string };
-      include: { patient: true; documents: true };
+      include: { patient: true; documents: { orderBy: { sortOrder: 'asc' } } };
     }): Promise<ChatCaseRecord | null>;
   };
   chatMessage: {
@@ -133,7 +133,7 @@ export async function sendChatMessage(
 
   const gameCase = await prisma.case.findUnique({
     where: { id: input.caseId },
-    include: { patient: true, documents: true },
+    include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
   });
   if (!gameCase) {
     throw new ChatCaseNotFoundError();

@@ -103,9 +103,10 @@ export default function chatRoutes(fastify: FastifyInstance, opts: ChatRoutesOpt
         },
         { userId: user.id, gameSessionId, caseId, playerText },
       );
-      return await reply
-        .status(200)
-        .send({ chatMessages: [result.playerMessage, result.patientMessage] });
+      return await reply.status(200).send({
+        chatMessages: [result.playerMessage, result.patientMessage],
+        revealedDocuments: result.revealedDocuments,
+      });
     } catch (error) {
       if (error instanceof ChatGameSessionNotFoundError) {
         return reply.status(404).send({ error: 'game_session_not_found' });
