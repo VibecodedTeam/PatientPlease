@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import styles from './Wall.module.css';
 import { mockBooks } from './mockBooks';
 import { OverlayPortal } from '../OverlayPortal';
+import { Phone } from '../Phone';
 
 const PATIENTS_LEFT_TODAY = 5;
 
@@ -54,9 +55,6 @@ export function Wall({ books }) {
   const [pinnedNotes, setPinnedNotes] = useState([{ id: 0, text: PREVENTION_TIPS[0], slot: 0, offsetX: 0, offsetY: 0, rotate: -2 }]);
   const [nextTipIndex, setNextTipIndex] = useState(1);
   const nextNoteIdRef = useRef(1);
-  const [musicVolume, setMusicVolume] = useState(50);
-  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [lampOn, setLampOn] = useState(false);
   const [dermatoscopeOn, setDermatoscopeOn] = useState(false);
 
@@ -128,11 +126,13 @@ export function Wall({ books }) {
           <button
             type="button"
             className={styles.settingsButton}
-            aria-label="Open settings"
-            title="Settings"
+            aria-label="Open test orders"
+            title="Order tests"
             onClick={openSettings}
           >
-            <span aria-hidden="true">⚙</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="1.05rem" height="1.05rem" fill="#c0392b">
+              <path d="M6.62 10.79a15.09 15.09 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.36 11.36 0 0 0 3.57.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.4 21 3 13.6 3 4.5a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.24 1.02z" />
+            </svg>
           </button>
         </div>
 
@@ -256,57 +256,16 @@ export function Wall({ books }) {
       )}
 
       {isSettingsOpen && (
-        // overlay-portal: settings must appear as a centered modal above the whole page,
-        // not clipped inside the compact wall panel
+        // overlay-portal: the order-tests popup must appear as a centered modal above the
+        // whole page, not clipped inside the compact wall panel
         <OverlayPortal onDismiss={closeSettings}>
           <div
-            className={styles.settingsPopup}
             role="dialog"
             aria-modal="true"
-            aria-label="Settings"
+            aria-label="Order tests"
             onClick={(event) => event.stopPropagation()}
           >
-            <h3 className={styles.settingsTitle}>Settings</h3>
-
-            <label className={styles.settingsField}>
-              Music volume
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={musicVolume}
-                onChange={(event) => setMusicVolume(Number(event.target.value))}
-              />
-            </label>
-
-            <label className={styles.settingsField}>
-              <input
-                type="checkbox"
-                checked={soundEffectsEnabled}
-                onChange={(event) => setSoundEffectsEnabled(event.target.checked)}
-              />
-              Sound effects
-            </label>
-
-            <label className={styles.settingsField}>
-              <input
-                type="checkbox"
-                checked={isFullscreen}
-                onChange={(event) => setIsFullscreen(event.target.checked)}
-              />
-              Fullscreen
-            </label>
-
-            <div className={styles.logoutField}>
-              <button type="button" className={styles.logoutButton} disabled title="Not implemented yet">
-                Log out
-              </button>
-              <span className={styles.comingSoonLabel}>Coming soon</span>
-            </div>
-
-            <button type="button" className={styles.closeButton} onClick={closeSettings}>
-              Close
-            </button>
+            <Phone onCancel={closeSettings} />
           </div>
         </OverlayPortal>
       )}

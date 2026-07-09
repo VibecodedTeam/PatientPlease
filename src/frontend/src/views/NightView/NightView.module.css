@@ -110,6 +110,17 @@
   background: #193447;
   border: 1px solid #384254;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, opacity 0.15s;
+}
+
+.cardSelected {
+  border-color: #a89e96;
+  box-shadow: 0 0 0 3px rgba(168, 158, 150, 0.23), 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.cardOwned {
+  background: #16232f;
+  opacity: 0.72;
 }
 
 .cardCover {
@@ -181,13 +192,31 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  cursor: default;
+  cursor: pointer;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 2px solid #4a5568;
   background: #212129;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.selectDotSelected {
+  border-color: #a89e96;
+  background: #a89e96;
+}
+
+.ownedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ec4b9;
+  padding: 8px 12px;
+  background: #073b33;
+  border-radius: 999px;
 }
 
 .summary {
@@ -246,11 +275,20 @@
   letter-spacing: 0.01em;
   padding: 14px 52px;
   border-radius: 12px;
-  cursor: default;
+  cursor: pointer;
   border: 1px solid #4a5568;
   background: #193447;
   color: #cfc7bf;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.actionButton:disabled {
+  cursor: not-allowed;
+  border-color: #531516;
+  background: #2a1719;
+  color: #8a6d6a;
+  box-shadow: none;
 }
 
 .actionHint {

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './NightView.module.css';
 
 const CATALOG = [
@@ -28,6 +29,52 @@ const CATALOG = [
 const STARTING_FUNDS = 120;
 
 export function NightView() {
+  const navigate = useNavigate();
+  const [funds, setFunds] = useState(STARTING_FUNDS);
+  const [ownedIds, setOwnedIds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  function toggle(id) {
+    setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  }
+
+  const total = CATALOG.filter((item) => selectedIds.includes(item.id)).reduce((sum, item) => sum + item.price, 0);
+  const anySelected = selectedIds.length > 0;
+  const canAfford = total <= funds;
+
+  function buy() {
+    if (!anySelected || !canAfford) return;
+    setFunds((f) => f - total);
+    setOwnedIds((ids) => [...ids, ...selectedIds]);
+    setSelectedIds([]);
+    navigate('/game/main');
+  }
+
+  function skip() {
+    navigate('/game/main');
+  }
+
+  let actionLabel;
+  let actionDisabled;
+  let actionHint;
+  if (!anySelected) {
+    actionLabel = 'Skip';
+    actionDisabled = false;
+    actionHint = 'End the shift without buying';
+  } else if (!canAfford) {
+    actionLabel = 'Buy';
+    actionDisabled = true;
+    actionHint = `Insufficient funds — remove an item (over by $${total - funds})`;
+  } else {
+    actionLabel = `Buy · $${total}`;
+    actionDisabled = false;
+    actionHint = `$${funds - total} will remain`;
+  }
+
+  const nSelected = selectedIds.length;
+  const selectionLabel =
+    nSelected === 0 ? 'No items selected' : `${nSelected} ${nSelected === 1 ? 'item' : 'items'} selected`;
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -55,45 +102,64 @@ export function NightView() {
                 $
               </text>
             </svg>
-            {STARTING_FUNDS}
+            {funds}
           </span>
         </div>
       </header>
 
       <main className={styles.catalog}>
-        {CATALOG.map((item) => (
-          <div className={styles.card} key={item.id}>
-            <div className={styles.cardCover} />
+        {CATALOG.map((item) => {
+          const owned = ownedIds.includes(item.id);
+          const selected = selectedIds.includes(item.id);
+          return (
+            <div className={`${styles.card}${owned ? ` ${styles.cardOwned}` : ''}${selected ? ` ${styles.cardSelected}` : ''}`} key={item.id}>
+              <div className={styles.cardCover} />
 
-            <div className={styles.cardBody}>
-              <div className={styles.cardHeading}>
-                <h2 className={styles.cardTitle}>{item.title}</h2>
-                <span className={styles.cardCategory}>{item.category}</span>
+              <div className={styles.cardBody}>
+                <div className={styles.cardHeading}>
+                  <h2 className={styles.cardTitle}>{item.title}</h2>
+                  <span className={styles.cardCategory}>{item.category}</span>
+                </div>
+                <p className={styles.cardFlavor}>{item.flavor}</p>
               </div>
-              <p className={styles.cardFlavor}>{item.flavor}</p>
-            </div>
 
-            <div className={styles.cardTrailing}>
-              <span className={styles.cardPrice}>${item.price}</span>
-              <span className={styles.selectDot} aria-hidden="true" />
+              <div className={styles.cardTrailing}>
+                <span className={styles.cardPrice}>${item.price}</span>
+                {owned ? (
+                  <span className={styles.ownedBadge}>In library</span>
+                ) : (
+                  <button
+                    type="button"
+                    aria-label={`Select ${item.title}`}
+                    aria-pressed={selected}
+                    className={`${styles.selectDot}${selected ? ` ${styles.selectDotSelected}` : ''}`}
+                    onClick={() => toggle(item.id)}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </main>
 
       <div className={styles.summary}>
-        <span className={styles.summaryLabel}>No items selected</span>
+        <span className={styles.summaryLabel}>{selectionLabel}</span>
         <span className={styles.total}>
           <span className={styles.totalLabel}>Cart total</span>
-          <span className={styles.totalValue}>$0</span>
+          <span className={styles.totalValue}>${total}</span>
         </span>
       </div>
 
       <div className={styles.action}>
-        <button type="button" className={styles.actionButton} disabled>
-          Skip
+        <button
+          type="button"
+          className={styles.actionButton}
+          disabled={actionDisabled}
+          onClick={anySelected ? buy : skip}
+        >
+          {actionLabel}
         </button>
-        <span className={styles.actionHint}>End the shift without buying</span>
+        <span className={styles.actionHint}>{actionHint}</span>
       </div>
     </div>
   );
