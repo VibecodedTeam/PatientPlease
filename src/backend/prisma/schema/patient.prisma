@@ -20,26 +20,27 @@ model Patient {
 
 /// The scoreable encounter for a Patient: answer key, economy, and everything documenting it.
 model Case {
-  id                    String         @id @default(uuid(7)) @db.Uuid
-  patientId             String         @unique @db.Uuid
-  patient               Patient    @relation(fields: [patientId], references: [id])
-  difficulty            Int        @db.SmallInt
-  correctDiagnosisId    String     @db.Uuid
-  correctDiagnosis      Diagnosis  @relation(fields: [correctDiagnosisId], references: [id])
-  correctTreatmentId    String?    @db.Uuid
-  correctTreatment      Treatment? @relation(fields: [correctTreatmentId], references: [id])
-  
+  id                 String     @id @default(uuid(7)) @db.Uuid
+  patientId          String     @unique @db.Uuid
+  patient            Patient    @relation(fields: [patientId], references: [id])
+  difficulty         Int        @db.SmallInt
+  correctDiagnosisId String     @db.Uuid
+  correctDiagnosis   Diagnosis  @relation(fields: [correctDiagnosisId], references: [id])
+  correctTreatmentId String?    @db.Uuid
+  correctTreatment   Treatment? @relation(fields: [correctTreatmentId], references: [id])
+
   moneyReward           Int
   moneyPenalty          Int
   resultExplanationText String
-  isActive              Boolean    @default(true)
-  createdAt             DateTime   @default(now())
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
 
   documents         CaseDocument[]
   hints             CaseHint[]
   diagnosisAttempts DiagnosisAttempt[]
   chatMessages      ChatMessage[]
   gameplayLogs      GameplayLog[]
+  examinations      CaseExamination[]
 
   @@index([correctDiagnosisId])
   @@index([correctTreatmentId])
