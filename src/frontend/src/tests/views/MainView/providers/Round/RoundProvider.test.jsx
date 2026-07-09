@@ -98,6 +98,7 @@ describe('RoundProvider', () => {
     expect(screen.getByText('loading')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('patient Jan Kowalski')).toBeInTheDocument());
 
+    expect(global.fetch).toHaveBeenCalledTimes(1);
     const request = lastRequest();
     expect(request.method).toBe('POST');
     expect(request.url).toBe('http://api.test/api/v1/round');

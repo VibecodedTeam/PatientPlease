@@ -25,6 +25,7 @@ export const ENDPOINTS = {
   },
   day: {
     reset: '/api/v1/day/reset',
+    end: '/api/v1/day/end',
   },
 };
 

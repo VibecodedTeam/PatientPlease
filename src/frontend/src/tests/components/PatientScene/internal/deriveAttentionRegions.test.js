@@ -16,4 +16,13 @@ describe('deriveAttentionRegions', () => {
     expect(deriveAttentionRegions([])).toEqual([]);
     expect(deriveAttentionRegions(undefined)).toEqual([]);
   });
+
+  it('drops regions with no known 3D coordinate instead of passing them through', () => {
+    const documents = [
+      { id: 'd1', attentionPointRegion: 'HEAD' },
+      { id: 'd2', attentionPointRegion: 'NOT_A_REAL_REGION' },
+    ];
+
+    expect(deriveAttentionRegions(documents)).toEqual(['HEAD']);
+  });
 });

@@ -43,4 +43,29 @@ describe('createHttpClient', () => {
     const request = global.fetch.mock.calls[0][0];
     expect(request.credentials).toBe('omit');
   });
+
+  it('does not declare a JSON content-type on a POST with no body', async () => {
+    global.fetch = jest.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+
+    const client = createHttpClient('http://api.test');
+    await client.post('/things');
+
+    // Fastify rejects a request that declares Content-Type: application/json
+    // but sends an empty body (FST_ERR_CTP_EMPTY_JSON_BODY) — every no-body
+    // POST in this app (round.start, game.pause/reset, day.reset/end,
+    // auth.logout) hits this in real use, even though it's invisible to any
+    // test that mocks fetch without inspecting the real Request's headers.
+    const request = global.fetch.mock.calls[0][0];
+    expect(request.headers.get('content-type')).toBeNull();
+  });
+
+  it('still declares a JSON content-type on a POST that does send a body', async () => {
+    global.fetch = jest.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+
+    const client = createHttpClient('http://api.test');
+    await client.post('/things', { a: 1 });
+
+    const request = global.fetch.mock.calls[0][0];
+    expect(request.headers.get('content-type')).toBe('application/json');
+  });
 });

@@ -1,18 +1,27 @@
 import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { ApiProvider } from '../../../../../providers/Api';
-import { GameSessionProvider, useGameSession } from '../../../../../views/MainView/providers/GameSession';
+import {
+  GameSessionProvider,
+  useGameSession,
+  DAY_DURATION_SECONDS,
+} from '../../../../../views/MainView/providers/GameSession';
 
 function TestConsumer() {
-  const { elapsedSeconds, isPaused, pauseTimer, resumeTimer, resetDay, resetGame } = useGameSession();
+  const { elapsedSeconds, isPaused, isDayOver, pauseTimer, resumeTimer, resetDay, resetGame, endDay } =
+    useGameSession();
+  const [dayLog, setDayLog] = React.useState(null);
   return (
     <div>
       <span data-testid="elapsed">{elapsedSeconds}</span>
       <span data-testid="paused">{String(isPaused)}</span>
+      <span data-testid="day-over">{String(isDayOver)}</span>
+      <span data-testid="day-log">{dayLog ? JSON.stringify(dayLog) : 'none'}</span>
       <button onClick={pauseTimer}>pause</button>
       <button onClick={resumeTimer}>resume</button>
       <button onClick={resetDay}>reset-day</button>
       <button onClick={resetGame}>reset-game</button>
+      <button onClick={() => endDay().then((data) => setDayLog(data.dayLog))}>end-day</button>
     </div>
   );
 }
@@ -187,6 +196,67 @@ describe('GameSessionProvider / useGameSession', () => {
     fireVisibilityChange();
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('flips isDayOver and freezes the timer once elapsedSeconds reaches DAY_DURATION_SECONDS', () => {
+    renderWithProviders();
+
+    act(() => {
+      jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
+    });
+
+    expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS));
+    expect(screen.getByTestId('day-over').textContent).toBe('true');
+    expect(screen.getByTestId('paused').textContent).toBe('true');
+
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS));
+  });
+
+  it('resumeTimer does not un-pause a day that is already over', () => {
+    renderWithProviders();
+
+    act(() => {
+      jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
+    });
+    expect(screen.getByTestId('paused').textContent).toBe('true');
+
+    act(() => {
+      screen.getByText('resume').click();
+    });
+
+    expect(screen.getByTestId('paused').textContent).toBe('true');
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS));
+  });
+
+  it('endDay POSTs /api/v1/day/end, returns the real payload, and resets elapsedSeconds', async () => {
+    const dayLogResponse = {
+      gameSession: { consecutiveBadDiagnosisCount: 0 },
+      dayLog: { id: 'day-1', dayNumber: 3, startingMoney: 100, endingMoney: 130, casesAttempted: 2, casesCorrect: 2 },
+    };
+    global.fetch = jest.fn().mockResolvedValue(new Response(JSON.stringify(dayLogResponse), { status: 200 }));
+    renderWithProviders();
+
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    await act(async () => {
+      screen.getByText('end-day').click();
+    });
+
+    const request = lastRequest();
+    expect(request.method).toBe('POST');
+    expect(request.url).toBe('http://api.test/api/v1/day/end');
+    await waitFor(() =>
+      expect(screen.getByTestId('day-log').textContent).toBe(JSON.stringify(dayLogResponse.dayLog)),
+    );
+    expect(screen.getByTestId('elapsed').textContent).toBe('0');
   });
 
   it('does not auto-resume when the document becomes visible again', () => {
