@@ -164,6 +164,37 @@ describe('sendChatMessage', () => {
     expect(result.patientMessage.id).toBe('patient-msg');
   });
 
+  it('never forwards doctor-only case fields (e.g. resultExplanationText) into the Gemini prompt', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findUnique.mockResolvedValue(makeGameSession());
+    // Simulates the raw Prisma Case row, which always carries these scalar columns
+    // even though ChatCaseRecord's declared shape only exposes patient/documents/difficulty.
+    prisma.case.findUnique.mockResolvedValue({
+      ...makeCase(),
+      resultExplanationText: 'It was melanoma because of the ABCDE criteria.',
+      correctDiagnosisName: 'Melanoma',
+    } as ChatCaseRecord);
+    prisma.chatMessage.findMany.mockResolvedValue([]);
+    prisma.chatMessage.create
+      .mockResolvedValueOnce(makeMessage({ id: 'player-msg', sortOrder: 1 }))
+      .mockResolvedValueOnce(makeMessage({ id: 'patient-msg', sender: 'PATIENT', sortOrder: 2 }));
+    const generateReply = jest
+      .fn<(input: GenerateReplyInput) => Promise<string>>()
+      .mockResolvedValue('I do not know.');
+
+    await sendChatMessage(
+      prisma,
+      { generateReply },
+      { userId: 'user-uuid', gameSessionId: 'session-uuid', caseId: 'case-uuid', playerText: 'Hi' },
+    );
+
+    const promptArg = generateReply.mock.calls[0]?.[0] as { systemInstruction: string };
+    expect(promptArg.systemInstruction).not.toContain(
+      'It was melanoma because of the ABCDE criteria.',
+    );
+    expect(promptArg.systemInstruction).not.toContain('Melanoma');
+  });
+
   it('starts sortOrder at 1 when there is no prior history', async () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findUnique.mockResolvedValue(makeGameSession());
