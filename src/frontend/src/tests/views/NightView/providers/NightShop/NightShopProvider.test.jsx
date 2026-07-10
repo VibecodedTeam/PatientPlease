@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../../../providers/Api';
+import { RoundProvider } from '../../../../../providers/Round';
 import { NightShopProvider, useNightShop } from '../../../../../views/NightView/providers/NightShop';
 
 const CATALOG = {
@@ -41,9 +42,11 @@ function Probe() {
 function renderProvider() {
   return render(
     <ApiProvider baseUrl="http://api.test">
-      <NightShopProvider>
-        <Probe />
-      </NightShopProvider>
+      <RoundProvider>
+        <NightShopProvider>
+          <Probe />
+        </NightShopProvider>
+      </RoundProvider>
     </ApiProvider>,
   );
 }
@@ -138,9 +141,11 @@ describe('NightShopProvider', () => {
 
     render(
       <ApiProvider baseUrl="http://api.test">
-        <NightShopProvider>
-          <Probe />
-        </NightShopProvider>
+        <RoundProvider>
+          <NightShopProvider>
+            <Probe />
+          </NightShopProvider>
+        </RoundProvider>
       </ApiProvider>,
     );
     await waitFor(() => screen.getByText('money 100'));

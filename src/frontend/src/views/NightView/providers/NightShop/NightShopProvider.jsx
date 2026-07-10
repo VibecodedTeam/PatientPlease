@@ -1,50 +1,30 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useApi } from '../../../../providers/Api';
-import { ENDPOINTS } from '../../../../lib/endpointList';
+import { useRound } from '../../../../providers/Round';
 
 export const NightShopContext = createContext(null);
 
 /**
- * Owns the night-shop domain: the purchasable catalog + the player's money
- * (fetched from `GET /api/v1/shop`), a budget-aware selection, and a
- * `buySelected` action that commits each selection via `POST /api/v1/shop/purchase`.
+ * Owns the night-shop domain's UI-selection state: a budget-aware cart built
+ * on top of RoundProvider's shopCatalog/loadShopCatalog/purchaseShopItem
+ * (the only place that talks to GET/POST /api/v1/shop*).
  *
  * Budget invariants: an item can only be selected while its price fits in the
  * remaining balance, so `selectedTotal` never exceeds `money` and `remaining`
  * never goes negative. The backend independently rejects `insufficient_funds`.
  */
 export function NightShopProvider({ children }) {
-  const api = useApi();
-  const [catalog, setCatalog] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { shopCatalog, isShopLoading, shopError, loadShopCatalog, purchaseShopItem } = useRound();
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [isBuying, setIsBuying] = useState(false);
   const [buyError, setBuyError] = useState(null);
 
-  const loadCatalog = useCallback(() => {
-    setIsLoading(true);
-    return api
-      .get(ENDPOINTS.shop.list)
-      .then((data) => {
-        setCatalog(data);
-        setError(null);
-        return data;
-      })
-      .catch((err) => {
-        setError(err);
-        return null;
-      })
-      .finally(() => setIsLoading(false));
-  }, [api]);
-
   useEffect(() => {
-    loadCatalog();
-  }, [loadCatalog]);
+    loadShopCatalog();
+  }, [loadShopCatalog]);
 
-  const items = useMemo(() => catalog?.items ?? [], [catalog]);
-  const money = catalog?.money ?? 0;
+  const items = useMemo(() => shopCatalog?.items ?? [], [shopCatalog]);
+  const money = shopCatalog?.money ?? 0;
 
   const selectedTotal = useMemo(
     () =>
@@ -86,17 +66,17 @@ export function NightShopProvider({ children }) {
       for (const shopItemId of selectedIds) {
         // Sequential: the backend debits money per purchase, so ordering matters.
         // eslint-disable-next-line no-await-in-loop
-        await api.post(ENDPOINTS.shop.purchase, { shopItemId });
+        await purchaseShopItem(shopItemId);
       }
       setSelectedIds(new Set());
-      await loadCatalog();
+      await loadShopCatalog();
     } catch (err) {
       setBuyError(err);
       // Resync from the server so money/owned reflect any partial success, then
       // drop from the selection any item that is now owned or no longer present
       // — otherwise already-purchased items stay "selected", double-counting the
       // cart total and getting re-POSTed (item_already_owned) on the next Buy.
-      const latest = await loadCatalog();
+      const latest = await loadShopCatalog();
       if (latest) {
         const selectable = new Set(
           (latest.items ?? []).filter((item) => !item.owned).map((item) => item.id),
@@ -106,14 +86,14 @@ export function NightShopProvider({ children }) {
     } finally {
       setIsBuying(false);
     }
-  }, [api, selectedIds, loadCatalog]);
+  }, [selectedIds, purchaseShopItem, loadShopCatalog]);
 
   const value = useMemo(
     () => ({
       items,
       money,
-      isLoading,
-      error,
+      isLoading: isShopLoading,
+      error: shopError,
       selectedIds,
       selectedTotal,
       remaining,
@@ -127,8 +107,8 @@ export function NightShopProvider({ children }) {
     [
       items,
       money,
-      isLoading,
-      error,
+      isShopLoading,
+      shopError,
       selectedIds,
       selectedTotal,
       remaining,
