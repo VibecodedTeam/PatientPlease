@@ -6,6 +6,30 @@ import { ENDPOINTS } from '../../../../lib/endpointList';
 export const RoundContext = createContext(null);
 
 /**
+ * Maps a failed `POST /api/v1/round` to a terminal game state, or `null` if the
+ * failure is an ordinary error the caller should surface as such. The backend
+ * returns 409 for a game that can no longer produce a round: `game_completed` /
+ * `no_cases_remaining` mean the player finished every case, `game_over` means
+ * they lost — both are dead-ends the day view renders a message for rather than
+ * an empty desk.
+ *
+ * @param {*} err - The rejected value from the API client (an axios error).
+ * @returns {'completed' | 'game_over' | null}
+ */
+function terminalStateFromError(err) {
+  if (err?.response?.status !== 409) return null;
+  switch (err.response.data?.error) {
+    case 'game_completed':
+    case 'no_cases_remaining':
+      return 'completed';
+    case 'game_over':
+      return 'game_over';
+    default:
+      return null;
+  }
+}
+
+/**
  * Loads the full round payload: game session, owned items, the active
  * case (patient, documents), and diagnosis/treatment catalogs, from
  * POST /api/v1/round (starts a new round or resumes the currently open one).
@@ -15,6 +39,7 @@ export function RoundProvider({ children }) {
   const [round, setRound] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [terminalState, setTerminalState] = useState(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -25,7 +50,13 @@ export function RoundProvider({ children }) {
         if (!isCancelled) setRound(data);
       })
       .catch((err) => {
-        if (!isCancelled) setError(err);
+        if (isCancelled) return;
+        const terminal = terminalStateFromError(err);
+        if (terminal) {
+          setTerminalState(terminal);
+        } else {
+          setError(err);
+        }
       })
       .finally(() => {
         if (!isCancelled) setIsLoading(false);
@@ -37,7 +68,7 @@ export function RoundProvider({ children }) {
   }, [api]);
 
   return (
-    <RoundContext.Provider value={{ round, isLoading, error }}>
+    <RoundContext.Provider value={{ round, isLoading, error, terminalState }}>
       {children}
     </RoundContext.Provider>
   );

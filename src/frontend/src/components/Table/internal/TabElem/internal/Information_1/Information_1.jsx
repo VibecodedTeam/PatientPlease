@@ -16,7 +16,6 @@ export function Information_1({ title = 'Patient Information', className = '', .
     ? [
         patient.sex ? `Sex: ${patient.sex}` : null,
         patient.occupation ? `Occupation: ${patient.occupation}` : null,
-        patient.chiefComplaint ? `Chief complaint: ${patient.chiefComplaint}` : null,
       ].filter(Boolean)
     : ['Pending clinical note', 'Pending clinical note', 'Pending clinical note'];
 

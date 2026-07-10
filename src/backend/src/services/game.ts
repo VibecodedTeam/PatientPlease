@@ -1,7 +1,13 @@
-import { MIN_DAY_DURATION_MS } from '../config.js';
-import type { GameDayLogRecord, GameSessionRecord, GameSessionStatusValue } from './round.js';
+import { MIN_DAY_DURATION_MS } from '../constants.js';
+import { computeEffectiveElapsedMs } from './dayElapsed.js';
+import type {
+  GameDayLogRecord,
+  GameDayLogResponse,
+  GameSessionRecord,
+  GameSessionStatusValue,
+} from './round.js';
 
-export type { GameDayLogRecord, GameSessionRecord };
+export type { GameDayLogRecord, GameDayLogResponse, GameSessionRecord };
 
 /** Narrow, structurally-compatible subset of PrismaClient this service depends on — mirrors RoundPrismaClient in services/round.ts. */
 export interface GamePrismaClient {
@@ -27,6 +33,7 @@ export interface GamePrismaClient {
       where: { id: string };
       data: {
         pausedAt?: Date | null;
+        totalPausedMs?: number;
         endedAt?: Date;
         endingMoney?: number;
         casesAttempted?: number;
@@ -112,7 +119,7 @@ function toGameSessionResponse(record: GameSessionRecord): GameSessionRecord {
   };
 }
 
-function toGameDayLogResponse(record: GameDayLogRecord): GameDayLogRecord {
+function toGameDayLogResponse(record: GameDayLogRecord): GameDayLogResponse {
   return {
     id: record.id,
     dayNumber: record.dayNumber,
@@ -206,6 +213,7 @@ export async function resetDay(
     },
   });
 
+  const pausedMs = openDayLog.pausedAt ? Date.now() - openDayLog.pausedAt.getTime() : 0;
   await prisma.gameDayLog.update({
     where: { id: openDayLog.id },
     data: {
@@ -214,6 +222,7 @@ export async function resetDay(
       thresholdMet: null,
       penaltyApplied: false,
       pausedAt: null,
+      totalPausedMs: openDayLog.totalPausedMs + pausedMs,
     },
   });
 
@@ -223,11 +232,15 @@ export async function resetDay(
 export async function endDay(
   prisma: GamePrismaClient,
   userId: string,
-): Promise<{ gameSession: GameSessionRecord; dayLog: GameDayLogRecord }> {
+): Promise<{ gameSession: GameSessionRecord; dayLog: GameDayLogResponse }> {
   const session = await requireActiveGameSession(prisma, userId);
   const openDayLog = await requireOpenGameDayLog(prisma, session.id);
 
-  const elapsedMs = Date.now() - openDayLog.startedAt.getTime();
+  const elapsedMs = computeEffectiveElapsedMs({
+    startedAt: openDayLog.startedAt,
+    totalPausedMs: openDayLog.totalPausedMs,
+    extraElapsedMs: openDayLog.extraElapsedMs,
+  });
   if (elapsedMs < MIN_DAY_DURATION_MS) {
     throw new DayNotElapsedError(MIN_DAY_DURATION_MS - elapsedMs);
   }

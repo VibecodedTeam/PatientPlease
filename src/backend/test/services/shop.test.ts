@@ -31,6 +31,7 @@ function createMockPrisma() {
       findFirst: jest.fn<ShopPrismaClient['ownedItem']['findFirst']>(),
       create: jest.fn<ShopPrismaClient['ownedItem']['create']>(),
     },
+    $transaction: jest.fn() as unknown as ShopPrismaClient['$transaction'],
   };
 }
 
@@ -152,6 +153,11 @@ describe('purchaseItem', () => {
     prisma.ownedItem.findFirst.mockResolvedValue(null);
     prisma.gameSession.update.mockResolvedValue(makeSession({ money: 50 }));
     prisma.ownedItem.create.mockResolvedValue(makeOwnedItem());
+    // The mock transaction just runs the callback against the same mock client,
+    // so tests can keep asserting on gameSession.update/ownedItem.create directly.
+    prisma.$transaction = jest.fn((fn: (tx: ShopPrismaClient) => Promise<unknown>) =>
+      fn(prisma as unknown as ShopPrismaClient),
+    ) as unknown as ShopPrismaClient['$transaction'];
   }
 
   it('throws NoActiveGameError when there is no active GameSession', async () => {
@@ -278,5 +284,14 @@ describe('purchaseItem', () => {
     const result = await purchaseItem(prisma, 'user-uuid', 'shop-item-uuid');
 
     expect(result.gameSession).not.toHaveProperty('userId');
+  });
+
+  it('debits money and creates the OwnedItem inside a single transaction', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+
+    await purchaseItem(prisma, 'user-uuid', 'shop-item-uuid');
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 });

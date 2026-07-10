@@ -39,7 +39,15 @@ export function AuthProvider({ children }) {
   );
 
   const logout = useCallback(async () => {
-    await api.post(ENDPOINTS.auth.logout);
+    // Clear local auth state regardless of the request outcome: a failed
+    // logout call must not leave the user shown as still authenticated, nor
+    // surface as an unhandled rejection at the (catch-less) call site.
+    try {
+      await api.post(ENDPOINTS.auth.logout);
+    } catch {
+      // Transport/server error on logout is non-actionable — clear the
+      // client session anyway.
+    }
     setUser(null);
     setStatus('unauthenticated');
   }, [api]);
