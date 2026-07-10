@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../providers/Api';
-import { AuthProvider } from '../../../providers/Auth';
+import { AuthProvider, useAuth } from '../../../providers/Auth';
 import { AuthGate } from '../../../components/AuthGate';
 
 const USER = { id: '1', email: 'user@example.test', name: 'Test User', avatarUrl: null };
@@ -39,28 +39,38 @@ describe('AuthGate', () => {
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
   });
 
-  it('shows the header and children when authenticated', async () => {
+  it('renders children when authenticated', async () => {
     renderGate(() =>
       Promise.resolve(new Response(JSON.stringify({ user: USER }), { status: 200 })),
     );
 
     await waitFor(() => expect(screen.getByText('Protected content')).toBeInTheDocument());
-    expect(screen.getByText('Test User')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument();
   });
 
-  it('returns to Login after clicking Logout', async () => {
+  it('returns to Login when a child calls logout()', async () => {
     const user = userEvent.setup();
     global.fetch = jest
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ user: USER }), { status: 200 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
+    function ChildWithLogoutButton() {
+      const { logout } = useAuth();
+      return (
+        <div>
+          <div>Protected content</div>
+          <button type="button" onClick={() => logout()}>
+            Logout
+          </button>
+        </div>
+      );
+    }
+
     render(
       <ApiProvider baseUrl="http://api.test">
         <AuthProvider>
           <AuthGate googleClientId="test-client-id">
-            <div>Protected content</div>
+            <ChildWithLogoutButton />
           </AuthGate>
         </AuthProvider>
       </ApiProvider>,
