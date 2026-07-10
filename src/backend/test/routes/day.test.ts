@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../src/app.js';
-import { MIN_DAY_DURATION_MS } from '../../src/config.js';
+import { MIN_DAY_DURATION_MS } from '../../src/constants.js';
 import { prisma } from '../../src/db/prisma.js';
 import type { GoogleIdTokenVerifier } from '../../src/services/auth.js';
 
@@ -226,6 +226,31 @@ describe('POST /api/v1/day/reset', () => {
     expect(response.statusCode).toBe(200);
     const body = response.json<{ gameSession: { status: string } }>();
     expect(body.gameSession.status).toBe('ACTIVE');
+  });
+
+  it('accumulates totalPausedMs from a stamped pausedAt before clearing it', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const { gameDayLog } = await createActiveSessionWithOpenDay(userId);
+    await prisma.gameDayLog.update({
+      where: { id: gameDayLog.id },
+      data: { pausedAt: new Date(Date.now() - 5000) },
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/day/reset',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const updatedDayLog = await prisma.gameDayLog.findUniqueOrThrow({
+      where: { id: gameDayLog.id },
+    });
+    expect(updatedDayLog.pausedAt).toBeNull();
+    expect(updatedDayLog.totalPausedMs).toBeGreaterThanOrEqual(5000);
+    expect(updatedDayLog.totalPausedMs).toBeLessThan(6000);
   });
 });
 

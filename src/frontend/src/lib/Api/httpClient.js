@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const DEFAULT_BASE_URL = (import.meta.env && import.meta.env.VITE_API_BASE_URL) || 'http://localhost:3000';
+const DEFAULT_BASE_URL = (import.meta.env && import.meta.env.VITE_API_BASE_URL) || 'http://localhost:4000';
 
 /**
  * Generic REST helper shared by every provider that needs to talk HTTP.

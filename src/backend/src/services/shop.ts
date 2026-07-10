@@ -51,6 +51,7 @@ export interface ShopPrismaClient extends DayPhasePrismaClient {
       include: { shopItem: true };
     }): Promise<OwnedItemRecord>;
   };
+  $transaction<T>(fn: (tx: ShopPrismaClient) => Promise<T>): Promise<T>;
 }
 
 export interface ShopCatalogItem {
@@ -210,20 +211,26 @@ export async function purchaseItem(
     throw new InsufficientFundsError();
   }
 
-  const updatedSession = await prisma.gameSession.update({
-    where: { id: session.id },
-    data: { money: session.money - shopItem.price },
-  });
+  // Debit + grant atomically: a failed create must not leave the player's
+  // money debited with no item to show for it.
+  const { updatedSession, ownedItem } = await prisma.$transaction(async (tx) => {
+    const debitedSession = await tx.gameSession.update({
+      where: { id: session.id },
+      data: { money: session.money - shopItem.price },
+    });
 
-  const ownedItem = await prisma.ownedItem.create({
-    data: {
-      gameSessionId: session.id,
-      shopItemId: shopItem.id,
-      purchasePrice: shopItem.price,
-      purchasedOnDay: dayPhase.upcomingDayNumber - 1,
-      isEquipped: false,
-    },
-    include: { shopItem: true },
+    const createdItem = await tx.ownedItem.create({
+      data: {
+        gameSessionId: session.id,
+        shopItemId: shopItem.id,
+        purchasePrice: shopItem.price,
+        purchasedOnDay: dayPhase.upcomingDayNumber - 1,
+        isEquipped: false,
+      },
+      include: { shopItem: true },
+    });
+
+    return { updatedSession: debitedSession, ownedItem: createdItem };
   });
 
   return { gameSession: toGameSessionResponse(updatedSession), ownedItem };

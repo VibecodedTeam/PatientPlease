@@ -1,452 +1,173 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap');
-
-.sca-page {
-  --stone: #A89E96;
-  --slate: #384254;
-  --navy: #193447;
-  --ink: #212129;
-  --rust: #531516;
-  --teal: #073B33;
-  --ink-soft: rgba(33, 33, 41, 0.64);
-  --line: rgba(33, 33, 41, 0.18);
-
-  font-family: 'IBM Plex Sans', sans-serif;
-  background: var(--stone);
-  color: var(--ink);
-  min-height: 100vh;
-  width: 100%;
-  overflow-x: hidden;
-}
-
-.sca-page * {
-  box-sizing: border-box;
-}
-
-.sca-eyebrow {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--navy);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.sca-eyebrow::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--rust);
-  box-shadow: 0 0 0 3px rgba(83, 21, 22, 0.18);
-}
-
-/* ---------- HERO ---------- */
-
-.sca-hero {
+.stage {
   display: grid;
-  padding: 4.5rem 1.5rem 5rem;
-  text-align: center;
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
   overflow: hidden;
+  background: #193447;
+  color: #a89e96;
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
 }
 
-/* .sca-hero-bg and .sca-hero-content share the hero's single grid cell so the
-   decorative background can sit behind the foreground content without
-   position:absolute — stacking order follows DOM order within the cell. */
-.sca-hero-bg,
-.sca-hero-content {
+.stage > * {
   grid-area: 1 / 1;
 }
 
-.sca-hero-bg {
-  display: grid;
+.backdropGlow {
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(circle at 50% 30%, rgba(168, 158, 150, 0.16), rgba(168, 158, 150, 0) 55%);
   pointer-events: none;
 }
 
-.sca-hero-bg-dot {
-  grid-area: 1 / 1;
-  border-radius: 40% 60% 55% 45%;
-  background: var(--slate);
-  opacity: 0.16;
+.backdropGrid {
+  width: 100%;
+  height: 100%;
+  opacity: 0.7;
+  pointer-events: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><g fill="none" stroke="%23A89E96" stroke-opacity="0.08" stroke-width="2" stroke-linecap="round"><path d="M22 15v14M15 22h14"/></g></svg>');
 }
 
-.sca-hero-bg-dot.corner-tl { justify-self: start; align-self: start; margin: -60px 0 0 -80px; }
-.sca-hero-bg-dot.corner-br { justify-self: end; align-self: end; margin: 0 -40px -40px 0; }
-
-.sca-sun {
-  grid-area: 1 / 1;
-  justify-self: center;
+.ekg {
   align-self: center;
-  width: min(560px, 130vw);
-  height: min(560px, 130vw);
-  color: var(--navy);
-  opacity: 0.08;
+  width: 100%;
+  height: 26vh;
+  opacity: 0.3;
+  pointer-events: none;
 }
 
-.sca-hero-content {
+.ekgLine {
+  animation: pp-ekg 4s linear infinite;
+}
+
+.content {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
 }
 
-.sca-headline {
-  font-family: 'Fraunces', serif;
-  font-optical-sizing: auto;
-  font-weight: 560;
-  font-size: clamp(2.4rem, 6vw, 4.2rem);
-  line-height: 1.04;
-  letter-spacing: -0.01em;
-  margin: 1rem 0 0.9rem;
-  color: var(--navy);
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #a89e96;
+  margin-bottom: 26px;
 }
 
-.sca-headline em {
-  font-style: italic;
-  color: var(--rust);
+.chipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #531516;
+  box-shadow: 0 0 0 4px rgba(83, 21, 22, 0.28);
+  animation: pp-blip 1.4s ease-in-out infinite;
 }
 
-.sca-subhead {
-  font-size: 1.05rem;
-  line-height: 1.55;
-  color: var(--ink-soft);
-  max-width: 34rem;
-  margin: 0 auto 3.2rem;
+.title {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  font-size: clamp(62px, 15vw, 210px);
+  color: #cfc7c0;
 }
 
-.sca-stage {
+.buttonStage {
   display: grid;
-  width: min(420px, 80vw);
-  height: min(420px, 80vw);
-  margin: 0 auto;
+  margin-top: clamp(44px, 7vh, 80px);
 }
 
-/* Every child of .sca-stage shares its single grid cell so rings, moles, and
-   the play button overlap in place instead of via position:absolute. */
-.sca-stage > * {
+.buttonStage > * {
   grid-area: 1 / 1;
 }
 
-.sca-ring {
-  justify-self: center;
-  align-self: center;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 1.4px solid var(--navy);
-  opacity: 0;
-  animation: sca-scan 3.6s cubic-bezier(0.2, 0.7, 0.4, 1) infinite;
+.ring {
+  border-radius: 999px;
+  background: #531516;
+  animation: pp-ring 2.2s ease-out infinite;
+  /* Decorative pulse only — must not intercept clicks meant for the PLAY
+     button it stacks over (its transform animation creates a stacking
+     context that would otherwise paint above the button). */
+  pointer-events: none;
 }
 
-.sca-ring.r1 { animation-delay: 0s; }
-.sca-ring.r2 { animation-delay: 1.2s; }
-.sca-ring.r3 { animation-delay: 2.4s; }
-
-@keyframes sca-scan {
-  0%   { transform: scale(0.28); opacity: 0.55; border-color: var(--navy); }
-  70%  { opacity: 0.12; }
-  100% { transform: scale(1); opacity: 0; }
-}
-
-.sca-page.is-playing .sca-ring {
-  animation-duration: 1.6s;
-  border-color: var(--rust);
-}
-
-.sca-mole {
-  border-radius: 50%;
-  background: var(--navy);
-}
-
-.sca-mole.irregular {
-  border-radius: 40% 60% 65% 35%;
-  background: var(--rust);
-}
-
-.sca-mole.m1 { width: 10px; height: 10px; justify-self: start; align-self: start; margin: 12% 0 0 20%; opacity: 0.5; }
-.sca-mole.m2 { width: 14px; height: 12px; justify-self: end;   align-self: start; margin: 22% 12% 0 0; opacity: 0.7; }
-.sca-mole.m3 { width: 8px;  height: 8px;  justify-self: start; align-self: end;   margin: 0 0 16% 14%; opacity: 0.4; }
-.sca-mole.m4 { width: 16px; height: 13px; justify-self: end;   align-self: end;   margin: 0 18% 10% 0; opacity: 0.55; }
-
-.sca-play-btn {
-  justify-self: center;
-  align-self: center;
-  z-index: 2;
-  width: 152px;
-  height: 152px;
-  border-radius: 50%;
+.playButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
   border: none;
-  background: var(--teal);
-  color: var(--stone);
   cursor: pointer;
+  padding: 24px 56px 24px 48px;
+  border-radius: 999px;
+  background: #531516;
+  color: #f2ece7;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: clamp(26px, 4vw, 44px);
+  letter-spacing: 0.02em;
+  box-shadow: 0 12px 0 #340d0e, 0 24px 34px rgba(0, 0, 0, 0.4);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.playButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 0 #340d0e, 0 30px 40px rgba(0, 0, 0, 0.45);
+}
+
+.playButton:active {
+  transform: translateY(9px);
+  box-shadow: 0 3px 0 #340d0e, 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.playIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35em;
+  height: 1.35em;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.loginOverlay {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 18px 40px -12px rgba(33, 33, 41, 0.55);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  margin-top: clamp(44px, 7vh, 80px);
 }
 
-.sca-play-btn:hover {
-  transform: scale(1.045);
-  box-shadow: 0 22px 46px -10px rgba(33, 33, 41, 0.6);
-}
-
-.sca-play-btn:active {
-  transform: scale(0.97);
-}
-
-.sca-play-btn:focus-visible {
-  outline: 3px solid var(--navy);
-  outline-offset: 4px;
-}
-
-.sca-page.is-playing .sca-play-btn {
-  background: var(--navy);
-}
-
-.sca-play-icon {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 15px 0 15px 24px;
-  border-color: transparent transparent transparent var(--stone);
-  margin-left: 4px;
-  transition: all 0.2s ease;
-}
-
-.sca-play-bar {
-  display: none;
-}
-
-.sca-page.is-playing .sca-play-icon {
-  width: auto;
-  height: 34px;
-  border: none;
-  margin-left: 0;
-  background: transparent;
-}
-
-.sca-page.is-playing .sca-play-bar {
-  display: block;
-  width: 5px;
-  height: 34px;
-  background: var(--stone);
-  border-radius: 1px;
-}
-
-.sca-caption {
-  margin-top: 1.6rem;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.8rem;
-  letter-spacing: 0.04em;
-  color: var(--navy);
-  min-height: 1.4em;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
-}
-
-.sca-page.is-playing .sca-caption {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ---------- ABCDE ---------- */
-
-.sca-section {
-  padding: 4rem 1.5rem;
-  max-width: 74rem;
-  margin: 0 auto;
-}
-
-.sca-section-head {
-  text-align: center;
-  margin-bottom: 2.6rem;
-}
-
-.sca-section-title {
-  font-family: 'Fraunces', serif;
-  font-weight: 550;
-  font-size: clamp(1.6rem, 3vw, 2.1rem);
-  color: var(--navy);
-  margin: 0.6rem 0 0.5rem;
-}
-
-.sca-section-sub {
-  color: var(--ink-soft);
-  max-width: 32rem;
-  margin: 0 auto;
-  font-size: 0.98rem;
-  line-height: 1.5;
-}
-
-.sca-abcde {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1rem;
-}
-
-.sca-abcde-card {
-  background: var(--stone);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 1.4rem 1.1rem 1.6rem;
-  text-align: left;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.sca-abcde-icon {
-  display: block;
-  width: 28px;
-  height: 28px;
-  color: var(--slate);
-  margin-bottom: 0.8rem;
-}
-
-.sca-abcde-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.sca-abcde-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 30px -18px rgba(33, 33, 41, 0.35);
-}
-
-.sca-abcde-letter {
-  font-family: 'Fraunces', serif;
-  font-size: 2.1rem;
-  font-weight: 600;
-  color: var(--rust);
-  line-height: 1;
-}
-
-.sca-abcde-word {
-  font-weight: 600;
-  margin: 0.5rem 0 0.35rem;
-  font-size: 0.95rem;
-  color: var(--ink);
-}
-
-.sca-abcde-desc {
-  font-size: 0.85rem;
-  line-height: 1.45;
-  color: var(--ink-soft);
-}
-
-/* ---------- STATS ---------- */
-
-.sca-stats {
-  background: var(--navy);
-  padding: 3.6rem 1.5rem;
-}
-
-.sca-stats-inner {
-  max-width: 74rem;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  text-align: center;
-  color: var(--stone);
-}
-
-.sca-stat-icon {
-  display: inline-flex;
-  width: 30px;
-  height: 30px;
-  color: var(--stone);
-  opacity: 0.75;
-  margin-bottom: 0.5rem;
-}
-
-.sca-stat-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.sca-stat-num {
-  font-family: 'Fraunces', serif;
-  font-size: clamp(2.2rem, 4vw, 3rem);
-  font-weight: 600;
-  color: var(--stone);
-}
-
-.sca-stat-label {
-  font-size: 0.88rem;
-  color: rgba(168, 158, 150, 0.78);
-  margin-top: 0.4rem;
-  line-height: 1.4;
-}
-
-/* ---------- CTA / FOOTER ---------- */
-
-.sca-cta {
-  padding: 4.5rem 1.5rem 5rem;
-  text-align: center;
-  max-width: 40rem;
-  margin: 0 auto;
-}
-
-.sca-cta-title {
-  font-family: 'Fraunces', serif;
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  color: var(--navy);
-  margin: 0.8rem 0 0.9rem;
-}
-
-.sca-cta-text {
-  color: var(--ink-soft);
-  line-height: 1.55;
-  margin-bottom: 1.8rem;
-}
-
-.sca-cta-btn {
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--stone);
-  background: var(--rust);
-  border: none;
-  padding: 0.85rem 1.8rem;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.sca-cta-btn:hover {
-  background: var(--slate);
-  transform: translateY(-2px);
-}
-
-.sca-foot-note {
-  margin-top: 1.6rem;
-  font-size: 0.78rem;
-  color: var(--ink-soft);
-}
-
-@media (max-width: 720px) {
-  .sca-abcde {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .sca-stats-inner {
-    grid-template-columns: 1fr;
-    gap: 2.2rem;
+@keyframes pp-ekg {
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .sca-ring {
-    animation: none;
+@keyframes pp-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  70% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pp-blip {
+  0%,
+  100% {
     opacity: 0.25;
-    transform: scale(0.7);
   }
-  .sca-abcde-card,
-  .sca-play-btn,
-  .sca-cta-btn {
-    transition: none;
+  50% {
+    opacity: 1;
   }
 }

@@ -100,6 +100,12 @@ each document instead carries `attentionPointRegion`, the coarse body region it'
 `null`), and the frontend's `PatientScene` maps that region to a 3D hotspot position/zoom
 preset itself.
 
+A `documents` entry of `type: "EXAMINATION_RESULTS"` is only included once the player has
+successfully ordered the matching examination for this case — i.e. a `CaseExamination` row
+exists for `(this session, this case, content.shopItemId)` with `isSuccessful: true`. Until
+then it's omitted entirely, not returned with placeholder/redacted content. See
+`docs/api/examinations.md` for how examinations are ordered.
+
 ## Orchestration
 
 On each call, the backend:

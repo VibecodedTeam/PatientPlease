@@ -1,10 +1,8 @@
 const DEFAULT_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-/** Minimum real-world time a GameDayLog must be open before POST /api/v1/day/end will end it. */
-export const MIN_DAY_DURATION_MS = 10 * 60 * 1000;
-
 export function resolvePort(value: string | undefined, fallback: number): number {
-  return value ? Number(value) : fallback;
+  const parsed = Number(value);
+  return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 export function resolveGoogleClientId(value: string | undefined): string {
