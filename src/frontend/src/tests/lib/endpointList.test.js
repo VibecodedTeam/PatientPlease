@@ -25,6 +25,14 @@ describe('endpointList', () => {
         reset: '/api/v1/day/reset',
         end: '/api/v1/day/end',
       },
+      shop: {
+        list: '/api/v1/shop',
+        purchase: '/api/v1/shop/purchase',
+      },
+      inventory: {
+        get: '/api/v1/inventory',
+        update: '/api/v1/inventory',
+      },
     });
   });
 
