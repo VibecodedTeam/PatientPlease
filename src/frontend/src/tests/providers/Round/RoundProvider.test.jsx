@@ -154,10 +154,15 @@ describe('RoundProvider', () => {
 
     await userEvent.setup().click(screen.getByText('reset-day'));
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+    // 3 calls: the initial round-start, the reset itself, and the refetch
+    // resetDay triggers afterward so the next case actually loads.
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
+    const resetRequest = global.fetch.mock.calls.map(([request]) => request).find(
+      (request) => new URL(request.url).pathname === '/api/v1/day/reset',
+    );
+    expect(resetRequest.method).toBe('POST');
     const request = lastRequest();
-    expect(request.method).toBe('POST');
-    expect(request.url).toBe('http://api.test/api/v1/day/reset');
+    expect(request.url).toBe('http://api.test/api/v1/round');
   });
 
   it('resetGame POSTs /api/v1/game/reset and tolerates a null gameSession response', async () => {
@@ -185,9 +190,13 @@ describe('RoundProvider', () => {
 
     await expect(userEvent.setup().click(screen.getByText('reset-game'))).resolves.not.toThrow();
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
-    const request = lastRequest();
-    expect(request.url).toBe('http://api.test/api/v1/game/reset');
+    // 3 calls: the initial round-start, the reset itself, and the refetch
+    // resetGame triggers afterward so the next case actually loads.
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
+    const resetRequest = global.fetch.mock.calls.map(([request]) => request).find(
+      (request) => new URL(request.url).pathname === '/api/v1/game/reset',
+    );
+    expect(resetRequest).toBeDefined();
   });
 
   it('endDay POSTs /api/v1/day/end, returns the dayLog, and updates round.gameSession', async () => {
@@ -309,5 +318,45 @@ describe('RoundProvider', () => {
     expect(request.method).toBe('POST');
     expect(request.url).toBe('http://api.test/api/v1/shop/purchase');
     expect(await request.clone().json()).toEqual({ shopItemId: 'shop-item-1' });
+  });
+
+  it('resetDay refetches the round so a new case replaces the old one', async () => {
+    let roundCallCount = 0;
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        roundCallCount += 1;
+        const caseId = roundCallCount === 1 ? 'case-old' : 'case-new';
+        return Promise.resolve(
+          new Response(JSON.stringify({ gameSession: { money: 100 }, case: { id: caseId } }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 100 } }), { status: 200 }));
+    });
+
+    function Probe() {
+      const { round, resetDay } = useRound();
+      return (
+        <div>
+          <span data-testid="case-id">{round?.case?.id ?? 'none'}</span>
+          <button onClick={() => resetDay()}>reset-day</button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('case-old'));
+
+    await userEvent.setup().click(screen.getByText('reset-day'));
+
+    await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('case-new'));
   });
 });

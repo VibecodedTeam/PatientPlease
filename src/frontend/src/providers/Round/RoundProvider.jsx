@@ -49,31 +49,32 @@ export function RoundProvider({ children }) {
   const [isShopLoading, setIsShopLoading] = useState(false);
   const [shopError, setShopError] = useState(null);
 
+  const fetchRound = useCallback(async () => {
+    try {
+      const data = await api.post(ENDPOINTS.round.start);
+      setRound(data);
+      setError(null);
+      setTerminalState(null);
+    } catch (err) {
+      const terminal = terminalStateFromError(err);
+      if (terminal) {
+        setTerminalState(terminal);
+      } else {
+        setError(err);
+      }
+    }
+  }, [api]);
+
   useEffect(() => {
     let isCancelled = false;
-
-    api
-      .post(ENDPOINTS.round.start)
-      .then((data) => {
-        if (!isCancelled) setRound(data);
-      })
-      .catch((err) => {
-        if (isCancelled) return;
-        const terminal = terminalStateFromError(err);
-        if (terminal) {
-          setTerminalState(terminal);
-        } else {
-          setError(err);
-        }
-      })
-      .finally(() => {
-        if (!isCancelled) setIsLoading(false);
-      });
-
+    setIsLoading(true);
+    fetchRound().finally(() => {
+      if (!isCancelled) setIsLoading(false);
+    });
     return () => {
       isCancelled = true;
     };
-  }, [api]);
+  }, [fetchRound]);
 
   const pauseGame = useCallback(async () => {
     const data = await api.post(ENDPOINTS.game.pause);
@@ -81,19 +82,20 @@ export function RoundProvider({ children }) {
     return data;
   }, [api]);
 
+  // Unlike pauseGame/endDay/purchaseShopItem, a reset needs a whole new case,
+  // not just an updated gameSession — refetching the round is what actually
+  // makes the desk show the next case instead of the one that was just reset.
   const resetDay = useCallback(async () => {
     const data = await api.post(ENDPOINTS.day.reset);
-    setRound((current) => (current ? { ...current, gameSession: data.gameSession } : current));
+    await fetchRound();
     return data;
-  }, [api]);
+  }, [api, fetchRound]);
 
   const resetGame = useCallback(async () => {
     const data = await api.post(ENDPOINTS.game.reset);
-    setRound((current) =>
-      current && data.gameSession ? { ...current, gameSession: data.gameSession } : current,
-    );
+    await fetchRound();
     return data;
-  }, [api]);
+  }, [api, fetchRound]);
 
   const endDay = useCallback(async () => {
     const data = await api.post(ENDPOINTS.day.end);
