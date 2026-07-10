@@ -16,7 +16,7 @@ These are never violated, no exceptions, no "just this once":
 7. **No direct pushes to `main`.** All work lands via PR, CI must be green, at least one review pass (see Section 10) is required before merge.
 8. **Never skip hooks or checks** (`--no-verify`, disabling lint-staged, commenting out CI steps, etc.) to get something to pass.
 9. **pnpm only.** No npm/yarn lockfiles, no mixing package managers.
-10. **No `features/` folder in frontend. A `lib/` folder is allowed, scoped strictly to pure, framework-free, stateless helpers** — e.g. a generic HTTP client factory. Nothing in `lib/` may hold React state, own a domain, or duplicate a provider's job; if it needs either, it belongs in a provider instead. `src/frontend/` holds only tooling/config at its top level (`package.json`, `Dockerfile`, `vite.config.js`, `index.html`, `jest.config.js`, `playwright.config.js`) plus one `src/` folder — **everything else (`main.jsx`, `App.jsx`, `providers/`, `views/` (one `PascalCase` folder per top-level screen/route — currently `MainView`, `NightView`, `StartView`; adding another means updating Section 4 and Section 6 of this document), `components/`, `styles/`, `lib/`, `tests/`, and `e2e/`) lives inside `src/frontend/src/`.** There is no top-level `providers/`, `views/`, `components/`, `styles/`, `lib/`, `tests/`, or `e2e/` folder outside `src/`. Every provider is co-located with the view/component it belongs to, or, for the small set of app-wide domains composed once at the root, lives next to `src/App.jsx` (Section 4, Section 5, Section 6).
+10. **No `features/` folder in frontend. A `lib/` folder is allowed, scoped strictly to pure, framework-free, stateless helpers** — e.g. a generic HTTP client factory. Nothing in `lib/` may hold React state, own a domain, or duplicate a provider's job; if it needs either, it belongs in a provider instead. `src/frontend/` holds only tooling/config at its top level (`package.json`, `Dockerfile`, `vite.config.js`, `index.html`, `jest.config.js`, `playwright.config.js`) plus one `src/` folder — **everything else (`main.jsx`, `App.jsx`, `providers/`, `views/` (one PascalCase folder per top-level routed screen — added as the game's screens grow, each following the same layout convention; currently `MainView`, `NightView`, `StartView`), `components/`, `styles/`, `lib/`, `tests/`, and `e2e/`) lives inside `src/frontend/src/`.** There is no top-level `providers/`, `views/`, `components/`, `styles/`, `lib/`, `tests/`, or `e2e/` folder outside `src/`. Every provider is co-located with the view/component it belongs to, or, for the small set of app-wide domains composed once at the root, lives next to `src/App.jsx` (Section 4, Section 5, Section 6).
 11. When a relevant skill exists (TDD, brainstorming, systematic-debugging, code-review, etc. from the `superpowers` plugin), **use it rather than re-deriving its process ad hoc.**
 
 ---
@@ -85,17 +85,21 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 │   │       ├── providers/          # the only app-root providers/ folder in the tree: app-wide domains composed once, here
 │   │       │   ├── Api/             # axios-backed client (built on lib/Api), exposed via useApi()
 │   │       │   └── Auth/
-│   │       ├── views/                  # one folder per top-level screen/route: MainView (day phase), NightView (night/shop phase), StartView (pre-game landing) — extend by updating Section 4/6
-│   │       │   ├── MainView/
+│   │       ├── views/                  # one PascalCase folder per top-level routed screen, added as the game grows
+│   │       │   ├── MainView/               # day phase
 │   │       │   │   ├── index.js
 │   │       │   │   ├── MainView.jsx
 │   │       │   │   ├── MainView.module.css
 │   │       │   │   └── providers/         # domains consumed only inside MainView's own subtree
 │   │       │   │       └── Round/
-│   │       │   └── NightView/
+│   │       │   ├── NightView/              # night/shop phase
+│   │       │   │   ├── index.js
+│   │       │   │   ├── NightView.jsx
+│   │       │   │   └── NightView.module.css
+│   │       │   └── StartView/              # pre-game splash screen, routed at / (public; PLAY signs in via Google, then enters /game/*)
 │   │       │       ├── index.js
-│   │       │       ├── NightView.jsx
-│   │       │       └── NightView.module.css
+│   │       │       ├── StartView.jsx
+│   │       │       └── StartView.module.css
 │   │       ├── components/             # every reusable/domain UI unit, flat, one PascalCase folder per component
 │   │       │   ├── PatientScene/        # Three.js figure + attention points
 │   │       │   ├── PatientDocuments/    # multi-frame document viewer
@@ -145,7 +149,7 @@ Rules tied to this structure:
 - `src/frontend/src/App.jsx` is composition-only: it wires `views/` to routes via `react-router-dom`, it does not contain view business logic or its own state. It also composes the small set of app-wide providers (`Api`, `Auth`) — those live next to it, in `src/frontend/src/providers/`.
 - `src/frontend/src/lib/` is allowed but scoped to pure, framework-free, stateless helpers only (Section 1, constraint 10) — currently just `lib/Api/`, the shared axios client factory every provider that talks HTTP builds its client from. Living inside `src/` doesn't relax this scope — it still holds no React code, state, or JSX.
 - There is no top-level `providers/` folder outside `src/frontend/src/providers/`. A provider used only within one view's or component's own subtree lives co-located inside that folder, in its own `providers/<Domain>/` subfolder (e.g. `views/MainView/providers/Round/`, `components/Table/providers/DocumentTable/`, both under `src/frontend/src/`) — see Section 5 for the full rule.
-- `src/frontend/src/views/` holds one folder per top-level screen/route wired to its own path in `App.jsx`'s route table — currently `MainView` (day phase), `NightView` (night/shop phase), and `StartView` (pre-game skin-cancer-awareness landing page). Adding a new top-level screen means adding its `views/<Name>/` entry here and in Section 6's naming list — it is not a `features/` folder and this list is not meant to stay capped at any fixed number. Every other screen element (patient scene, documents, diagnosis panel, chat, shop, inventory, popups, info board) is a `src/frontend/src/components/` entry composed inside one of those views, not its own view.
+- `src/frontend/src/views/` holds one PascalCase folder per top-level screen wired to its own route in `App.jsx` — currently `MainView`, `NightView`, `StartView` — added as the game grows a new top-level screen, not capped at a fixed count. This list must stay current: adding a view means adding it here in the same change. Everything that is *not* its own top-level routed screen (patient scene, documents, diagnosis panel, chat, shop, inventory, popups, info board) is instead a `src/frontend/src/components/` entry composed inside whichever view uses it — not its own view and not a `features/` folder. `App.jsx`'s route table splits into a public group (`/` → `StartView`, the splash screen) and a gated group (`/game/*`, wrapped in `AuthGate` → `MainView` at `/game/main`, `NightView` at `/game/night`).
 
 ---
 
@@ -209,7 +213,7 @@ Rules:
 - Tests are never co-located and there is no per-folder `__tests__` directory. `src/frontend/src/tests/` is the single frontend test tree, and its internal structure exactly mirrors `views/`, `components/`, `providers/`, and `lib/`.
 - Styles are co-located and scoped (CSS Modules) to the view/component they style. Global styles only live in `src/frontend/src/styles/globals.css` — the only file in that folder — and are limited to a CSS reset plus `:root` design tokens (colors, spacing scale, typography); never component-specific layout or one-off overrides.
 - Naming conventions:
-  - Views: `PascalCase` folder + file, one per top-level route — currently `MainView`, `NightView`, `StartView`. This list grows as new top-level screens are added; each addition must be reflected here and in Section 4's rule bullet.
+  - Views: `PascalCase` folder + file, one per top-level routed screen — currently `MainView`, `NightView`, `StartView`. New views are added freely as the game grows further screens, each following this same layout convention; update the list here (and in Section 4) in the same change that adds one.
   - Components: `PascalCase.jsx` (`PatientScene.jsx`), folder name matches exactly (`components/PatientScene/`).
   - Providers: `PascalCase` domain folder (`providers/Diagnosis/`) containing `PascalCase` + `Provider` suffix (`DiagnosisProvider.jsx`) and its `camelCase` `use`-prefixed hook (`useDiagnosis.js`).
   - Hooks: `camelCase.js` starting with `use` (`usePatientSession.js`).

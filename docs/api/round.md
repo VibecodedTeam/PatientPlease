@@ -51,7 +51,8 @@ existing open round looks identical to a client as starting a new one.
       },
       "purchasePrice": 100,
       "purchasedOnDay": 2,
-      "purchasedAt": "iso-datetime"
+      "purchasedAt": "iso-datetime",
+      "isEquipped": false
     }
   ],
   "case": {
@@ -107,7 +108,13 @@ On each call, the backend:
    back to `ACTIVE` if `PAUSED`, or creates a fresh one if none exists (or the latest is
    `GAME_OVER`/`COMPLETED`).
 2. Picks the lowest-`difficulty` active `Case` that has no `DiagnosisAttempt` yet in this
-   session. If none remain, marks the session `COMPLETED` and returns `409`.
+   session. If none remain, marks the session `COMPLETED` and returns `409`. Ties at that
+   lowest difficulty are broken by a uniform pick among the tied candidates — not insertion
+   or id order — so replays don't always serve the same case first. The pick is a
+   deterministic function of `gameSessionId` and the tied candidate set (see
+   `pickIndexForSeed` in `services/round.ts`), not `Math.random()`: this keeps repeat calls
+   idempotent (see below) while still varying across sessions and once a tied case is
+   diagnosed and drops out of the candidate set.
 3. Reuses the session's currently open `GameDayLog` (`endedAt: null`), or opens a new one.
 4. Returns the session's owned shop items plus the full `Diagnosis`/`Treatment` catalogs
    (unfiltered — every player sees the same menu).
