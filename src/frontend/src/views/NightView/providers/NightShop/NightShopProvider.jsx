@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from '../../../../providers/Api';
+import { ENDPOINTS } from '../../../../lib/endpointList';
 
 export const NightShopContext = createContext(null);
 
@@ -25,7 +26,7 @@ export function NightShopProvider({ children }) {
   const loadCatalog = useCallback(() => {
     setIsLoading(true);
     return api
-      .get('/api/v1/shop')
+      .get(ENDPOINTS.shop.list)
       .then((data) => {
         setCatalog(data);
         setError(null);
@@ -85,7 +86,7 @@ export function NightShopProvider({ children }) {
       for (const shopItemId of selectedIds) {
         // Sequential: the backend debits money per purchase, so ordering matters.
         // eslint-disable-next-line no-await-in-loop
-        await api.post('/api/v1/shop/purchase', { shopItemId });
+        await api.post(ENDPOINTS.shop.purchase, { shopItemId });
       }
       setSelectedIds(new Set());
       await loadCatalog();
