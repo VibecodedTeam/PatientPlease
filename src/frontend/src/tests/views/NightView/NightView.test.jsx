@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../providers/Api';
+import { RoundProvider } from '../../../providers/Round';
 import { NightView } from '../../../views/NightView';
 
 const CATALOG = {
@@ -15,7 +16,9 @@ const CATALOG = {
 function renderNightView() {
   return render(
     <ApiProvider baseUrl="http://api.test">
-      <NightView />
+      <RoundProvider>
+        <NightView />
+      </RoundProvider>
     </ApiProvider>,
   );
 }
