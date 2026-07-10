@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { ApiProvider } from '../../../../../providers/Api';
+import { RoundProvider } from '../../../../../providers/Round';
 import {
   GameSessionProvider,
   useGameSession,
@@ -29,9 +30,11 @@ function TestConsumer() {
 function renderWithProviders() {
   return render(
     <ApiProvider baseUrl="http://api.test">
-      <GameSessionProvider>
-        <TestConsumer />
-      </GameSessionProvider>
+      <RoundProvider>
+        <GameSessionProvider>
+          <TestConsumer />
+        </GameSessionProvider>
+      </RoundProvider>
     </ApiProvider>,
   );
 }
@@ -80,7 +83,7 @@ describe('GameSessionProvider / useGameSession', () => {
     });
 
     expect(screen.getByTestId('paused').textContent).toBe('true');
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
     const request = lastRequest();
     expect(request.method).toBe('POST');
     expect(request.url).toBe('http://api.test/api/v1/game/pause');
@@ -100,7 +103,7 @@ describe('GameSessionProvider / useGameSession', () => {
     });
 
     expect(screen.getByTestId('paused').textContent).toBe('true');
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
   });
 
   it('resumes counting locally after resumeTimer is called, without calling the API', async () => {
@@ -108,7 +111,7 @@ describe('GameSessionProvider / useGameSession', () => {
     act(() => {
       screen.getByText('pause').click();
     });
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
 
     act(() => {
       screen.getByText('resume').click();
@@ -119,7 +122,7 @@ describe('GameSessionProvider / useGameSession', () => {
 
     expect(screen.getByTestId('elapsed').textContent).toBe('4');
     expect(screen.getByTestId('paused').textContent).toBe('false');
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
   it('resetDay zeroes the elapsed timer and POSTs /api/v1/day/reset', async () => {
@@ -133,7 +136,7 @@ describe('GameSessionProvider / useGameSession', () => {
     });
 
     expect(screen.getByTestId('elapsed').textContent).toBe('0');
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
     const request = lastRequest();
     expect(request.method).toBe('POST');
     expect(request.url).toBe('http://api.test/api/v1/day/reset');
@@ -150,7 +153,7 @@ describe('GameSessionProvider / useGameSession', () => {
     });
 
     expect(screen.getByTestId('elapsed').textContent).toBe('0');
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
     const request = lastRequest();
     expect(request.method).toBe('POST');
     expect(request.url).toBe('http://api.test/api/v1/game/reset');
@@ -166,7 +169,7 @@ describe('GameSessionProvider / useGameSession', () => {
     fireVisibilityChange();
 
     expect(screen.getByTestId('paused').textContent).toBe('true');
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
 
     act(() => {
       jest.advanceTimersByTime(5000);
@@ -181,7 +184,7 @@ describe('GameSessionProvider / useGameSession', () => {
     fireVisibilityChange();
     fireVisibilityChange();
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
   it('does not send a duplicate pause request when auto-paused after an explicit pauseTimer call', async () => {
@@ -190,12 +193,12 @@ describe('GameSessionProvider / useGameSession', () => {
     act(() => {
       screen.getByText('pause').click();
     });
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
 
     setDocumentHidden(true);
     fireVisibilityChange();
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
   it('flips isDayOver and freezes the timer once elapsedSeconds reaches DAY_DURATION_SECONDS', () => {
@@ -239,7 +242,12 @@ describe('GameSessionProvider / useGameSession', () => {
       gameSession: { consecutiveBadDiagnosisCount: 0 },
       dayLog: { id: 'day-1', dayNumber: 3, startingMoney: 100, endingMoney: 130, casesAttempted: 2, casesCorrect: 2 },
     };
-    global.fetch = jest.fn().mockResolvedValue(new Response(JSON.stringify(dayLogResponse), { status: 200 }));
+    // mockImplementation (not mockResolvedValue) so each call gets its own
+    // Response instance — RoundProvider's own mount-time round-start call
+    // now shares this mock too, and a Response body can only be read once.
+    global.fetch = jest
+      .fn()
+      .mockImplementation(() => new Response(JSON.stringify(dayLogResponse), { status: 200 }));
     renderWithProviders();
 
     act(() => {

@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useApi } from '../../../../providers/Api';
-import { ENDPOINTS } from '../../../../lib/endpointList';
+import { useRound } from '../../../../providers/Round';
 
 export const GameSessionContext = createContext(null);
 
@@ -10,7 +9,8 @@ export const GameSessionContext = createContext(null);
 export const DAY_DURATION_SECONDS = 600;
 
 export function GameSessionProvider({ children }) {
-  const api = useApi();
+  const { pauseGame, resetDay: roundResetDay, resetGame: roundResetGame, endDay: roundEndDay } =
+    useRound();
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(isPaused);
@@ -47,8 +47,8 @@ export function GameSessionProvider({ children }) {
     // (no active session/open day yet — e.g. pausing before Round's own
     // POST /api/v1/round call resolves, or on an already-paused/completed
     // session) must not block the local pause state from taking effect.
-    api.post(ENDPOINTS.game.pause).catch(() => {});
-  }, [api]);
+    pauseGame().catch(() => {});
+  }, [pauseGame]);
 
   // Real resume has no dedicated endpoint — per docs/api/game.md, a PAUSED
   // session flips back to ACTIVE the next time POST /api/v1/round is called
@@ -65,22 +65,22 @@ export function GameSessionProvider({ children }) {
 
   const resetDay = useCallback(() => {
     setElapsedSeconds(0);
-    api.post(ENDPOINTS.day.reset).catch(() => {});
-  }, [api]);
+    roundResetDay().catch(() => {});
+  }, [roundResetDay]);
 
   const resetGame = useCallback(() => {
     setElapsedSeconds(0);
-    api.post(ENDPOINTS.game.reset).catch(() => {});
-  }, [api]);
+    roundResetGame().catch(() => {});
+  }, [roundResetGame]);
 
   // Unlike resetDay/resetGame, the caller needs the real dayLog payload (for
   // the Statistics popup), so this awaits the request and lets a failure
   // propagate rather than swallowing it fire-and-forget.
   const endDay = useCallback(async () => {
-    const data = await api.post(ENDPOINTS.day.end);
+    const data = await roundEndDay();
     setElapsedSeconds(0);
     return data;
-  }, [api]);
+  }, [roundEndDay]);
 
   useEffect(() => {
     function handleVisibilityChange() {

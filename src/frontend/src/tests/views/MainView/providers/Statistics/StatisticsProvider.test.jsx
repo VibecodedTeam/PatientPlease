@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { ApiProvider } from '../../../../../providers/Api';
+import { RoundProvider } from '../../../../../providers/Round';
 import { GameSessionProvider, DAY_DURATION_SECONDS } from '../../../../../views/MainView/providers/GameSession';
 import { StatisticsProvider, useStatistics } from '../../../../../views/MainView/providers/Statistics';
 
@@ -29,11 +30,13 @@ function StatisticsConsumer() {
 function renderWithProviders() {
   return render(
     <ApiProvider baseUrl="http://api.test">
-      <GameSessionProvider>
-        <StatisticsProvider>
-          <StatisticsConsumer />
-        </StatisticsProvider>
-      </GameSessionProvider>
+      <RoundProvider>
+        <GameSessionProvider>
+          <StatisticsProvider>
+            <StatisticsConsumer />
+          </StatisticsProvider>
+        </GameSessionProvider>
+      </RoundProvider>
     </ApiProvider>,
   );
 }
@@ -41,7 +44,12 @@ function renderWithProviders() {
 describe('StatisticsProvider', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    global.fetch = jest.fn().mockResolvedValue(new Response(JSON.stringify(DAY_LOG_RESPONSE), { status: 200 }));
+    // mockImplementation (not mockResolvedValue) so each call gets its own
+    // Response instance — RoundProvider's own mount-time round-start call
+    // now shares this mock too, and a Response body can only be read once.
+    global.fetch = jest
+      .fn()
+      .mockImplementation(() => new Response(JSON.stringify(DAY_LOG_RESPONSE), { status: 200 }));
   });
 
   afterEach(() => {
@@ -78,7 +86,9 @@ describe('StatisticsProvider', () => {
   });
 
   it('logs the error and stays closed (no unhandled rejection) if endDay fails', async () => {
-    global.fetch = jest.fn().mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
+    global.fetch = jest
+      .fn()
+      .mockImplementation(() => new Response('Internal Server Error', { status: 500 }));
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     renderWithProviders();
 
@@ -87,7 +97,10 @@ describe('StatisticsProvider', () => {
     });
 
     expect(screen.getByTestId('is-open').textContent).toBe('false');
-    expect(consoleError).toHaveBeenCalled();
+    // The rejection now propagates through an extra hop (RoundProvider's
+    // endDay -> GameSessionProvider's endDay -> this catch), so it needs a
+    // waitFor rather than a bare synchronous assertion right after act().
+    await waitFor(() => expect(consoleError).toHaveBeenCalled());
     consoleError.mockRestore();
   });
 
