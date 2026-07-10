@@ -29,6 +29,10 @@ function renderProvider() {
   );
 }
 
+function lastRequest() {
+  return global.fetch.mock.calls[global.fetch.mock.calls.length - 1][0];
+}
+
 describe('RoundProvider', () => {
   it('starts a round via POST /api/v1/round and exposes it via useRound', async () => {
     global.fetch = jest.fn().mockImplementation((input, init) => {
