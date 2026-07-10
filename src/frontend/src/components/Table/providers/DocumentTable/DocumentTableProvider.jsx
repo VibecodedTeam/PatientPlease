@@ -1,6 +1,6 @@
 import React, { createContext } from 'react';
 import PropTypes from 'prop-types';
-import { useRound } from '../../../../views/MainView';
+import { useRound } from '../../../../providers/Round';
 
 export const DocumentTableContext = createContext(null);
 

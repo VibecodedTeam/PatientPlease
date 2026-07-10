@@ -7,7 +7,7 @@ import { Table } from '../../components/Table';
 import { Settings } from '../../components/Settings';
 import { ResultPopup } from '../../components/ResultPopup';
 import { StatisticsPopup } from '../../components/StatisticsPopup';
-import { RoundProvider, useRound } from './providers/Round';
+import { useRound } from '../../providers/Round';
 import { DocumentTableProvider } from '../../components/Table/providers/DocumentTable';
 import { GameSessionProvider, useGameSession } from './providers/GameSession';
 import { ResultsProvider, useResults } from './providers/Results';
@@ -136,13 +136,11 @@ export function MainView() {
   return (
     <GameSessionProvider>
       <StatisticsProvider>
-        <RoundProvider>
-          <ResultsProvider>
-            <DocumentTableProvider>
-              <MainViewContent />
-            </DocumentTableProvider>
-          </ResultsProvider>
-        </RoundProvider>
+        <ResultsProvider>
+          <DocumentTableProvider>
+            <MainViewContent />
+          </DocumentTableProvider>
+        </ResultsProvider>
       </StatisticsProvider>
     </GameSessionProvider>
   );

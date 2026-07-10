@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../../../providers/Api';
-import { RoundProvider } from '../../../../../views/MainView/providers/Round';
+import { RoundProvider } from '../../../../../providers/Round';
 import { ResultsProvider, useResults } from '../../../../../views/MainView/providers/Results';
 
 const ROUND_RESPONSE = {

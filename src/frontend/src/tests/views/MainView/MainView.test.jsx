@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../providers/Api';
 import { AuthProvider, useAuth } from '../../../providers/Auth';
+import { RoundProvider } from '../../../providers/Round';
 import { MainView } from '../../../views/MainView';
 import { DAY_DURATION_SECONDS } from '../../../views/MainView/providers/GameSession';
 import { PatientScene } from '../../../components/PatientScene';
@@ -109,13 +110,17 @@ async function renderMainView() {
           AuthenticatedGate,
           null,
           React.createElement(
-            MemoryRouter,
-            { initialEntries: ['/'] },
+            RoundProvider,
+            null,
             React.createElement(
-              Routes,
-              null,
-              React.createElement(Route, { path: '/', element: React.createElement(MainView) }),
-              React.createElement(Route, { path: '/night', element: React.createElement(NightMarker) }),
+              MemoryRouter,
+              { initialEntries: ['/'] },
+              React.createElement(
+                Routes,
+                null,
+                React.createElement(Route, { path: '/', element: React.createElement(MainView) }),
+                React.createElement(Route, { path: '/night', element: React.createElement(NightMarker) }),
+              ),
             ),
           ),
         ),

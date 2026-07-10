@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ApiProvider } from '../../../../../providers/Api';
-import { RoundProvider } from '../../../../../views/MainView';
+import { RoundProvider } from '../../../../../providers/Round';
 import { DocumentTableProvider, useDocumentTable } from '../../../../../components/Table/providers/DocumentTable';
 
 function DocumentsConsumer() {

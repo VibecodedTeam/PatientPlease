@@ -5,7 +5,7 @@ import { Table } from '../../../components/Table/Table';
 import styles from '../../../components/Table/Table.module.css';
 import { DocumentTableContext } from '../../../components/Table/providers/DocumentTable/DocumentTableProvider';
 import { ApiProvider } from '../../../providers/Api';
-import { RoundProvider } from '../../../views/MainView/providers/Round';
+import { RoundProvider } from '../../../providers/Round';
 import { ResultsProvider, useResults } from '../../../views/MainView/providers/Results';
 
 function ResultsPeek() {
