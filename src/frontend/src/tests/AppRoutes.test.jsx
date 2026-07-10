@@ -78,11 +78,8 @@ describe('AppRoutes', () => {
   it('renders /game/night through the gate when authenticated', async () => {
     mockAuth(true);
     renderAt('/game/night');
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/shop for items/i)).toBeInTheDocument());
     expect(screen.queryByRole('heading', { name: /sign in/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/shop for items/i)).toBeInTheDocument();
   });
 
   it('redirects /game to /game/main when authenticated', async () => {

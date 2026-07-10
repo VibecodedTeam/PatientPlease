@@ -4,13 +4,25 @@ import styles from './MainView.module.css';
 import { PatientScene, PatientSceneProvider } from '../../components/PatientScene';
 import { Wall } from '../../components/Wall';
 import { Table } from '../../components/Table';
-import { RoundProvider } from './providers/Round';
+import { Settings } from '../../components/Settings';
+import { ResultPopup } from '../../components/ResultPopup';
+import { StatisticsPopup } from '../../components/StatisticsPopup';
+import { RoundProvider, useRound } from './providers/Round';
 import { DocumentTableProvider } from '../../components/Table/providers/DocumentTable';
+import { GameSessionProvider, useGameSession } from './providers/GameSession';
+import { ResultsProvider, useResults } from './providers/Results';
+import { StatisticsProvider, useStatistics } from './providers/Statistics';
 
 const TERMINAL_MESSAGES = {
   completed: "You've completed every case. Well done!",
   game_over: 'Game over. Your practice has closed.',
 };
+
+// Stable fallback so PatientScene's documents prop keeps the same reference
+// across re-renders while round is still loading — a fresh [] literal here
+// would otherwise re-trigger PatientScene's model-setup effect on every
+// unrelated re-render (e.g. GameSession's per-second timer tick).
+const NO_DOCUMENTS = [];
 
 /**
  * Renders the day-phase desk, or — when the backend reports the game can no
@@ -18,7 +30,39 @@ const TERMINAL_MESSAGES = {
  * the empty desk it would otherwise show.
  */
 function MainViewContent() {
-  const { terminalState } = useRound();
+  const navigate = useNavigate();
+  const { elapsedSeconds, isPaused } = useGameSession();
+  const { round, terminalState } = useRound();
+  const { isOpen: isResultOpen, result, closeResult } = useResults();
+  const { isOpen: isStatisticsOpen, statistics, closeStatistics } = useStatistics();
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [settingsAutoOpened, setSettingsAutoOpened] = useState(false);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        setSettingsOpen(true);
+        setSettingsAutoOpened(true);
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  function handleOpenSettings() {
+    setSettingsAutoOpened(false);
+    setSettingsOpen(true);
+  }
+
+  function handleCloseSettings() {
+    setSettingsOpen(false);
+    setSettingsAutoOpened(false);
+  }
+
+  function handleCloseStatistics() {
+    closeStatistics();
+    navigate('/night');
+  }
 
   if (terminalState) {
     return (
