@@ -177,6 +177,77 @@ describe('MainView', () => {
     await waitFor(() => expect(screen.getByText(/game over/i)).toBeInTheDocument());
   });
 
+  it('refetches the round every time MainView mounts, so returning from night shows the new case', async () => {
+    let roundCallCount = 0;
+    // Two calls happen on the very first mount: RoundProvider's own
+    // one-time mount effect, plus MainView's own mount-effect refresh
+    // (which is what this test exists to cover) - both fire together only
+    // on this first render, since RoundProvider never mounts again after
+    // this. Both are idempotent-while-open per docs/api/round.md, so they
+    // return the same "yesterday" case; only the THIRD call (after the
+    // toggle round-trip, simulating returning from /game/night) is the one
+    // this test actually asserts on.
+    let roundCaseId = 'case-yesterday';
+    mockFetchRoutes({
+      '/api/v1/round': () => {
+        roundCallCount += 1;
+        return new Response(
+          JSON.stringify({ case: { documents: [], id: roundCaseId, moneyReward: 50, moneyPenalty: 20 } }),
+          { status: 200 },
+        );
+      },
+    });
+
+    // Models the real bug exactly: RoundProvider is an ANCESTOR (mounted
+    // once, per AppRoutes.jsx) that must stay mounted the whole time, while
+    // MainView itself unmounts and remounts underneath it - reproducing
+    // "navigate away to /game/night and back" without needing the
+    // still-unbuilt NightView navigation button (Task 2, deferred).
+    function Harness() {
+      const [showMainView, setShowMainView] = React.useState(true);
+      return React.createElement(
+        React.Fragment,
+        null,
+        showMainView ? React.createElement(MainView) : React.createElement('div', null, 'elsewhere'),
+        React.createElement(
+          'button',
+          { onClick: () => setShowMainView((current) => !current) },
+          'toggle',
+        ),
+      );
+    }
+
+    render(
+      React.createElement(
+        ApiProvider,
+        { baseUrl: 'http://api.test' },
+        React.createElement(
+          AuthProvider,
+          null,
+          React.createElement(
+            AuthenticatedGate,
+            null,
+            React.createElement(
+              RoundProvider,
+              null,
+              React.createElement(MemoryRouter, { initialEntries: ['/'] }, React.createElement(Harness)),
+            ),
+          ),
+        ),
+      ),
+    );
+    await waitFor(() => expect(screen.getByText('Status: Running')).toBeInTheDocument());
+    await waitFor(() => expect(roundCallCount).toBe(2));
+
+    roundCaseId = 'case-today'; // models a new day/case becoming available while away
+    const user = userEvent.setup();
+    await user.click(screen.getByText('toggle')); // unmount MainView (simulates navigating to /game/night)
+    await waitFor(() => expect(screen.getByText('elsewhere')).toBeInTheDocument());
+    await user.click(screen.getByText('toggle')); // remount MainView (simulates returning to /game/main)
+
+    await waitFor(() => expect(roundCallCount).toBe(3));
+  });
+
   it('renders the 3D patient scene in the patient preview area, fed by the round data', async () => {
     await renderMainView();
 
@@ -193,11 +264,24 @@ describe('MainView', () => {
   });
 
   it('passes PatientScene a stable documents reference across re-renders while round is still loading', async () => {
-    let resolveRound;
-    const roundPromise = new Promise((resolve) => {
-      resolveRound = resolve;
+    // MainView's own mount-effect refresh (in addition to RoundProvider's
+    // own one-time mount fetch) means two /api/v1/round calls can be in
+    // flight on the very first render — each needs its OWN Response
+    // instance once "resolved" (a Response body can only be read once), so
+    // this gate returns a fresh Response per pending call rather than
+    // resolving one shared Promise/Response for both.
+    let isResolved = false;
+    const pendingCalls = [];
+    mockFetchRoutes({
+      '/api/v1/round': () =>
+        new Promise((resolve) => {
+          if (isResolved) {
+            resolve(new Response(JSON.stringify({ case: { documents: ROUND_DOCUMENTS } }), { status: 200 }));
+          } else {
+            pendingCalls.push(resolve);
+          }
+        }),
     });
-    mockFetchRoutes({ '/api/v1/round': () => roundPromise });
     const user = userEvent.setup();
 
     await renderMainView();
@@ -211,7 +295,10 @@ describe('MainView', () => {
 
     expect(lastCall[0].documents).toBe(firstDocuments);
 
-    resolveRound(new Response(JSON.stringify({ case: { documents: ROUND_DOCUMENTS } }), { status: 200 }));
+    isResolved = true;
+    pendingCalls.forEach((resolve) =>
+      resolve(new Response(JSON.stringify({ case: { documents: ROUND_DOCUMENTS } }), { status: 200 })),
+    );
     await waitFor(() =>
       expect(screen.getByTestId('patient-scene-stub')).toHaveAttribute(
         'data-document-ids',
