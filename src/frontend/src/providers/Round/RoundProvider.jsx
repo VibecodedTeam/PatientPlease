@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useApi } from '../Api';
 import { ENDPOINTS } from '../../lib/endpointList';
@@ -49,32 +49,43 @@ export function RoundProvider({ children }) {
   const [isShopLoading, setIsShopLoading] = useState(false);
   const [shopError, setShopError] = useState(null);
 
-  const fetchRound = useCallback(async () => {
+  // Monotonically-increasing token: only the response from the MOST
+  // RECENTLY issued call is allowed to update state. Any earlier call's
+  // response, arriving after a later one (or after unmount, since the
+  // token check runs regardless), is discarded instead of overwriting
+  // fresher data or firing a state update nothing is listening for.
+  const fetchTokenRef = useRef(0);
+
+  const refreshRound = useCallback(async () => {
+    const token = (fetchTokenRef.current += 1);
+    setIsLoading(true);
     try {
       const data = await api.post(ENDPOINTS.round.start);
+      if (token !== fetchTokenRef.current) return;
       setRound(data);
       setError(null);
       setTerminalState(null);
     } catch (err) {
+      if (token !== fetchTokenRef.current) return;
       const terminal = terminalStateFromError(err);
       if (terminal) {
         setTerminalState(terminal);
       } else {
         setError(err);
       }
+    } finally {
+      if (token === fetchTokenRef.current) setIsLoading(false);
     }
   }, [api]);
 
   useEffect(() => {
-    let isCancelled = false;
-    setIsLoading(true);
-    fetchRound().finally(() => {
-      if (!isCancelled) setIsLoading(false);
-    });
-    return () => {
-      isCancelled = true;
-    };
-  }, [fetchRound]);
+    refreshRound();
+    // Fires exactly once for this RoundProvider instance's own mount (first
+    // entry into /game/*). MainView additionally calls refreshRound() from
+    // its own mount effect, so every subsequent entry into the day view -
+    // including returning from /game/night, which does not remount
+    // RoundProvider - also refetches.
+  }, [refreshRound]);
 
   const pauseGame = useCallback(async () => {
     const data = await api.post(ENDPOINTS.game.pause);
@@ -87,15 +98,15 @@ export function RoundProvider({ children }) {
   // makes the desk show the next case instead of the one that was just reset.
   const resetDay = useCallback(async () => {
     const data = await api.post(ENDPOINTS.day.reset);
-    await fetchRound();
+    await refreshRound();
     return data;
-  }, [api, fetchRound]);
+  }, [api, refreshRound]);
 
   const resetGame = useCallback(async () => {
     const data = await api.post(ENDPOINTS.game.reset);
-    await fetchRound();
+    await refreshRound();
     return data;
-  }, [api, fetchRound]);
+  }, [api, refreshRound]);
 
   const endDay = useCallback(async () => {
     const data = await api.post(ENDPOINTS.day.end);
@@ -103,18 +114,25 @@ export function RoundProvider({ children }) {
     return data;
   }, [api]);
 
+  // Separate token from fetchTokenRef: loadShopCatalog and refreshRound are
+  // independent operations and must not treat each other as superseding.
+  const shopFetchTokenRef = useRef(0);
+
   const loadShopCatalog = useCallback(async () => {
+    const token = (shopFetchTokenRef.current += 1);
     setIsShopLoading(true);
     try {
       const data = await api.get(ENDPOINTS.shop.list);
+      if (token !== shopFetchTokenRef.current) return null;
       setShopCatalog(data);
       setShopError(null);
       return data;
     } catch (err) {
+      if (token !== shopFetchTokenRef.current) return null;
       setShopError(err);
       return null;
     } finally {
-      setIsShopLoading(false);
+      if (token === shopFetchTokenRef.current) setIsShopLoading(false);
     }
   }, [api]);
 
@@ -132,6 +150,7 @@ export function RoundProvider({ children }) {
     isLoading,
     error,
     terminalState,
+    refreshRound,
     pauseGame,
     resetDay,
     resetGame,

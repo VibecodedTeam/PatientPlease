@@ -359,4 +359,138 @@ describe('RoundProvider', () => {
 
     await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('case-new'));
   });
+
+  it('exposes refreshRound() which re-fetches the round on demand', async () => {
+    let roundCallCount = 0;
+    global.fetch = jest.fn().mockImplementation(() => {
+      roundCallCount += 1;
+      const caseId = roundCallCount === 1 ? 'case-a' : 'case-b';
+      return Promise.resolve(
+        new Response(JSON.stringify({ gameSession: { money: 100 }, case: { id: caseId } }), {
+          status: 200,
+        }),
+      );
+    });
+
+    function Probe() {
+      const { round, refreshRound } = useRound();
+      return (
+        <div>
+          <span data-testid="case-id">{round?.case?.id ?? 'none'}</span>
+          <button onClick={() => refreshRound()}>refresh</button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('case-a'));
+
+    await userEvent.setup().click(screen.getByText('refresh'));
+
+    await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('case-b'));
+  });
+
+  it('discards a stale refreshRound response when a newer call resolves first', async () => {
+    let resolveFirstCall;
+    let callCount = 0;
+    global.fetch = jest.fn().mockImplementation(() => {
+      callCount += 1;
+      if (callCount === 1) {
+        return new Promise((resolve) => {
+          resolveFirstCall = () =>
+            resolve(
+              new Response(JSON.stringify({ gameSession: { money: 100 }, case: { id: 'stale' } }), {
+                status: 200,
+              }),
+            );
+        });
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify({ gameSession: { money: 100 }, case: { id: 'fresh' } }), {
+          status: 200,
+        }),
+      );
+    });
+
+    function Probe() {
+      const { round, refreshRound } = useRound();
+      return (
+        <div>
+          <span data-testid="case-id">{round?.case?.id ?? 'none'}</span>
+          <button onClick={() => refreshRound()}>refresh</button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    // Mount effect fires call #1 (hangs). Trigger call #2 before #1 resolves.
+    await userEvent.setup().click(screen.getByText('refresh'));
+
+    await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('fresh'));
+
+    resolveFirstCall();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(screen.getByTestId('case-id').textContent).toBe('fresh');
+  });
+
+  it('loadShopCatalog discards a stale response when two calls overlap out of order', async () => {
+    let shopCallCount = 0;
+    let resolveFirstCall;
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        return Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 100 } }), { status: 200 }));
+      }
+      shopCallCount += 1;
+      if (shopCallCount === 1) {
+        return new Promise((resolve) => {
+          resolveFirstCall = () =>
+            resolve(new Response(JSON.stringify({ money: 0, items: [{ id: 'stale' }] }), { status: 200 }));
+        });
+      }
+      return Promise.resolve(new Response(JSON.stringify({ money: 999, items: [{ id: 'fresh' }] }), { status: 200 }));
+    });
+
+    function Probe() {
+      const { shopCatalog, loadShopCatalog } = useRound();
+      return (
+        <div>
+          <span data-testid="money">{shopCatalog?.money ?? 'none'}</span>
+          <button onClick={() => loadShopCatalog()}>load</button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByText('load')); // call #1: hangs
+    await user.click(screen.getByText('load')); // call #2: resolves immediately with money:999
+
+    await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('999'));
+
+    resolveFirstCall(); // call #1 finally resolves with the stale money:0
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(screen.getByTestId('money').textContent).toBe('999'); // must NOT regress to the stale value
+  });
 });

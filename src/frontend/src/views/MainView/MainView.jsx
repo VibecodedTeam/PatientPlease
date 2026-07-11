@@ -32,7 +32,7 @@ const NO_DOCUMENTS = [];
 function MainViewContent() {
   const navigate = useNavigate();
   const { elapsedSeconds, isPaused } = useGameSession();
-  const { round, terminalState } = useRound();
+  const { round, terminalState, refreshRound } = useRound();
   const { isOpen: isResultOpen, result, closeResult } = useResults();
   const { isOpen: isStatisticsOpen, statistics, closeStatistics } = useStatistics();
   const [isSettingsOpen, setSettingsOpen] = useState(false);
@@ -47,6 +47,17 @@ function MainViewContent() {
     }
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // RoundProvider is an app-root singleton (see AppRoutes.jsx) — it does not
+  // remount when navigating between /game/main and /game/night, so its own
+  // one-time mount effect only ever fires once per session. MainView DOES
+  // remount on every entry into the day view (first login, or returning
+  // from night), so this is what actually refetches the round each time —
+  // without it, returning from night would keep showing the same stale
+  // case indefinitely.
+  useEffect(() => {
+    refreshRound();
   }, []);
 
   function handleOpenSettings() {
