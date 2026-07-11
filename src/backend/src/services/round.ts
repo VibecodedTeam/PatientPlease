@@ -252,14 +252,20 @@ export async function resolveGameSession(
     return updated;
   }
 
-  // A finished game is terminal: surface it as such instead of silently
-  // spawning a fresh money:0 session, which would wipe the player's money and
-  // replay every case (case selection is scoped by gameSessionId).
+  // COMPLETED (every case legitimately diagnosed) is a genuine terminal
+  // state — surface it as such rather than silently spawning a fresh
+  // money:0 session that would wipe progress and replay every case.
   if (latest.status === 'COMPLETED') {
     throw new GameCompletedError();
   }
+
+  // GAME_OVER is what POST /api/v1/game/reset sets specifically so the
+  // player can start over (see docs/api/game.md) — treat it exactly like
+  // "no session exists yet" rather than a dead end.
   if (latest.status === 'GAME_OVER') {
-    throw new GameOverError();
+    return prisma.gameSession.create({
+      data: { userId, ...NEW_SESSION_DEFAULTS, status: 'ACTIVE' },
+    });
   }
 
   return latest;

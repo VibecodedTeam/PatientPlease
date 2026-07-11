@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals';
 import {
   GameCompletedError,
-  GameOverError,
   NoCasesRemainingError,
   pickIndexForSeed,
   resolveGameSession,
@@ -218,13 +217,17 @@ describe('resolveGameSession', () => {
     expect(prisma.gameSession.update).not.toHaveBeenCalled();
   });
 
-  it('throws GameOverError and creates no new session when the latest is GAME_OVER', async () => {
+  it('creates a brand-new session when the latest is GAME_OVER, per docs/api/game.md', async () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findFirst.mockResolvedValue(makeSession({ status: 'GAME_OVER' }));
+    prisma.gameSession.create.mockResolvedValue(makeSession({ status: 'ACTIVE', money: 0 }));
 
-    await expect(resolveGameSession(prisma, 'user-uuid')).rejects.toThrow(GameOverError);
-    expect(prisma.gameSession.create).not.toHaveBeenCalled();
-    expect(prisma.gameSession.update).not.toHaveBeenCalled();
+    const result = await resolveGameSession(prisma, 'user-uuid');
+
+    expect(prisma.gameSession.create).toHaveBeenCalledWith({
+      data: { userId: 'user-uuid', money: 0, consecutiveBadDiagnosisCount: 0, status: 'ACTIVE' },
+    });
+    expect(result.status).toBe('ACTIVE');
   });
 });
 

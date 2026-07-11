@@ -287,12 +287,15 @@ describe('POST /api/v1/round', () => {
     expect(sessions[0]?.money).toBe(250);
   });
 
-  it('returns 409 game_over for a GAME_OVER session without spawning a new session', async () => {
+  it('starts a brand-new session and returns 200 when the latest session is GAME_OVER', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();
     const { cookie, userId } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    await createCase(diagnosis.id, treatment.id);
     await prisma.gameSession.create({
-      data: { userId, money: 0, status: 'GAME_OVER' },
+      data: { userId, money: 250, status: 'GAME_OVER' },
     });
 
     const response = await app.inject({
@@ -301,10 +304,12 @@ describe('POST /api/v1/round', () => {
       headers: { cookie },
     });
 
-    expect(response.statusCode).toBe(409);
-    expect(response.json()).toEqual({ error: 'game_over' });
+    expect(response.statusCode).toBe(200);
     const sessions = await prisma.gameSession.findMany({ where: { userId } });
-    expect(sessions).toHaveLength(1);
+    expect(sessions).toHaveLength(2);
+    const newSession = sessions.find((s) => s.status === 'ACTIVE');
+    expect(newSession).toBeDefined();
+    expect(newSession?.money).toBe(0);
   });
 
   it('hides an EXAMINATION_RESULTS document until a successful CaseExamination exists for it', async () => {
