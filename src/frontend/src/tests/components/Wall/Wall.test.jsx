@@ -1,26 +1,44 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Wall } from '../../../components/Wall';
 import { mockBooks } from '../../../components/Wall/mockBooks';
+import { ApiProvider } from '../../../providers/Api';
+import { RoundProvider } from '../../../providers/Round';
+
+function renderWithProviders(ui) {
+  return render(
+    <ApiProvider baseUrl="http://api.test">
+      <RoundProvider>{ui}</RoundProvider>
+    </ApiProvider>,
+  );
+}
 
 describe('Wall', () => {
   beforeEach(() => {
     document.body.innerHTML = '<div id="root"></div><div id="overlay-root"></div>';
+    // A fresh Response per call: RoundProvider's mount-time refreshRound() and
+    // ExaminationsProvider's loadShopCatalog() (once the order-tests modal opens)
+    // are two independent fetch calls in the same test, and a Response body can
+    // only be read once — reusing one instance via mockResolvedValue would make
+    // the second reader fail with "body stream already read".
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({}), { status: 200 })),
+    );
   });
 
   it('renders the doctor office wall', () => {
-    render(<Wall />);
+    renderWithProviders(<Wall />);
     expect(screen.getByRole('region', { name: /doctor office wall/i })).toBeInTheDocument();
   });
 
   it('shows the pinned board with patients left today', () => {
-    render(<Wall />);
+    renderWithProviders(<Wall />);
     expect(screen.getByText('Patients left today: 5')).toBeInTheDocument();
   });
 
   it('only renders books that have been bought', () => {
-    render(<Wall />);
+    renderWithProviders(<Wall />);
     const boughtBooks = mockBooks.filter((book) => book.bought);
     const unboughtBooks = mockBooks.filter((book) => !book.bought);
 
@@ -36,7 +54,7 @@ describe('Wall', () => {
   });
 
   it('shows no book popup and no highlighted book before any click', () => {
-    render(<Wall />);
+    renderWithProviders(<Wall />);
     const boughtBook = mockBooks.find((book) => book.bought);
 
     expect(screen.queryByRole('dialog', { name: new RegExp(boughtBook.title, 'i') })).not.toBeInTheDocument();
@@ -45,7 +63,7 @@ describe('Wall', () => {
 
   it('opens a book details popup and highlights the book after clicking, then closes it', async () => {
     const user = userEvent.setup();
-    render(<Wall />);
+    renderWithProviders(<Wall />);
     const boughtBook = mockBooks.find((book) => book.bought);
 
     await user.click(screen.getByRole('button', { name: boughtBook.title }));
@@ -65,7 +83,7 @@ describe('Wall', () => {
 
   it('opens and closes the order-tests popup from the gear button', async () => {
     const user = userEvent.setup();
-    render(<Wall />);
+    renderWithProviders(<Wall />);
 
     expect(screen.queryByRole('dialog', { name: /order tests/i })).not.toBeInTheDocument();
 
@@ -73,6 +91,7 @@ describe('Wall', () => {
     expect(screen.getByRole('dialog', { name: /order tests/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Zleć badania' })).toBeInTheDocument();
 
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Anuluj' })).toBeInTheDocument());
     await user.click(screen.getByRole('button', { name: 'Anuluj' }));
     expect(screen.queryByRole('dialog', { name: /order tests/i })).not.toBeInTheDocument();
   });
@@ -81,14 +100,14 @@ describe('Wall', () => {
     const customBooks = [
       { id: 'custom-1', title: 'Custom Handbook', category: 'Test', description: 'desc', hint: 'hint', bought: true },
     ];
-    render(<Wall books={customBooks} />);
+    renderWithProviders(<Wall books={customBooks} />);
 
     expect(screen.getByRole('button', { name: 'Custom Handbook' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: mockBooks[0].title })).not.toBeInTheDocument();
   });
 
   it('shows an empty shelf message when there are no bought books', () => {
-    render(<Wall books={[]} />);
+    renderWithProviders(<Wall books={[]} />);
 
     expect(screen.getByText(/no handbooks bought yet/i)).toBeInTheDocument();
     expect(screen.getByText(/visit the night shop/i)).toBeInTheDocument();
@@ -96,7 +115,7 @@ describe('Wall', () => {
 
   it('closes the book popup when clicking outside it', async () => {
     const user = userEvent.setup();
-    render(<Wall />);
+    renderWithProviders(<Wall />);
     const boughtBook = mockBooks.find((book) => book.bought);
 
     await user.click(screen.getByRole('button', { name: boughtBook.title }));
@@ -109,7 +128,7 @@ describe('Wall', () => {
   });
 
   it('shows the prevention notes board with a default pinned note', () => {
-    render(<Wall />);
+    renderWithProviders(<Wall />);
 
     expect(screen.getByRole('button', { name: /pin new prevention note/i })).toBeInTheDocument();
     expect(screen.getByText('SPF daily')).toBeInTheDocument();
@@ -118,7 +137,7 @@ describe('Wall', () => {
 
   it('pins a new prevention note at a random board position when clicking the board itself', async () => {
     const user = userEvent.setup();
-    render(<Wall />);
+    renderWithProviders(<Wall />);
 
     const board = screen.getByRole('button', { name: /pin new prevention note/i });
     await user.click(board);
@@ -130,7 +149,7 @@ describe('Wall', () => {
 
   it('pins a new note when activated with the keyboard', async () => {
     const user = userEvent.setup();
-    render(<Wall />);
+    renderWithProviders(<Wall />);
 
     const board = screen.getByRole('button', { name: /pin new prevention note/i });
     board.focus();
@@ -141,7 +160,7 @@ describe('Wall', () => {
 
   it('keeps at most 6 pinned notes, dropping the oldest and looping through tips', async () => {
     const user = userEvent.setup();
-    render(<Wall />);
+    renderWithProviders(<Wall />);
 
     const board = screen.getByRole('button', { name: /pin new prevention note/i });
     for (let i = 0; i < 6; i += 1) {
@@ -155,7 +174,7 @@ describe('Wall', () => {
 
   it('toggles the shelf lamp on and off when clicked', async () => {
     const user = userEvent.setup();
-    render(<Wall />);
+    renderWithProviders(<Wall />);
 
     const lamp = screen.getByRole('button', { name: /toggle desk lamp/i });
     expect(lamp).toHaveAttribute('aria-pressed', 'false');
@@ -169,7 +188,7 @@ describe('Wall', () => {
 
   it('toggles the dermatoscope on and off when clicked', async () => {
     const user = userEvent.setup();
-    render(<Wall />);
+    renderWithProviders(<Wall />);
 
     const dermatoscope = screen.getByRole('button', { name: /toggle dermatoscope/i });
     expect(dermatoscope).toHaveAttribute('aria-pressed', 'false');
@@ -190,7 +209,7 @@ describe('Wall', () => {
       { id: 'book-a', title: 'Book A', category: 'Test', description: 'desc a', hint: 'hint a', bought: true },
       { id: 'book-b', title: 'Book B', category: 'Test', description: 'desc b', hint: 'hint b', bought: true },
     ];
-    const { rerender } = render(<Wall books={initialBooks} />);
+    const { rerender } = renderWithProviders(<Wall books={initialBooks} />);
 
     await user.click(screen.getByRole('button', { name: 'Book A' }));
     expect(screen.getByRole('dialog', { name: /book a/i })).toBeInTheDocument();
@@ -198,7 +217,13 @@ describe('Wall', () => {
     const booksWithoutA = [
       { id: 'book-b', title: 'Book B', category: 'Test', description: 'desc b', hint: 'hint b', bought: true },
     ];
-    rerender(<Wall books={booksWithoutA} />);
+    rerender(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Wall books={booksWithoutA} />
+        </RoundProvider>
+      </ApiProvider>,
+    );
 
     expect(screen.queryByRole('dialog', { name: /book a/i })).not.toBeInTheDocument();
   });

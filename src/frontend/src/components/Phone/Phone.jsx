@@ -1,25 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import styles from './Phone.module.css';
-
-const TESTS = [
-  { id: 'derm', name: 'Dermatoskopia cyfrowa', desc: 'Cyfrowe mapowanie i archiwizacja znamion', minutes: 15, available: true },
-  { id: 'biopsy', name: 'Biopsja zmiany skórnej', desc: 'Pobranie wycinka do oceny mikroskopowej', minutes: 60, available: true },
-  { id: 'blood', name: 'Badania krwi', desc: 'Morfologia, LDH i markery nowotworowe S100', minutes: 20, available: true },
-  { id: 'usg', name: 'USG węzłów chłonnych', desc: 'Ocena regionalnych węzłów wartowniczych', minutes: 30, available: true },
-  { id: 'histo', name: 'Badanie histopatologiczne', desc: 'Wymaga materiału pobranego podczas biopsji', minutes: 0, available: false },
-  { id: 'onko', name: 'Konsultacja onkologiczna', desc: 'Brak wolnych terminów w tym tygodniu', minutes: 45, available: false },
-];
-
-function formatMinutes(totalMinutes) {
-  if (!totalMinutes || totalMinutes <= 0) return '';
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  let text = '';
-  if (hours) text += `${hours} godz`;
-  if (minutes) text += `${text ? ' ' : ''}${minutes} min`;
-  return text;
-}
+import { useExaminations } from './providers/Examinations';
 
 function countLabel(n) {
   if (n === 0) return 'Nie wybrano badań';
@@ -28,12 +10,13 @@ function countLabel(n) {
 }
 
 export function Phone({ onCancel }) {
+  const { examinations, isLoading, error } = useExaminations();
   const [selected, setSelected] = useState({});
   const [ordered, setOrdered] = useState(false);
 
   function toggle(id) {
-    const test = TESTS.find((t) => t.id === id);
-    if (!test || !test.available) return;
+    const exam = examinations.find((e) => e.id === id);
+    if (!exam || !exam.owned) return;
     setSelected((current) => ({ ...current, [id]: !current[id] }));
   }
 
@@ -42,15 +25,15 @@ export function Phone({ onCancel }) {
     setOrdered(false);
   }
 
-  const chosen = TESTS.filter((t) => selected[t.id] && t.available);
-  const totalMinutes = chosen.reduce((sum, t) => sum + t.minutes, 0);
+  const chosen = examinations.filter((e) => selected[e.id] && e.owned);
+  const totalPrice = chosen.reduce((sum, e) => sum + e.price, 0);
   const confirmDisabled = chosen.length === 0;
 
   return (
     <div className={styles.phone}>
       <div className={styles.header}>
         <div className={styles.headerIcon} aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d98a80" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-3.2-3.2" />
             <circle cx="11" cy="11" r="2.6" />
@@ -67,7 +50,10 @@ export function Phone({ onCancel }) {
         </button>
       </div>
 
-      {ordered ? (
+      {isLoading && <p className={styles.patientLine}>Ładowanie badań…</p>}
+      {error && <p className={styles.patientLine}>Nie udało się wczytać listy badań.</p>}
+
+      {!isLoading && !error && (ordered ? (
         <div className={styles.success}>
           <div className={styles.successIcon} aria-hidden="true">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4fbfa2" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -76,15 +62,14 @@ export function Phone({ onCancel }) {
           </div>
           <h4 className={styles.successTitle}>Badania zlecone</h4>
           <p className={styles.successText}>
-            Skierowania trafiły do rejestracji. Szacowany łączny czas w placówce:{' '}
-            <strong>{formatMinutes(totalMinutes) || '0 min'}</strong>.
+            Skierowania trafiły do rejestracji. Łączny koszt: <strong>${totalPrice}</strong>.
           </p>
 
           <div className={styles.orderedList}>
-            {chosen.map((t) => (
-              <div className={styles.orderedRow} key={t.id}>
-                <span className={styles.orderedName}>{t.name}</span>
-                <span className={styles.orderedDuration}>{formatMinutes(t.minutes)}</span>
+            {chosen.map((e) => (
+              <div className={styles.orderedRow} key={e.id}>
+                <span className={styles.orderedName}>{e.name}</span>
+                <span className={styles.orderedDuration}>${e.price}</span>
               </div>
             ))}
           </div>
@@ -101,17 +86,17 @@ export function Phone({ onCancel }) {
       ) : (
         <>
           <div className={styles.testList}>
-            {TESTS.map((test) => {
-              const isSelected = !!selected[test.id] && test.available;
-              const unavailable = !test.available;
+            {examinations.map((exam) => {
+              const isSelected = !!selected[exam.id] && exam.owned;
+              const unavailable = !exam.owned;
               return (
                 <button
-                  key={test.id}
+                  key={exam.id}
                   type="button"
                   className={`${styles.row}${isSelected ? ` ${styles.rowSelected}` : ''}${unavailable ? ` ${styles.rowUnavailable}` : ''}`}
                   disabled={unavailable}
                   aria-pressed={isSelected}
-                  onClick={() => toggle(test.id)}
+                  onClick={() => toggle(exam.id)}
                 >
                   <span className={`${styles.rowBox}${isSelected ? ` ${styles.rowBoxSelected}` : ''}`} aria-hidden="true">
                     {isSelected && (
@@ -122,13 +107,13 @@ export function Phone({ onCancel }) {
                   </span>
                   <span className={styles.rowBody}>
                     <span className={styles.rowNameLine}>
-                      <span className={`${styles.rowName}${unavailable ? ` ${styles.rowNameUnavailable}` : ''}`}>{test.name}</span>
+                      <span className={`${styles.rowName}${unavailable ? ` ${styles.rowNameUnavailable}` : ''}`}>{exam.name}</span>
                       {unavailable && <span className={styles.unavailableBadge}>Niedostępne</span>}
                     </span>
-                    <span className={`${styles.rowDesc}${unavailable ? ` ${styles.rowDescUnavailable}` : ''}`}>{test.desc}</span>
+                    <span className={`${styles.rowDesc}${unavailable ? ` ${styles.rowDescUnavailable}` : ''}`}>{exam.description}</span>
                   </span>
                   <span className={`${styles.rowDuration}${unavailable ? ` ${styles.rowDurationUnavailable}` : ''}`}>
-                    {formatMinutes(test.minutes) || (unavailable ? '—' : '')}
+                    ${exam.price}
                   </span>
                 </button>
               );
@@ -138,10 +123,10 @@ export function Phone({ onCancel }) {
           <div className={styles.footer}>
             <div className={styles.summary}>
               <div>
-                <div className={styles.summaryLabel}>Łączny czas badań</div>
+                <div className={styles.summaryLabel}>Łączny koszt badań</div>
                 <div className={styles.summaryCount}>{countLabel(chosen.length)}</div>
               </div>
-              <div className={styles.summaryTotal}>{formatMinutes(totalMinutes) || '0 min'}</div>
+              <div className={styles.summaryTotal}>${totalPrice.toFixed(2)}</div>
             </div>
 
             <div className={styles.actions}>
@@ -154,7 +139,7 @@ export function Phone({ onCancel }) {
             </div>
           </div>
         </>
-      )}
+      ))}
     </div>
   );
 }
