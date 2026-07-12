@@ -89,7 +89,7 @@ describe('Phone', () => {
     await user.click(screen.getByRole('button', { name: /punch biopsy/i }));
 
     expect(screen.getByText('1 badanie wybrane')).toBeInTheDocument();
-    expect(screen.getByText('$140')).toBeInTheDocument();
+    expect(screen.getByTestId('examinations-total-price')).toHaveTextContent('$140');
     expect(screen.getByRole('button', { name: 'Zleć badania (1)' })).toBeEnabled();
   });
 

@@ -126,7 +126,7 @@ export function Phone({ onCancel }) {
                 <div className={styles.summaryLabel}>Łączny koszt badań</div>
                 <div className={styles.summaryCount}>{countLabel(chosen.length)}</div>
               </div>
-              <div className={styles.summaryTotal}>${totalPrice.toFixed(2)}</div>
+              <div className={styles.summaryTotal} data-testid="examinations-total-price">${totalPrice}</div>
             </div>
 
             <div className={styles.actions}>
