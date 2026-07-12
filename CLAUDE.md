@@ -92,7 +92,11 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 │   │       │   │   ├── MainView.module.css
 │   │       │   │   └── providers/         # domains consumed only inside MainView's own subtree
 │   │       │   │       └── Round/
-│   │       │   └── NightView/
+│   │       │   ├── NightView/              # night/shop phase
+│   │       │   │   ├── index.js
+│   │       │   │   ├── NightView.jsx
+│   │       │   │   └── NightView.module.css
+│   │       │   └── StartView/              # pre-game splash screen, routed at / (public; PLAY signs in via Google, then enters /game/*)
 │   │       │       ├── index.js
 │   │       │       ├── NightView.jsx
 │   │       │       └── NightView.module.css

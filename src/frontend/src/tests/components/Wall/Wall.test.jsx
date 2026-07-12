@@ -63,28 +63,18 @@ describe('Wall', () => {
     expect(screen.getByRole('button', { name: boughtBook.title })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('opens and closes the settings popup', async () => {
+  it('opens and closes the order-tests popup from the gear button', async () => {
     const user = userEvent.setup();
     render(<Wall />);
 
-    expect(screen.queryByRole('dialog', { name: /settings/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: /order tests/i })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /open settings/i }));
-    expect(screen.getByRole('dialog', { name: /settings/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /open test orders/i }));
+    expect(screen.getByRole('dialog', { name: /order tests/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Zleć badania' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /close/i }));
-    expect(screen.queryByRole('dialog', { name: /settings/i })).not.toBeInTheDocument();
-  });
-
-  it('shows a disabled, non-functional log out option in settings', async () => {
-    const user = userEvent.setup();
-    render(<Wall />);
-
-    await user.click(screen.getByRole('button', { name: /open settings/i }));
-
-    const logoutButton = screen.getByRole('button', { name: /log out/i });
-    expect(logoutButton).toBeDisabled();
-    expect(screen.getByText(/coming soon/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Anuluj' }));
+    expect(screen.queryByRole('dialog', { name: /order tests/i })).not.toBeInTheDocument();
   });
 
   it('renders books passed in via the books prop instead of the mock data', () => {

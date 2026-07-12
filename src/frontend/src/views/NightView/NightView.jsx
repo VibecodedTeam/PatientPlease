@@ -1,41 +1,79 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './NightView.module.css';
-import { NightShopProvider, useNightShop } from './providers/NightShop';
 
-const ITEM_TYPE_LABELS = {
-  HANDBOOK: 'Handbook',
-  EQUIPMENT: 'Equipment',
-  PLOT_ITEM: 'Plot Item',
-};
+const CATALOG = [
+  {
+    id: 'h1',
+    title: 'Atlas of Dermoscopy',
+    category: 'Handbook',
+    price: 45,
+    flavor: 'High-resolution reference for reading pigment networks and vascular patterns under magnification.',
+  },
+  {
+    id: 'h2',
+    title: 'Clinical Guide to Skin Cancer',
+    category: 'Handbook',
+    price: 60,
+    flavor: 'ABCDE criteria, staging tables, and differential diagnosis, worked chapter by chapter.',
+  },
+  {
+    id: 'h3',
+    title: 'Sun & Skin: UV Exposure Manual',
+    category: 'Handbook',
+    price: 80,
+    flavor: 'Cumulative-dose charts and phototype risk tables for reading patient sun-history records.',
+  },
+];
 
-function itemTypeLabel(itemType) {
-  return ITEM_TYPE_LABELS[itemType] ?? itemType;
-}
+const STARTING_FUNDS = 120;
 
-function selectionLabel(count) {
-  if (count === 0) return 'No items selected';
-  if (count === 1) return '1 item selected';
-  return `${count} items selected`;
-}
+export function NightView() {
+  const navigate = useNavigate();
+  const [funds, setFunds] = useState(STARTING_FUNDS);
+  const [ownedIds, setOwnedIds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
 
-function NightShopScreen() {
-  const {
-    items,
-    money,
-    isLoading,
-    error,
-    selectedIds,
-    selectedTotal,
-    remaining,
-    isSelected,
-    canToggle,
-    toggleItem,
-    buySelected,
-    isBuying,
-    buyError,
-  } = useNightShop();
+  function toggle(id) {
+    setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  }
 
-  const selectedCount = selectedIds.size;
+  const total = CATALOG.filter((item) => selectedIds.includes(item.id)).reduce((sum, item) => sum + item.price, 0);
+  const anySelected = selectedIds.length > 0;
+  const canAfford = total <= funds;
+
+  function buy() {
+    if (!anySelected || !canAfford) return;
+    setFunds((f) => f - total);
+    setOwnedIds((ids) => [...ids, ...selectedIds]);
+    setSelectedIds([]);
+    navigate('/game/main');
+  }
+
+  function skip() {
+    navigate('/game/main');
+  }
+
+  let actionLabel;
+  let actionDisabled;
+  let actionHint;
+  if (!anySelected) {
+    actionLabel = 'Skip';
+    actionDisabled = false;
+    actionHint = 'End the shift without buying';
+  } else if (!canAfford) {
+    actionLabel = 'Buy';
+    actionDisabled = true;
+    actionHint = `Insufficient funds — remove an item (over by $${total - funds})`;
+  } else {
+    actionLabel = `Buy · $${total}`;
+    actionDisabled = false;
+    actionHint = `$${funds - total} will remain`;
+  }
+
+  const nSelected = selectedIds.length;
+  const selectionLabel =
+    nSelected === 0 ? 'No items selected' : `${nSelected} ${nSelected === 1 ? 'item' : 'items'} selected`;
 
   return (
     <div className={styles.page}>
@@ -64,56 +102,51 @@ function NightShopScreen() {
                 $
               </text>
             </svg>
-            {money}
+            {funds}
           </span>
         </div>
       </header>
 
       <main className={styles.catalog}>
-        {isLoading && <p className={styles.stateMessage}>Loading the shop…</p>}
-        {!isLoading && error && (
-          <p className={styles.stateMessage}>Couldn&apos;t load the shop. Try again.</p>
-        )}
-        {!isLoading && !error && items.length === 0 && (
-          <p className={styles.stateMessage}>Nothing in stock right now.</p>
-        )}
-        {!isLoading &&
-          !error &&
-          items.map((item) => {
-            const selected = isSelected(item.id);
-            return (
-              <div className={styles.card} key={item.id}>
-                <div className={styles.cardCover} />
+        {CATALOG.map((item) => {
+          const owned = ownedIds.includes(item.id);
+          const selected = selectedIds.includes(item.id);
+          return (
+            <div className={`${styles.card}${owned ? ` ${styles.cardOwned}` : ''}${selected ? ` ${styles.cardSelected}` : ''}`} key={item.id}>
+              <div className={styles.cardCover} />
 
-                <div className={styles.cardBody}>
-                  <div className={styles.cardHeading}>
-                    <h2 className={styles.cardTitle}>{item.name}</h2>
-                    <span className={styles.cardCategory}>{itemTypeLabel(item.itemType)}</span>
-                  </div>
-                  <p className={styles.cardFlavor}>{item.description}</p>
+              <div className={styles.cardBody}>
+                <div className={styles.cardHeading}>
+                  <h2 className={styles.cardTitle}>{item.title}</h2>
+                  <span className={styles.cardCategory}>{item.category}</span>
                 </div>
+                <p className={styles.cardFlavor}>{item.flavor}</p>
+              </div>
 
-                <div className={styles.cardTrailing}>
-                  <span className={styles.cardPrice}>${item.price}</span>
+              <div className={styles.cardTrailing}>
+                <span className={styles.cardPrice}>${item.price}</span>
+                {owned ? (
+                  <span className={styles.ownedBadge}>In library</span>
+                ) : (
                   <button
                     type="button"
-                    aria-label={item.owned ? `${item.name} owned` : `Select ${item.name}`}
-                    className={`${styles.selectDot}${selected ? ` ${styles.selectDotSelected}` : ''}`}
+                    aria-label={`Select ${item.title}`}
                     aria-pressed={selected}
-                    disabled={!canToggle(item)}
-                    onClick={() => toggleItem(item)}
+                    className={`${styles.selectDot}${selected ? ` ${styles.selectDotSelected}` : ''}`}
+                    onClick={() => toggle(item.id)}
                   />
-                </div>
+                )}
               </div>
-            );
-          })}
+            </div>
+          );
+        })}
       </main>
 
       <div className={styles.summary}>
-        <span className={styles.summaryLabel}>{selectionLabel(selectedCount)}</span>
+        <span className={styles.summaryLabel}>{selectionLabel}</span>
         <span className={styles.total}>
           <span className={styles.totalLabel}>Cart total</span>
-          <span className={styles.totalValue}>${selectedTotal}</span>
+          <span className={styles.totalValue}>${total}</span>
         </span>
       </div>
 
@@ -121,23 +154,13 @@ function NightShopScreen() {
         <button
           type="button"
           className={styles.actionButton}
-          disabled={selectedCount === 0 || isBuying}
-          onClick={() => buySelected()}
+          disabled={actionDisabled}
+          onClick={anySelected ? buy : skip}
         >
-          {isBuying ? 'Buying…' : 'Buy'}
+          {actionLabel}
         </button>
-        <span className={styles.actionHint}>
-          {buyError ? 'Purchase failed — try again' : `Remaining balance $${remaining}`}
-        </span>
+        <span className={styles.actionHint}>{actionHint}</span>
       </div>
     </div>
-  );
-}
-
-export function NightView() {
-  return (
-    <NightShopProvider>
-      <NightShopScreen />
-    </NightShopProvider>
   );
 }

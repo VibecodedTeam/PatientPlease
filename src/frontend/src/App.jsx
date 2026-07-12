@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Navigate } from 'react-router-dom';
 import { ApiProvider } from './providers/Api';
 import { AuthProvider } from './providers/Auth';
 import { AppRoutes } from './AppRoutes';
