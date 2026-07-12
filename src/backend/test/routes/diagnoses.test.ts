@@ -72,7 +72,7 @@ async function createCase(overrides: { correctTreatmentId?: string } = {}) {
       patientId: patient.id,
       difficulty: 1,
       correctDiagnosisId: diagnosis.id,
-      correctTreatmentId: overrides.correctTreatmentId,
+      ...(overrides.correctTreatmentId ? { correctTreatmentId: overrides.correctTreatmentId } : {}),
       moneyReward: 50,
       moneyPenalty: 20,
       resultExplanationText: 'It was melanoma.',
