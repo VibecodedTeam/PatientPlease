@@ -93,6 +93,44 @@ describe('PatientScene', () => {
     expect(placedRegions).toEqual(['HEAD', 'OTHER']);
   });
 
+  it('does not re-fit/re-center the model when the effect re-runs for a new-but-equal documents reference', () => {
+    const actualThree = jest.requireActual('three');
+    const model = new actualThree.Group();
+    // Humanoid-shaped: local origin at the feet (y=0), body extends up to y=180 —
+    // a common export convention, and the actual root cause of the zoom bug: without
+    // a guard, a second effect run re-measures the ALREADY-fitted world-space box,
+    // computes scale = 2/2 = 1, and snaps the model back to this raw, unscaled size
+    // with its local origin (the feet) landing exactly on OrbitControls' fixed target.
+    const bodyMesh = new actualThree.Mesh(new actualThree.BoxGeometry(60, 180, 30));
+    bodyMesh.position.set(0, 90, 0);
+    model.add(bodyMesh);
+
+    const { rerender } = renderWithSceneContext(
+      { model, status: 'success', error: null },
+      { documents: [{ id: 'd1', attentionPointRegion: 'HEAD' }] },
+    );
+
+    const scaleAfterFirstRun = model.scale.x;
+    const positionAfterFirstRun = model.position.clone();
+
+    // Same content, new array reference — exactly what a second RoundProvider
+    // fetch resolving with fresh JSON produces.
+    rerender(
+      React.createElement(
+        PatientSceneContext.Provider,
+        { value: { model, status: 'success', error: null } },
+        React.createElement(PatientScene, {
+          documents: [{ id: 'd1', attentionPointRegion: 'HEAD' }],
+        }),
+      ),
+    );
+
+    expect(model.scale.x).toBeCloseTo(scaleAfterFirstRun, 5);
+    expect(model.position.x).toBeCloseTo(positionAfterFirstRun.x, 5);
+    expect(model.position.y).toBeCloseTo(positionAfterFirstRun.y, 5);
+    expect(model.position.z).toBeCloseTo(positionAfterFirstRun.z, 5);
+  });
+
   it('replaces old dots instead of accumulating them when documents changes', () => {
     const actualThree = jest.requireActual('three');
     const model = new actualThree.Group();
@@ -198,7 +236,7 @@ describe('PatientScene', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
-  it('logs the clicked dot\'s BodyRegion to the console', () => {
+  it("passes the clicked region's real document to the popup instead of a random stock image", () => {
     const actualThree = jest.requireActual('three');
     const model = new actualThree.Group();
     model.add(new actualThree.Mesh(new actualThree.BoxGeometry(1, 1, 1)));
@@ -207,15 +245,69 @@ describe('PatientScene', () => {
     model.add(dot);
 
     pickDot.mockReturnValue(dot);
-    const consoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
 
-    const { container } = renderWithSceneContext({ model, status: 'success', error: null });
+    const documents = [
+      {
+        id: 'doc-1',
+        type: 'SKIN_IMAGE',
+        attentionPointRegion: 'HEAD',
+        imageUrl: 'https://cdn.example.test/real-lesion.png',
+        imageAltText: 'Real lesion on the head',
+      },
+    ];
+
+    const { container } = renderWithSceneContext(
+      { model, status: 'success', error: null },
+      { documents },
+    );
     const canvas = container.querySelector('canvas');
     canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 300, height: 150 });
 
     fireEvent.click(canvas, { clientX: 150, clientY: 75 });
 
-    expect(consoleLog).toHaveBeenCalledWith('HEAD');
-    consoleLog.mockRestore();
+    const image = screen.getByRole('img');
+    expect(image.getAttribute('src')).toBe('https://cdn.example.test/real-lesion.png');
+    expect(image.getAttribute('alt')).toBe('Real lesion on the head');
+  });
+
+  it('clears the shown document when the popup closes and reopens for a region with no document', () => {
+    const actualThree = jest.requireActual('three');
+    const model = new actualThree.Group();
+    model.add(new actualThree.Mesh(new actualThree.BoxGeometry(1, 1, 1)));
+    const headDot = makeDot(actualThree);
+    headDot.userData.bodyRegion = 'HEAD';
+    const chestDot = makeDot(actualThree, 0x0000ff);
+    chestDot.userData.bodyRegion = 'CHEST';
+    model.add(headDot);
+    model.add(chestDot);
+
+    const documents = [
+      {
+        id: 'doc-1',
+        type: 'SKIN_IMAGE',
+        attentionPointRegion: 'HEAD',
+        imageUrl: 'https://cdn.example.test/real-lesion.png',
+        imageAltText: 'Real lesion on the head',
+      },
+    ];
+
+    const { container } = renderWithSceneContext(
+      { model, status: 'success', error: null },
+      { documents },
+    );
+    const canvas = container.querySelector('canvas');
+    canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 300, height: 150 });
+
+    pickDot.mockReturnValue(headDot);
+    fireEvent.click(canvas, { clientX: 150, clientY: 75 });
+    expect(screen.getByRole('img').getAttribute('src')).toBe(
+      'https://cdn.example.test/real-lesion.png',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+
+    pickDot.mockReturnValue(chestDot);
+    fireEvent.click(canvas, { clientX: 150, clientY: 75 });
+    expect(screen.getByRole('img').getAttribute('src')).toMatch(/^\/melanoma\/.+\.jpg$/);
   });
 });

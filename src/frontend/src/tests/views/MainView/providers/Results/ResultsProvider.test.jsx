@@ -7,6 +7,7 @@ import { ResultsProvider, useResults } from '../../../../../views/MainView/provi
 
 const ROUND_RESPONSE = {
   case: {
+    correctDiagnosisId: 'real-diagnosis-uuid',
     moneyReward: 50,
     moneyPenalty: 20,
   },
@@ -19,10 +20,12 @@ function ResultsConsumer() {
       <span data-testid="is-open">{String(isOpen)}</span>
       <span data-testid="is-correct">{result ? String(result.isCorrect) : 'none'}</span>
       <span data-testid="money-delta">{result ? result.moneyDelta : 'none'}</span>
-      <button onClick={() => showResult({ id: 'skin-cancer', label: 'Skin Cancer' })}>
+      <button onClick={() => showResult({ id: 'real-diagnosis-uuid', label: 'Melanoma' })}>
         submit-correct
       </button>
-      <button onClick={() => showResult({ id: 'no-condition', label: 'No Skin Condition' })}>
+      <button
+        onClick={() => showResult({ id: 'other-diagnosis-uuid', label: 'Seborrheic Keratosis' })}
+      >
         submit-incorrect
       </button>
       <button onClick={closeResult}>close</button>
@@ -55,7 +58,7 @@ describe('ResultsProvider', () => {
     expect(screen.getByTestId('is-correct').textContent).toBe('none');
   });
 
-  it('shows a correct result with the real money reward when the placeholder id matches', async () => {
+  it('shows a correct result with the real money reward when the selection matches case.correctDiagnosisId', async () => {
     const user = userEvent.setup();
     await renderWithProviders();
 
@@ -86,5 +89,38 @@ describe('ResultsProvider', () => {
 
     await user.click(screen.getByText('close'));
     expect(screen.getByTestId('is-open').textContent).toBe('false');
+  });
+
+  it('does not show a fake $0 result when submitted before the round finishes loading', async () => {
+    let resolveFetch;
+    global.fetch = jest.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = () =>
+            resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
+        }),
+    );
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <ResultsProvider>
+            <ResultsConsumer />
+          </ResultsProvider>
+        </RoundProvider>
+      </ApiProvider>,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByText('submit-correct'));
+
+    expect(screen.getByTestId('is-open').textContent).toBe('false');
+    expect(screen.getByTestId('is-correct').textContent).toBe('none');
+    expect(screen.getByTestId('money-delta').textContent).toBe('none');
+
+    resolveFetch();
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    await user.click(screen.getByText('submit-correct'));
+    expect(screen.getByTestId('money-delta').textContent).toBe('50');
   });
 });

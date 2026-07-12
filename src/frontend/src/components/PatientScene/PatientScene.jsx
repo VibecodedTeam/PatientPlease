@@ -21,7 +21,21 @@ export function PatientScene({ documents = [] }) {
   const modelRef = useRef(null);
   const dotsRef = useRef([]);
   const activeDotRef = useRef(null);
+  // Keyed by BodyRegion, so the click handler below (set up once, in the effect
+  // with no dependencies) always reads the latest documents without going stale.
+  const documentsByRegionRef = useRef({});
+  // Tracks which model instance has already been fit-to-frame, so the effect
+  // below can re-run safely for a new `documents` reference (to update dots)
+  // without re-measuring and re-fitting a model it already fit. Without this,
+  // `documents` receiving a new-but-equal array reference (e.g. RoundProvider's
+  // duplicate mount-effect fetch resolving twice with identical case data)
+  // would re-measure the model's ALREADY-fitted world-space box and treat it
+  // as raw geometry needing scaling — undoing the fit instead of being a
+  // no-op, and leaving the model's local origin sitting wherever OrbitControls'
+  // fixed target happens to be (e.g. a humanoid rig's feet).
+  const fittedModelRef = useRef(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [activeDocument, setActiveDocument] = useState(null);
   const { model, status } = usePatientScene();
 
   const closePopup = () => {
@@ -29,6 +43,7 @@ export function PatientScene({ documents = [] }) {
       activeDotRef.current.material.color.setHex(activeDotRef.current.userData.baseColor);
       activeDotRef.current = null;
     }
+    setActiveDocument(null);
     setIsPopupOpen(false);
   };
 
@@ -97,9 +112,8 @@ export function PatientScene({ documents = [] }) {
       }
       hit.material.color.set(0xff0000);
       activeDotRef.current = hit;
+      setActiveDocument(documentsByRegionRef.current[hit.userData.bodyRegion] ?? null);
       setIsPopupOpen(true);
-      // eslint-disable-next-line no-console
-      console.log(hit.userData.bodyRegion);
     };
     renderer.domElement.addEventListener('click', handleClick);
 
@@ -127,16 +141,19 @@ export function PatientScene({ documents = [] }) {
     const scene = sceneRef.current;
     if (!scene || status !== 'success' || !model) return undefined;
 
-    const box = new THREE.Box3().setFromObject(model);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
+    if (fittedModelRef.current !== model) {
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
 
-    const maxDimension = Math.max(size.x, size.y, size.z);
-    const scale = maxDimension > 0 ? 2 / maxDimension : 1;
-    model.scale.set(scale, scale, scale);
-    // Position is a translation in parent space, applied on top of (not scaled by)
-    // the object's own scale, so the centering offset must be pre-multiplied by it.
-    model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+      const maxDimension = Math.max(size.x, size.y, size.z);
+      const scale = maxDimension > 0 ? 2 / maxDimension : 1;
+      model.scale.set(scale, scale, scale);
+      // Position is a translation in parent space, applied on top of (not scaled by)
+      // the object's own scale, so the centering offset must be pre-multiplied by it.
+      model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+      fittedModelRef.current = model;
+    }
 
     model.traverse((child) => {
       if (child.isMesh && !child.material) {
@@ -154,6 +171,11 @@ export function PatientScene({ documents = [] }) {
     deriveAttentionRegions(documents).forEach((region) => {
       dotsRef.current.push(dodajKropkeDlaRegionu(model, region, DOT_COLOR));
     });
+    documentsByRegionRef.current = Object.fromEntries(
+      documents
+        .filter((document) => document.attentionPointRegion != null)
+        .map((document) => [document.attentionPointRegion, document]),
+    );
 
     scene.add(model);
     modelRef.current = model;
@@ -187,7 +209,7 @@ export function PatientScene({ documents = [] }) {
   return (
     <>
       <div ref={containerRef} className={styles.container} data-testid="patient-scene-container" />
-      {isPopupOpen && <MelanomaImagePopup onClose={closePopup} />}
+      {isPopupOpen && <MelanomaImagePopup caseDocument={activeDocument} onClose={closePopup} />}
     </>
   );
 }

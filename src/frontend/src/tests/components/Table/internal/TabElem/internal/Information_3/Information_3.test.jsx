@@ -23,20 +23,19 @@ describe('Information_3', () => {
     expect(screen.getByText('2 weeks')).toBeInTheDocument();
   });
 
-  it('renders symptoms from a CLINICAL_SYMPTOMS document when one exists', () => {
+  it('renders the real note from a CLINICAL_SYMPTOMS document when one exists', () => {
     renderWithDocumentTable(<Information_3 />, {
       documents: [
         {
           id: 'd9',
           type: 'CLINICAL_SYMPTOMS',
           title: 'Symptoms',
-          content: { symptoms: [{ name: 'Bleeding', duration: '1 day' }] },
+          content: { note: 'Itching and bleeding for the past week.' },
         },
       ],
     });
 
-    expect(screen.getByText('Bleeding')).toBeInTheDocument();
-    expect(screen.getByText('1 day')).toBeInTheDocument();
-    expect(screen.queryByText('Itching')).not.toBeInTheDocument();
+    expect(screen.getByText('Itching and bleeding for the past week.')).toBeInTheDocument();
+    expect(screen.queryByText('Itching', { exact: true })).not.toBeInTheDocument();
   });
 });

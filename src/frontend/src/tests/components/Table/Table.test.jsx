@@ -32,13 +32,14 @@ function renderWithProviders(ui) {
 
 describe('Table', () => {
   beforeEach(() => {
-    global.fetch = jest
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ case: { moneyReward: 50, moneyPenalty: 20 } }), {
-          status: 200,
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          case: { moneyReward: 50, moneyPenalty: 20, correctDiagnosisId: 'skin-cancer' },
         }),
-      );
+        { status: 200 },
+      ),
+    );
   });
 
   it('renders its children', async () => {
@@ -74,5 +75,35 @@ describe('Table', () => {
         }),
       ),
     );
+  });
+
+  it('passes the real diagnosisOptions catalog from DocumentTableProvider through to Diagnose', async () => {
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <ResultsProvider>
+            <DocumentTableContext.Provider
+              value={{
+                documents: [],
+                patient: null,
+                diagnosisOptions: [
+                  { id: 'dx-1', code: 'MELANOMA', name: 'Melanoma', category: 'MALIGNANT' },
+                  { id: 'dx-2', code: 'SEB_KER', name: 'Seborrheic Keratosis', category: 'BENIGN' },
+                ],
+                isLoading: false,
+                error: null,
+              }}
+            >
+              <Table />
+            </DocumentTableContext.Provider>
+          </ResultsProvider>
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+    expect(screen.getByRole('radio', { name: 'Melanoma' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Seborrheic Keratosis' })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'Skin Cancer' })).not.toBeInTheDocument();
   });
 });

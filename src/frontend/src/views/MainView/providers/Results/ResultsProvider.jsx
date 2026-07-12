@@ -4,20 +4,15 @@ import { useRound } from '../../../../providers/Round';
 
 export const ResultsContext = createContext(null);
 
-// There is no diagnosis-submission endpoint anywhere in the backend yet (checked
-// every branch, local and remote) — docs/api/round.md explicitly states the real
-// answer key (case.correctDiagnosisId/correctTreatmentId) is never sent to the
-// frontend, since verification is meant to be server-side only. Until that
-// endpoint exists, correctness is judged against this placeholder id (matching
-// Diagnose.jsx's own DEFAULT_OPTIONS) instead of anything real.
-// TODO(backend): delete this placeholder once a real diagnosis-submission
-// endpoint exists, and judge correctness from its response instead.
-const PLACEHOLDER_CORRECT_DIAGNOSIS_ID = 'skin-cancer';
-
 /**
- * Shows the result of a diagnosis submission: whether it matched the (currently
- * placeholder) correct answer, and the real money reward/penalty for the active
- * case from Round.
+ * Shows the result of a diagnosis submission: whether it matched the case's real
+ * correct answer, and the real money reward/penalty for the active case from Round.
+ *
+ * Grading happens here, client-side, against `round.case.correctDiagnosisId` — there
+ * is no `POST /diagnoses` (or similar) submission endpoint yet, so the backend has no
+ * other way to tell the frontend which selection was right. This is a deliberate,
+ * documented exception (see docs/api/round.md) for this single-player educational
+ * game, not a pattern to extend to other answer-key fields.
  */
 export function ResultsProvider({ children }) {
   const { round } = useRound();
@@ -25,10 +20,12 @@ export function ResultsProvider({ children }) {
 
   const showResult = useCallback(
     (selection) => {
-      const isCorrect = selection.id === PLACEHOLDER_CORRECT_DIAGNOSIS_ID;
-      const moneyDelta = isCorrect
-        ? round?.case?.moneyReward ?? 0
-        : -(round?.case?.moneyPenalty ?? 0);
+      // A real case always carries real moneyReward/moneyPenalty (required backend
+      // fields) — if round.case isn't loaded yet, there's no real result to grade
+      // against, so this must not fabricate a fake $0 result.
+      if (!round?.case) return;
+      const isCorrect = selection.id === round.case.correctDiagnosisId;
+      const moneyDelta = isCorrect ? round.case.moneyReward : -round.case.moneyPenalty;
       setResult({ selection, isCorrect, moneyDelta });
     },
     [round],

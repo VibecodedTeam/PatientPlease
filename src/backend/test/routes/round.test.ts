@@ -178,7 +178,10 @@ describe('POST /api/v1/round', () => {
       { id: treatment.id, code: 'REFER_ONCO', name: 'Refer to oncology', kind: 'REFERRAL' },
     ]);
     expect(body.case.documents[0]?.attentionPointRegion).toBe('LEFT_ARM');
-    expect(body.case).not.toHaveProperty('correctDiagnosisId');
+    // correctDiagnosisId IS included (see docs/api/round.md) so the frontend can grade a
+    // diagnosis submission client-side until a real POST /diagnoses endpoint exists —
+    // correctTreatmentId/resultExplanationText remain hidden since nothing consumes them.
+    expect(body.case.correctDiagnosisId).toBe(diagnosis.id);
     expect(body.case).not.toHaveProperty('correctTreatmentId');
     expect(body.case).not.toHaveProperty('resultExplanationText');
     expect(rawBody).not.toContain('attentionPoints');
