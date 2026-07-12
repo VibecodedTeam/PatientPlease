@@ -188,26 +188,28 @@
 
 .settingsButton {
   flex-shrink: 0;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 3.5rem;
+  height: 3.5rem;
   border-radius: 50%;
-  border: 2px solid #b3862f;
-  background: #3a2f27;
-  color: #e8ddc7;
+  border: 2px solid #4a9eff;
+  background: #1d4e7a;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  box-shadow: 0 0 0 0 rgba(74, 158, 255, 0.5);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.2s ease;
 }
 
 .settingsButton:hover {
-  background: #4a3a2e;
+  background: #2a6bab;
   transform: scale(1.08);
+  box-shadow: 0 0 14px 2px rgba(74, 158, 255, 0.55);
 }
 
 .settingsButton:focus-visible {
-  outline: 2px solid #f1e6cc;
+  outline: 2px solid #cfe4ff;
   outline-offset: 2px;
 }
 
