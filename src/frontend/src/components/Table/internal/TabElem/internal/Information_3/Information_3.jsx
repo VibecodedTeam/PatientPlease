@@ -16,9 +16,9 @@ const DEFAULT_SYMPTOMS = [
 export function Information_3({ title = 'Clinical Symptoms', className = '', ...rest }) {
   const { documents } = useDocumentTable();
   const symptomsDocument = documents.find((doc) => doc.type === 'CLINICAL_SYMPTOMS');
-  // Assumed shape (content.symptoms: [{ name, duration }]) — unconfirmed,
-  // no CLINICAL_SYMPTOMS document exists in the schema or mock data yet.
-  const symptoms = symptomsDocument?.content?.symptoms ?? DEFAULT_SYMPTOMS;
+  // seed.ts stores every supporting document type (including CLINICAL_SYMPTOMS) as
+  // free-text `content: { note }` — there is no structured symptom list in the schema.
+  const note = symptomsDocument?.content?.note;
 
   const cardClassName = className ? `${styles.card} ${className}` : styles.card;
 
@@ -26,16 +26,20 @@ export function Information_3({ title = 'Clinical Symptoms', className = '', ...
     <div className={styles.slot}>
       <div className={cardClassName} {...rest}>
         <h3 className={styles.title}>{title}</h3>
-        <table className={styles.table}>
-          <tbody>
-            {symptoms.map((symptom) => (
-              <tr key={symptom.name} className={styles.row}>
-                <td className={styles.symptomName}>{symptom.name}</td>
-                <td className={styles.symptomDuration}>{symptom.duration}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {note ? (
+          <p className={styles.body}>{note}</p>
+        ) : (
+          <table className={styles.table}>
+            <tbody>
+              {DEFAULT_SYMPTOMS.map((symptom) => (
+                <tr key={symptom.name} className={styles.row}>
+                  <td className={styles.symptomName}>{symptom.name}</td>
+                  <td className={styles.symptomDuration}>{symptom.duration}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

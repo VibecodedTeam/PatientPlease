@@ -58,6 +58,7 @@ existing open round looks identical to a client as starting a new one.
   "case": {
     "id": "uuid",
     "difficulty": 2, // raw SmallInt, not an enum
+    "correctDiagnosisId": "uuid", // matches one entry in diagnosisOptions — see note below
     "moneyReward": 50,
     "moneyPenalty": 20,
     "patient": {
@@ -94,8 +95,14 @@ existing open round looks identical to a client as starting a new one.
 }
 ```
 
-`case.correctDiagnosisId`, `case.correctTreatmentId`, and `case.resultExplanationText`
-(the answer key) are never included in the response. There is no `case.attentionPoints` —
+`case.correctTreatmentId` and `case.resultExplanationText` are never included in the response.
+`case.correctDiagnosisId` **is** included, as an intentional, documented exception: there is no
+`POST /diagnoses` (or similar) submission endpoint yet, so `ResultsProvider` on the frontend
+grades a diagnosis submission client-side by comparing the player's selection against this
+field until real server-side verification exists. This is a known, temporary tradeoff (a
+determined player could read this field from the network tab) accepted for a single-player,
+educational, non-competitive game; do not extend the same pattern to other answer-key fields
+without a matching product decision. There is no `case.attentionPoints` —
 each document instead carries `attentionPointRegion`, the coarse body region it's about (or
 `null`), and the frontend's `PatientScene` maps that region to a 3D hotspot position/zoom
 preset itself.

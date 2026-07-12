@@ -124,16 +124,6 @@ export function Wall({ books }) {
           <div className={styles.board} role="note">
             <p className={styles.boardText}>Patients left today: {PATIENTS_LEFT_TODAY}</p>
           </div>
-
-          <button
-            type="button"
-            className={styles.settingsButton}
-            aria-label="Open settings"
-            title="Settings"
-            onClick={openSettings}
-          >
-            <span aria-hidden="true">⚙</span>
-          </button>
         </div>
 
         <div
@@ -249,62 +239,6 @@ export function Wall({ books }) {
             <p className={styles.detailsLabel}>Medical hint</p>
             <p className={styles.detailsHint}>{selectedBook.hint}</p>
             <button type="button" className={styles.closeButton} onClick={closeBookPopup}>
-              Close
-            </button>
-          </div>
-        </OverlayPortal>
-      )}
-
-      {isSettingsOpen && (
-        // overlay-portal: settings must appear as a centered modal above the whole page,
-        // not clipped inside the compact wall panel
-        <OverlayPortal onDismiss={closeSettings}>
-          <div
-            className={styles.settingsPopup}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Settings"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h3 className={styles.settingsTitle}>Settings</h3>
-
-            <label className={styles.settingsField}>
-              Music volume
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={musicVolume}
-                onChange={(event) => setMusicVolume(Number(event.target.value))}
-              />
-            </label>
-
-            <label className={styles.settingsField}>
-              <input
-                type="checkbox"
-                checked={soundEffectsEnabled}
-                onChange={(event) => setSoundEffectsEnabled(event.target.checked)}
-              />
-              Sound effects
-            </label>
-
-            <label className={styles.settingsField}>
-              <input
-                type="checkbox"
-                checked={isFullscreen}
-                onChange={(event) => setIsFullscreen(event.target.checked)}
-              />
-              Fullscreen
-            </label>
-
-            <div className={styles.logoutField}>
-              <button type="button" className={styles.logoutButton} disabled title="Not implemented yet">
-                Log out
-              </button>
-              <span className={styles.comingSoonLabel}>Coming soon</span>
-            </div>
-
-            <button type="button" className={styles.closeButton} onClick={closeSettings}>
               Close
             </button>
           </div>

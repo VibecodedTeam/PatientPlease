@@ -61,6 +61,7 @@ function makeCase(overrides: Partial<CaseRecord> = {}): CaseRecord {
   return {
     id: 'case-uuid',
     difficulty: 1,
+    correctDiagnosisId: 'diagnosis-uuid',
     moneyReward: 50,
     moneyPenalty: 20,
     patient: {
@@ -477,6 +478,7 @@ describe('startRound', () => {
       case: {
         id: 'case-uuid',
         difficulty: 1,
+        correctDiagnosisId: 'diagnosis-uuid',
         moneyReward: 50,
         moneyPenalty: 20,
         patient: {
@@ -513,7 +515,7 @@ describe('startRound', () => {
     });
   });
 
-  it('never leaks answer-key fields present on the raw Case record', async () => {
+  it('includes correctDiagnosisId (needed for client-side grading, see ResultsProvider) but never leaks correctTreatmentId/resultExplanationText', async () => {
     const prisma = createMockPrisma();
     primeHappyPath(prisma);
     prisma.case.findMany.mockResolvedValue([
@@ -527,7 +529,7 @@ describe('startRound', () => {
 
     const result = await startRound(prisma, 'user-uuid');
 
-    expect(result.case).not.toHaveProperty('correctDiagnosisId');
+    expect(result.case.correctDiagnosisId).toBe('diagnosis-uuid');
     expect(result.case).not.toHaveProperty('correctTreatmentId');
     expect(result.case).not.toHaveProperty('resultExplanationText');
   });

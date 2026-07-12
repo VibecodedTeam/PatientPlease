@@ -71,7 +71,14 @@ const ROUND_DOCUMENTS = [
 const DEFAULT_ROUTES = {
   '/api/v1/round': () =>
     new Response(
-      JSON.stringify({ case: { documents: ROUND_DOCUMENTS, moneyReward: 50, moneyPenalty: 20 } }),
+      JSON.stringify({
+        case: {
+          documents: ROUND_DOCUMENTS,
+          moneyReward: 50,
+          moneyPenalty: 20,
+          correctDiagnosisId: 'skin-cancer',
+        },
+      }),
       { status: 200 },
     ),
   '/auth/me': () => new Response(JSON.stringify({ user: USER }), { status: 200 }),

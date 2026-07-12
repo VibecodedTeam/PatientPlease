@@ -15,9 +15,10 @@ export function DocumentTableProvider({ children }) {
   const { round, isLoading, error } = useRound();
   const documents = round?.case?.documents ?? [];
   const patient = round?.case?.patient ?? null;
+  const diagnosisOptions = round?.diagnosisOptions ?? [];
 
   return (
-    <DocumentTableContext.Provider value={{ documents, patient, isLoading, error }}>
+    <DocumentTableContext.Provider value={{ documents, patient, diagnosisOptions, isLoading, error }}>
       {children}
     </DocumentTableContext.Provider>
   );
