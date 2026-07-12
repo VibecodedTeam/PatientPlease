@@ -25,6 +25,9 @@ describe('endpointList', () => {
         reset: '/api/v1/day/reset',
         end: '/api/v1/day/end',
       },
+      diagnoses: {
+        submit: '/api/v1/diagnoses',
+      },
       shop: {
         list: '/api/v1/shop',
         purchase: '/api/v1/shop/purchase',
