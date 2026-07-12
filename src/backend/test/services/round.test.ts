@@ -478,7 +478,6 @@ describe('startRound', () => {
       case: {
         id: 'case-uuid',
         difficulty: 1,
-        correctDiagnosisId: 'diagnosis-uuid',
         moneyReward: 50,
         moneyPenalty: 20,
         patient: {
@@ -515,7 +514,7 @@ describe('startRound', () => {
     });
   });
 
-  it('includes correctDiagnosisId (needed for client-side grading, see ResultsProvider) but never leaks correctTreatmentId/resultExplanationText', async () => {
+  it('never leaks correctDiagnosisId/correctTreatmentId/resultExplanationText', async () => {
     const prisma = createMockPrisma();
     primeHappyPath(prisma);
     prisma.case.findMany.mockResolvedValue([
@@ -529,7 +528,7 @@ describe('startRound', () => {
 
     const result = await startRound(prisma, 'user-uuid');
 
-    expect(result.case.correctDiagnosisId).toBe('diagnosis-uuid');
+    expect(result.case).not.toHaveProperty('correctDiagnosisId');
     expect(result.case).not.toHaveProperty('correctTreatmentId');
     expect(result.case).not.toHaveProperty('resultExplanationText');
   });
