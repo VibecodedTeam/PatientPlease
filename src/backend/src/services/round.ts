@@ -186,10 +186,6 @@ export interface RoundResponse {
   case: {
     id: string;
     difficulty: number;
-    // Unlike correctTreatmentId/resultExplanationText, this IS sent to the client: there is
-    // no POST /diagnoses endpoint yet (see docs/api/round.md), so ResultsProvider grades a
-    // diagnosis submission client-side against this value until server-side verification exists.
-    correctDiagnosisId: string;
     moneyReward: number;
     moneyPenalty: number;
     patient: PatientRecord;
@@ -364,7 +360,6 @@ function toCaseResponse(
   return {
     id: record.id,
     difficulty: record.difficulty,
-    correctDiagnosisId: record.correctDiagnosisId,
     moneyReward: record.moneyReward,
     moneyPenalty: record.moneyPenalty,
     patient: {
