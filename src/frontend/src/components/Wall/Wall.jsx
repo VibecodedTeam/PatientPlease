@@ -4,6 +4,7 @@ import styles from './Wall.module.css';
 import { mockBooks } from './mockBooks';
 import { OverlayPortal } from '../OverlayPortal';
 import { Phone } from '../Phone';
+import { ExaminationsProvider } from '../Phone/providers/Examinations';
 
 const PATIENTS_LEFT_TODAY = 5;
 
@@ -130,7 +131,7 @@ export function Wall({ books }) {
             title="Order tests"
             onClick={openSettings}
           >
-            <svg aria-hidden="true" viewBox="0 0 24 24" width="1.05rem" height="1.05rem" fill="#c0392b">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="2.2rem" height="2.2rem" fill="#ffffff">
               <path d="M6.62 10.79a15.09 15.09 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.36 11.36 0 0 0 3.57.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.4 21 3 13.6 3 4.5a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.24 1.02z" />
             </svg>
           </button>
@@ -265,7 +266,9 @@ export function Wall({ books }) {
             aria-label="Order tests"
             onClick={(event) => event.stopPropagation()}
           >
-            <Phone onCancel={closeSettings} />
+            <ExaminationsProvider>
+              <Phone onCancel={closeSettings} />
+            </ExaminationsProvider>
           </div>
         </OverlayPortal>
       )}
