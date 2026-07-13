@@ -1,79 +1,80 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { NightShopProvider, useNightShop } from './providers/NightShop';
 import styles from './NightView.module.css';
 
-const CATALOG = [
-  {
-    id: 'h1',
-    title: 'Atlas of Dermoscopy',
-    category: 'Handbook',
-    price: 45,
-    flavor: 'High-resolution reference for reading pigment networks and vascular patterns under magnification.',
-  },
-  {
-    id: 'h2',
-    title: 'Clinical Guide to Skin Cancer',
-    category: 'Handbook',
-    price: 60,
-    flavor: 'ABCDE criteria, staging tables, and differential diagnosis, worked chapter by chapter.',
-  },
-  {
-    id: 'h3',
-    title: 'Sun & Skin: UV Exposure Manual',
-    category: 'Handbook',
-    price: 80,
-    flavor: 'Cumulative-dose charts and phototype risk tables for reading patient sun-history records.',
-  },
-];
+const ITEM_TYPE_LABELS = {
+  HANDBOOK: 'Handbook',
+  EQUIPMENT: 'Equipment',
+  EXAMINATION: 'Examination',
+  PLOT_ITEM: 'Plot Item',
+};
 
-const STARTING_FUNDS = 120;
+/**
+ * @param {string} itemType
+ * @returns {string}
+ */
+function itemTypeLabel(itemType) {
+  return ITEM_TYPE_LABELS[itemType] ?? itemType;
+}
 
-export function NightView() {
+/**
+ * Renders the night/shop phase, backed entirely by `useNightShop()` (which in
+ * turn is backed by RoundProvider's shopCatalog/purchaseShopItem). Consumed
+ * inside `NightShopProvider` — see `index.js`.
+ */
+export function NightViewContent() {
   const navigate = useNavigate();
-  const [funds, setFunds] = useState(STARTING_FUNDS);
-  const [ownedIds, setOwnedIds] = useState([]);
-  const [selectedIds, setSelectedIds] = useState([]);
+  const {
+    items,
+    money,
+    error,
+    selectedIds,
+    selectedTotal,
+    remaining,
+    isSelected,
+    canToggle,
+    toggleItem,
+    buySelected,
+    isBuying,
+    buyError,
+  } = useNightShop();
 
-  function toggle(id) {
-    setSelectedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
-  }
+  const anySelected = selectedIds.size > 0;
+  const nSelected = selectedIds.size;
+  const selectionLabel =
+    nSelected === 0 ? 'No items selected' : `${nSelected} ${nSelected === 1 ? 'item' : 'items'} selected`;
 
-  const total = CATALOG.filter((item) => selectedIds.includes(item.id)).reduce((sum, item) => sum + item.price, 0);
-  const anySelected = selectedIds.length > 0;
-  const canAfford = total <= funds;
-
-  function buy() {
-    if (!anySelected || !canAfford) return;
-    setFunds((f) => f - total);
-    setOwnedIds((ids) => [...ids, ...selectedIds]);
-    setSelectedIds([]);
-    navigate('/game/main');
-  }
-
-  function skip() {
-    navigate('/game/main');
+  function handleAction() {
+    if (anySelected) {
+      buySelected().then(() => navigate('/game/main'));
+    } else {
+      navigate('/game/main');
+    }
   }
 
   let actionLabel;
   let actionDisabled;
   let actionHint;
-  if (!anySelected) {
+  if (isBuying) {
+    actionLabel = 'Buy';
+    actionDisabled = true;
+    actionHint = 'Processing purchase…';
+  } else if (!anySelected) {
     actionLabel = 'Skip';
     actionDisabled = false;
     actionHint = 'End the shift without buying';
-  } else if (!canAfford) {
+  } else if (remaining < 0) {
     actionLabel = 'Buy';
     actionDisabled = true;
-    actionHint = `Insufficient funds — remove an item (over by $${total - funds})`;
+    actionHint = `Insufficient funds — remove an item (over by $${-remaining})`;
   } else {
-    actionLabel = `Buy · $${total}`;
+    actionLabel = `Buy · $${selectedTotal}`;
     actionDisabled = false;
-    actionHint = `$${funds - total} will remain`;
+    actionHint = `$${remaining} will remain`;
   }
 
-  const nSelected = selectedIds.length;
-  const selectionLabel =
-    nSelected === 0 ? 'No items selected' : `${nSelected} ${nSelected === 1 ? 'item' : 'items'} selected`;
+  const combinedError = buyError ?? error;
 
   return (
     <div className={styles.page}>
@@ -102,38 +103,47 @@ export function NightView() {
                 $
               </text>
             </svg>
-            {funds}
+            {money}
           </span>
         </div>
       </header>
 
       <main className={styles.catalog}>
-        {CATALOG.map((item) => {
-          const owned = ownedIds.includes(item.id);
-          const selected = selectedIds.includes(item.id);
+        {items.map((item) => {
+          const selected = isSelected(item.id);
+          const disabledToggle = !item.owned && !canToggle(item);
           return (
-            <div className={`${styles.card}${owned ? ` ${styles.cardOwned}` : ''}${selected ? ` ${styles.cardSelected}` : ''}`} key={item.id}>
+            <div
+              className={`${styles.card}${item.owned ? ` ${styles.cardOwned}` : ''}${selected ? ` ${styles.cardSelected}` : ''}`}
+              key={item.id}
+            >
               <div className={styles.cardCover} />
 
               <div className={styles.cardBody}>
                 <div className={styles.cardHeading}>
-                  <h2 className={styles.cardTitle}>{item.title}</h2>
-                  <span className={styles.cardCategory}>{item.category}</span>
+                  <h2 className={styles.cardTitle}>{item.name}</h2>
+                  <span className={styles.cardCategory}>{itemTypeLabel(item.itemType)}</span>
                 </div>
-                <p className={styles.cardFlavor}>{item.flavor}</p>
+                <p className={styles.cardFlavor}>{item.description}</p>
               </div>
 
               <div className={styles.cardTrailing}>
-                <span className={styles.cardPrice}>${item.price}</span>
-                {owned ? (
+                <span className={styles.cardPrice}>
+                  ${item.price}
+                  {item.itemType === 'EXAMINATION' && typeof item.timeCostMs === 'number'
+                    ? ` +${Math.round(item.timeCostMs / 1000)}s`
+                    : null}
+                </span>
+                {item.owned ? (
                   <span className={styles.ownedBadge}>In library</span>
                 ) : (
                   <button
                     type="button"
-                    aria-label={`Select ${item.title}`}
+                    aria-label={`Select ${item.name}`}
                     aria-pressed={selected}
+                    disabled={disabledToggle}
                     className={`${styles.selectDot}${selected ? ` ${styles.selectDotSelected}` : ''}`}
-                    onClick={() => toggle(item.id)}
+                    onClick={() => toggleItem(item)}
                   />
                 )}
               </div>
@@ -146,21 +156,26 @@ export function NightView() {
         <span className={styles.summaryLabel}>{selectionLabel}</span>
         <span className={styles.total}>
           <span className={styles.totalLabel}>Cart total</span>
-          <span className={styles.totalValue}>${total}</span>
+          <span className={styles.totalValue}>${selectedTotal}</span>
         </span>
       </div>
 
       <div className={styles.action}>
-        <button
-          type="button"
-          className={styles.actionButton}
-          disabled={actionDisabled}
-          onClick={anySelected ? buy : skip}
-        >
+        <button type="button" className={styles.actionButton} disabled={actionDisabled} onClick={handleAction}>
           {actionLabel}
         </button>
-        <span className={styles.actionHint}>{actionHint}</span>
+        <span className={styles.actionHint}>
+          {combinedError ? `Something went wrong: ${combinedError.message ?? 'please try again'}` : actionHint}
+        </span>
       </div>
     </div>
+  );
+}
+
+export function NightView() {
+  return (
+    <NightShopProvider>
+      <NightViewContent />
+    </NightShopProvider>
   );
 }
