@@ -1,116 +1,52 @@
-import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import styles from './Wall.module.css';
-import { mockBooks } from './mockBooks';
 import { OverlayPortal } from '../OverlayPortal';
 import { Phone } from '../Phone';
 import { ExaminationsProvider } from '../Phone/providers/Examinations';
-
-const PATIENTS_LEFT_TODAY = 5;
-
-const PREVENTION_TIPS = [
-  'SPF daily',
-  'Reapply SPF',
-  'No tanning',
-  'Avoid noon sun',
-  'Cover skin',
-  'Check moles',
-  'Watch ABCDE',
-  'See derm',
-];
-
-const BOARD_COLUMNS = 3;
-const BOARD_ROWS = 2;
-const BOARD_SLOTS = BOARD_COLUMNS * BOARD_ROWS;
-const MAX_PINNED_NOTES = 6;
-
-const randomBetween = (min, max) => Math.random() * (max - min) + min;
+import { WallInventoryProvider, useWallInventory } from './providers/WallInventory';
 
 const withModifierClass = (baseClass, modifierClass, active) =>
   active ? `${baseClass} ${modifierClass}` : baseClass;
 
 /**
- * Shape of a single book entry, shared so future integrations (JSON payload, shop, API
- * response) can validate their data against the same contract Wall expects.
+ * Doctor office wall content: a shelf of the player's real owned handbooks and
+ * equipment, sourced from useWallInventory() (which narrows RoundProvider's
+ * ownedItems down to HANDBOOK/EQUIPMENT), plus the "order tests" button that
+ * opens the Phone. Exported separately from the composed `Wall` (see index.js,
+ * which wraps this in WallInventoryProvider) so the provider boundary sits
+ * outside the presentational content.
  */
-export const bookShape = PropTypes.shape({
-  id: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-  category: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  hint: PropTypes.string.isRequired,
-  bought: PropTypes.bool.isRequired,
-});
+export function WallContent() {
+  const { items } = useWallInventory();
 
-/**
- * @param {Object} props
- * @param {Array<{id: string, title: string, category: string, description: string, hint: string, bought: boolean}>} [props.books]
- *   Book data to render. Falls back to mockBooks when not provided — later this will come from
- *   the player's purchased inventory once the night shop exists.
- */
-export function Wall({ books }) {
-  const bookList = books ?? mockBooks;
-
-  const [selectedBookId, setSelectedBookId] = useState(null);
+  const [selectedItemId, setSelectedItemId] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [pinnedNotes, setPinnedNotes] = useState([{ id: 0, text: PREVENTION_TIPS[0], slot: 0, offsetX: 0, offsetY: 0, rotate: -2 }]);
-  const [nextTipIndex, setNextTipIndex] = useState(1);
-  const nextNoteIdRef = useRef(1);
   const [lampOn, setLampOn] = useState(false);
   const [dermatoscopeOn, setDermatoscopeOn] = useState(false);
 
-  const boughtBooks = bookList.filter((book) => book.bought);
-  const selectedBook = boughtBooks.find((book) => book.id === selectedBookId) ?? null;
+  const selectedItem = items.find((item) => item.id === selectedItemId) ?? null;
 
   useEffect(() => {
-    setSelectedBookId((currentId) => {
+    setSelectedItemId((currentId) => {
       if (currentId === null) return null;
-      const isCurrentStillBought = bookList.some((book) => book.id === currentId && book.bought);
-      return isCurrentStillBought ? currentId : null;
+      const isCurrentStillOwned = items.some((item) => item.id === currentId);
+      return isCurrentStillOwned ? currentId : null;
     });
-  }, [bookList]);
+  }, [items]);
 
   const openSettings = () => {
-    setSelectedBookId(null);
+    setSelectedItemId(null);
     setIsSettingsOpen(true);
   };
 
   const closeSettings = () => setIsSettingsOpen(false);
 
-  const selectBook = (bookId) => {
+  const selectItem = (itemId) => {
     setIsSettingsOpen(false);
-    setSelectedBookId(bookId);
+    setSelectedItemId(itemId);
   };
 
-  const closeBookPopup = () => setSelectedBookId(null);
-
-  const pinNewNote = () => {
-    const noteId = nextNoteIdRef.current;
-    nextNoteIdRef.current += 1;
-    const text = PREVENTION_TIPS[nextTipIndex];
-    const jitter = {
-      offsetX: randomBetween(-6, 6),
-      offsetY: randomBetween(-5, 5),
-      rotate: randomBetween(-7, 7),
-    };
-
-    setPinnedNotes((notes) => {
-      const remaining = notes.length >= MAX_PINNED_NOTES ? notes.slice(1) : notes;
-      const occupiedSlots = remaining.map((note) => note.slot);
-      const availableSlots = Array.from({ length: BOARD_SLOTS }, (_, index) => index).filter(
-        (slot) => !occupiedSlots.includes(slot)
-      );
-      const slot = availableSlots[Math.floor(Math.random() * availableSlots.length)];
-      return [...remaining, { id: noteId, text, slot, ...jitter }];
-    });
-    setNextTipIndex((index) => (index + 1) % PREVENTION_TIPS.length);
-  };
-
-  const handleBoardKeyDown = (event) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    pinNewNote();
-  };
+  const closeItemPopup = () => setSelectedItemId(null);
 
   const toggleLamp = () => setLampOn((on) => !on);
 
@@ -120,10 +56,6 @@ export function Wall({ books }) {
     <section className={styles.wall} aria-label="Doctor office wall">
       <div className={styles.panel}>
         <div className={styles.header}>
-          <div className={styles.board} role="note">
-            <p className={styles.boardText}>Patients left today: {PATIENTS_LEFT_TODAY}</p>
-          </div>
-
           <button
             type="button"
             className={styles.settingsButton}
@@ -137,38 +69,8 @@ export function Wall({ books }) {
           </button>
         </div>
 
-        <div
-          className={styles.corkboard}
-          role="button"
-          tabIndex={0}
-          aria-label="Pin new prevention note"
-          title="Click to pin a new prevention note"
-          onClick={pinNewNote}
-          onKeyDown={handleBoardKeyDown}
-        >
-          <div className={styles.corkboardNotes} role="list" aria-label="Pinned prevention notes" aria-live="polite">
-            {pinnedNotes.map((note) => (
-              <div
-                key={note.id}
-                role="listitem"
-                className={styles.corkboardNote}
-                style={{
-                  gridColumn: (note.slot % BOARD_COLUMNS) + 1,
-                  gridRow: Math.floor(note.slot / BOARD_COLUMNS) + 1,
-                  '--note-rotate': `${note.rotate}deg`,
-                  '--note-offset-x': `${note.offsetX}px`,
-                  '--note-offset-y': `${note.offsetY}px`,
-                }}
-              >
-                <span className={styles.corkboardPin} aria-hidden="true" />
-                {note.text}
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className={styles.shelf} aria-label="Medical handbooks shelf">
-          {boughtBooks.length === 0 ? (
+          {items.length === 0 ? (
             <div className={styles.emptyShelf}>
               <p>No handbooks bought yet.</p>
               <p>Visit the night shop to unlock medical handbooks.</p>
@@ -177,18 +79,18 @@ export function Wall({ books }) {
             <>
               <span className={styles.shelfBookend} aria-hidden="true" />
 
-              {boughtBooks.map((book) => {
-                const isSelected = book.id === selectedBookId;
+              {items.map((item) => {
+                const isSelected = item.id === selectedItemId;
                 return (
                   <button
-                    key={book.id}
+                    key={item.id}
                     type="button"
                     className={withModifierClass(styles.book, styles.bookSelected, isSelected)}
                     aria-pressed={isSelected}
-                    title={`${book.title} — ${book.category}`}
-                    onClick={() => selectBook(book.id)}
+                    title={`${item.title} — ${item.category}`}
+                    onClick={() => selectItem(item.id)}
                   >
-                    {book.title}
+                    {item.title}
                   </button>
                 );
               })}
@@ -232,24 +134,22 @@ export function Wall({ books }) {
         </div>
       </div>
 
-      {selectedBook && (
-        // overlay-portal: book details must appear as a centered modal above the whole
+      {selectedItem && (
+        // overlay-portal: item details must appear as a centered modal above the whole
         // page, not clipped inside the compact wall panel
-        <OverlayPortal onDismiss={closeBookPopup}>
+        <OverlayPortal onDismiss={closeItemPopup}>
           <div
             className={styles.bookPopup}
             role="dialog"
             aria-modal="true"
-            aria-label={`${selectedBook.title} details`}
+            aria-label={`${selectedItem.title} details`}
             onClick={(event) => event.stopPropagation()}
           >
             <p className={styles.detailsLabel}>Selected handbook</p>
-            <h3 className={styles.detailsTitle}>{selectedBook.title}</h3>
-            <p className={styles.detailsCategory}>{selectedBook.category}</p>
-            <p className={styles.detailsDescription}>{selectedBook.description}</p>
-            <p className={styles.detailsLabel}>Medical hint</p>
-            <p className={styles.detailsHint}>{selectedBook.hint}</p>
-            <button type="button" className={styles.closeButton} onClick={closeBookPopup}>
+            <h3 className={styles.detailsTitle}>{selectedItem.title}</h3>
+            <p className={styles.detailsCategory}>{selectedItem.category}</p>
+            <p className={styles.detailsDescription}>{selectedItem.description}</p>
+            <button type="button" className={styles.closeButton} onClick={closeItemPopup}>
               Close
             </button>
           </div>
@@ -276,6 +176,16 @@ export function Wall({ books }) {
   );
 }
 
-Wall.propTypes = {
-  books: PropTypes.arrayOf(bookShape),
-};
+/**
+ * The doctor office wall: WallContent composed with the WallInventoryProvider
+ * domain that sources the shelf items from RoundProvider's ownedItems. This is
+ * the only export the barrel (index.js) re-exports — WallContent itself stays
+ * internal to this folder.
+ */
+export function Wall() {
+  return (
+    <WallInventoryProvider>
+      <WallContent />
+    </WallInventoryProvider>
+  );
+}
