@@ -22,7 +22,7 @@ export function WallContent() {
 
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [lampOn, setLampOn] = useState(false);
+  const [lampOn, setLampOn] = useState(true);
   const [dermatoscopeOn, setDermatoscopeOn] = useState(false);
 
   const selectedItem = items.find((item) => item.id === selectedItemId) ?? null;
