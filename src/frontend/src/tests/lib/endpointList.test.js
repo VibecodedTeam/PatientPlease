@@ -17,6 +17,9 @@ describe('endpointList', () => {
       round: {
         start: '/api/v1/round',
       },
+      diagnoses: {
+        submit: '/api/v1/diagnoses',
+      },
       game: {
         pause: '/api/v1/game/pause',
         reset: '/api/v1/game/reset',

@@ -35,4 +35,22 @@ describe('ResultPopup', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('does not call onClose when the backdrop is clicked — only Continue should advance to the next case', () => {
+    const onClose = jest.fn();
+    render(<ResultPopup isCorrect moneyDelta={50} onClose={onClose} />);
+
+    fireEvent.click(document.getElementById('overlay-root').firstChild);
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('does not call onClose when Escape is pressed — only Continue should advance to the next case', () => {
+    const onClose = jest.fn();
+    render(<ResultPopup isCorrect moneyDelta={50} onClose={onClose} />);
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });

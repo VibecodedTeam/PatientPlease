@@ -320,6 +320,116 @@ describe('RoundProvider', () => {
     expect(await request.clone().json()).toEqual({ shopItemId: 'shop-item-1' });
   });
 
+  it('submitDiagnosis POSTs /api/v1/diagnoses with the case and selection ids, updates round.gameSession directly from its own response, and returns the grading result', async () => {
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        return Promise.resolve(
+          new Response(JSON.stringify({ gameSession: { money: 100 }, case: { id: 'case-1' } }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
+          { status: 200 },
+        ),
+      );
+    });
+
+    let submitResult;
+    function Probe() {
+      const { round, submitDiagnosis } = useRound();
+      return (
+        <div>
+          <span data-testid="money">{round?.gameSession?.money ?? 'none'}</span>
+          <button
+            onClick={async () => {
+              submitResult = await submitDiagnosis('case-1', 'diagnosis-1');
+            }}
+          >
+            submit
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('100'));
+
+    await userEvent.setup().click(screen.getByText('submit'));
+
+    await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('150'));
+    const submitRequest = global.fetch.mock.calls
+      .map(([request]) => request)
+      .find((request) => new URL(request.url).pathname === '/api/v1/diagnoses');
+    expect(submitRequest.method).toBe('POST');
+    expect(await submitRequest.clone().json()).toEqual({
+      caseId: 'case-1',
+      selectedDiagnosisId: 'diagnosis-1',
+    });
+    expect(submitResult).toEqual({
+      gameSession: { money: 150 },
+      isDiagnosisCorrect: true,
+      moneyDelta: 50,
+    });
+  });
+
+  it('submitDiagnosis does not refetch the round itself — the case stays the same until the result popup is closed', async () => {
+    let roundCallCount = 0;
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        roundCallCount += 1;
+        return Promise.resolve(
+          new Response(JSON.stringify({ gameSession: { money: 100 }, case: { id: 'case-old' } }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
+          { status: 200 },
+        ),
+      );
+    });
+
+    function Probe() {
+      const { round, submitDiagnosis } = useRound();
+      return (
+        <div>
+          <span data-testid="case-id">{round?.case?.id ?? 'none'}</span>
+          <button onClick={() => submitDiagnosis('case-old', 'diagnosis-1')}>submit</button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('case-old'));
+    expect(roundCallCount).toBe(1);
+
+    await userEvent.setup().click(screen.getByText('submit'));
+
+    // Give any (incorrect) refetch a chance to land, then confirm none did.
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+    expect(roundCallCount).toBe(1);
+    expect(screen.getByTestId('case-id').textContent).toBe('case-old');
+  });
+
   it('resetDay refetches the round so a new case replaces the old one', async () => {
     let roundCallCount = 0;
     global.fetch = jest.fn().mockImplementation((request) => {

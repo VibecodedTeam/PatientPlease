@@ -59,7 +59,6 @@ existing open round looks identical to a client as starting a new one.
   "case": {
     "id": "uuid",
     "difficulty": 2, // raw SmallInt, not an enum
-    "correctDiagnosisId": "uuid", // matches one entry in diagnosisOptions — see note below
     "moneyReward": 50,
     "moneyPenalty": 20,
     "patient": {
@@ -96,24 +95,20 @@ existing open round looks identical to a client as starting a new one.
 }
 ```
 
-`diagnosisOptions` is **not** the full `Diagnosis` catalog — it's `case.correctDiagnosisId`'s
-diagnosis plus up to 3 randomly-selected decoys from the rest of the catalog (fewer than 4 total
-if the catalog itself has fewer than 4 diagnoses), sorted by `name`. Decoys are chosen fresh on
-every call to this endpoint, including when resuming an already-open round, so the wrong options
-shown for a given case can differ between calls. `treatmentOptions` is unaffected — it's still the
-full `Treatment` catalog.
+`diagnosisOptions` is **not** the full `Diagnosis` catalog — it's the case's correct diagnosis
+plus up to 3 randomly-selected decoys from the rest of the catalog (fewer than 4 total if the
+catalog itself has fewer than 4 diagnoses), sorted by `name`. Decoys are chosen fresh on every
+call to this endpoint, including when resuming an already-open round, so the wrong options shown
+for a given case can differ between calls. `treatmentOptions` is unaffected — it's still the full
+`Treatment` catalog.
 
-`case.correctTreatmentId` and `case.resultExplanationText` are never included in the response.
-`case.correctDiagnosisId` **is** included, as an intentional, documented exception: there is no
-`POST /diagnoses` (or similar) submission endpoint yet, so `ResultsProvider` on the frontend
-grades a diagnosis submission client-side by comparing the player's selection against this
-field until real server-side verification exists. This is a known, temporary tradeoff (a
-determined player could read this field from the network tab) accepted for a single-player,
-educational, non-competitive game; do not extend the same pattern to other answer-key fields
-without a matching product decision. There is no `case.attentionPoints` —
-each document instead carries `attentionPointRegion`, the coarse body region it's about (or
-`null`), and the frontend's `PatientScene` maps that region to a 3D hotspot position/zoom
-preset itself.
+`case.correctDiagnosisId`, `case.correctTreatmentId`, and `case.resultExplanationText` are never
+included in the response — the answer key stays server-side. Grading a diagnosis submission is
+`POST /api/v1/diagnoses`'s job (see `docs/api/diagnoses.md`); the frontend's `ResultsProvider`
+uses that endpoint's response rather than comparing against a field of its own. There is no
+`case.attentionPoints` — each document instead carries `attentionPointRegion`, the coarse body
+region it's about (or `null`), and the frontend's `PatientScene` maps that region to a 3D hotspot
+position/zoom preset itself.
 
 A `documents` entry of `type: "EXAMINATION_RESULTS"` is only included once the player has
 successfully ordered the matching examination for this case — i.e. a `CaseExamination` row
@@ -150,3 +145,5 @@ is resolved) returns the same case and does not create a duplicate `GameDayLog`.
 - App wiring: `src/backend/src/app.ts`
 - Tests: `src/backend/test/routes/round.test.ts`, `src/backend/test/services/round.test.ts`
 - Design spec: `docs/superpowers/specs/2026-07-07-start-round-endpoint-design.md`
+- Related: `docs/api/diagnoses.md` (grades a diagnosis and is what makes `selectNextCase`
+  stop re-serving the same case)

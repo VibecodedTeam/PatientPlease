@@ -73,12 +73,20 @@ const DEFAULT_ROUTES = {
     new Response(
       JSON.stringify({
         case: {
+          id: 'case-1',
           documents: ROUND_DOCUMENTS,
           moneyReward: 50,
           moneyPenalty: 20,
-          correctDiagnosisId: 'skin-cancer',
         },
       }),
+      { status: 200 },
+    ),
+  // Grading is server-side now (see docs/api/diagnoses.md) — most tests submit
+  // 'Skin Cancer', so this default models a correct diagnosis; the one test
+  // submitting an incorrect diagnosis overrides this route itself.
+  '/api/v1/diagnoses': () =>
+    new Response(
+      JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
       { status: 200 },
     ),
   '/auth/me': () => new Response(JSON.stringify({ user: USER }), { status: 200 }),
@@ -121,12 +129,12 @@ async function renderMainView() {
             null,
             React.createElement(
               MemoryRouter,
-              { initialEntries: ['/'] },
+              { initialEntries: ['/game/main'] },
               React.createElement(
                 Routes,
                 null,
-                React.createElement(Route, { path: '/', element: React.createElement(MainView) }),
-                React.createElement(Route, { path: '/night', element: React.createElement(NightMarker) }),
+                React.createElement(Route, { path: '/game/main', element: React.createElement(MainView) }),
+                React.createElement(Route, { path: '/game/night', element: React.createElement(NightMarker) }),
               ),
             ),
           ),
@@ -322,7 +330,7 @@ describe('MainView', () => {
     await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
     await user.click(screen.getByText('Submit Diagnosis'));
 
-    expect(screen.getByText('Correct!')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Correct!')).toBeInTheDocument());
     expect(screen.getByText('+$50')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /continue/i }));
@@ -330,6 +338,13 @@ describe('MainView', () => {
   });
 
   it('shows the ResultPopup with the real money penalty after submitting an incorrect diagnosis', async () => {
+    mockFetchRoutes({
+      '/api/v1/diagnoses': () =>
+        new Response(
+          JSON.stringify({ gameSession: { money: 80 }, isDiagnosisCorrect: false, moneyDelta: -20 }),
+          { status: 200 },
+        ),
+    });
     const user = userEvent.setup();
     await renderMainView();
 
@@ -337,11 +352,11 @@ describe('MainView', () => {
     await user.click(screen.getByRole('radio', { name: 'No Skin Condition' }));
     await user.click(screen.getByText('Submit Diagnosis'));
 
-    expect(screen.getByText('Incorrect')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Incorrect')).toBeInTheDocument());
     expect(screen.getByText('-$20')).toBeInTheDocument();
   });
 
-  it('shows the Daily Statistics popup once the day timer elapses, and navigates to /night on close', async () => {
+  it('shows the Daily Statistics popup once the day timer elapses, and navigates to /game/night on close', async () => {
     mockFetchRoutes({
       '/api/v1/day/end': () =>
         new Response(
@@ -397,7 +412,7 @@ describe('MainView', () => {
       await act(async () => {
         screen.getByText('Submit Diagnosis').click();
       });
-      expect(screen.getByText('Correct!')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText('Correct!')).toBeInTheDocument());
 
       await act(async () => {
         jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);

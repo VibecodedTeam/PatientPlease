@@ -31,4 +31,13 @@ describe('Diagnose', () => {
 
     expect(handleSubmit).toHaveBeenCalledWith({ id: 'no-condition', label: 'No Skin Condition' });
   });
+
+  it('disables the submit button while isSubmitting is true, even with an option selected', async () => {
+    const user = userEvent.setup();
+    render(<Diagnose isSubmitting />);
+
+    await user.click(screen.getByText('Skin Cancer'));
+
+    expect(screen.getByText('Submit Diagnosis')).toBeDisabled();
+  });
 });

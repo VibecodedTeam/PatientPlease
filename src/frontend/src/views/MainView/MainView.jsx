@@ -72,7 +72,7 @@ function MainViewContent() {
 
   function handleCloseStatistics() {
     closeStatistics();
-    navigate('/night');
+    navigate('/game/night');
   }
 
   if (terminalState) {
