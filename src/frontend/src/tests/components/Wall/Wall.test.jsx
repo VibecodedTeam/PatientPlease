@@ -152,7 +152,10 @@ describe('Wall', () => {
 
     await screen.findByRole('button', { name: 'Dermatology Handbook' });
 
+    // The desk lamp starts ON by default; clicking it turns it off, then on again.
     const lamp = screen.getByRole('button', { name: /toggle desk lamp/i });
+    expect(lamp).toHaveAttribute('aria-pressed', 'true');
+    await user.click(lamp);
     expect(lamp).toHaveAttribute('aria-pressed', 'false');
     await user.click(lamp);
     expect(lamp).toHaveAttribute('aria-pressed', 'true');
