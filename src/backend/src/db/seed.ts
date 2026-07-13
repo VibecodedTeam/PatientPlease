@@ -1,3 +1,5 @@
+import 'dotenv/config';
+import { pathToFileURL } from 'node:url';
 import type { Prisma } from '@prisma/client';
 import { prisma } from './prisma.js';
 
@@ -741,7 +743,7 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
 }
 
 const isMainModule =
-  process.argv[1] !== undefined && import.meta.url === `file://${process.argv[1]}`;
+  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isMainModule) {
   const force = process.argv.includes('--force');

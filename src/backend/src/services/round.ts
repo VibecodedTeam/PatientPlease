@@ -292,6 +292,41 @@ export function pickIndexForSeed(seed: string, length: number): number {
   return Math.abs(hash) % length;
 }
 
+const DIAGNOSIS_OPTION_DECOY_COUNT = 3;
+
+/**
+ * Narrows the full diagnosis catalog down to the correct diagnosis plus up to
+ * DIAGNOSIS_OPTION_DECOY_COUNT random decoys, so the diagnosis panel shows a handful of choices
+ * instead of the entire catalog. `random` is injectable (defaults to Math.random) so callers can
+ * get a deterministic sequence in tests; startRound calls this fresh on every /round request, so
+ * decoys reshuffle even when the same case is being resumed.
+ */
+export function selectDiagnosisOptions(
+  diagnoses: DiagnosisRecord[],
+  correctDiagnosisId: string,
+  random: () => number = Math.random,
+): DiagnosisRecord[] {
+  const correct = diagnoses.find((diagnosis) => diagnosis.id === correctDiagnosisId);
+  if (!correct) {
+    throw new Error(
+      `selectDiagnosisOptions: correctDiagnosisId ${correctDiagnosisId} not found in the diagnoses catalog`,
+    );
+  }
+  const remainingPool = diagnoses.filter((diagnosis) => diagnosis.id !== correctDiagnosisId);
+  const decoyCount = Math.min(DIAGNOSIS_OPTION_DECOY_COUNT, remainingPool.length);
+
+  const decoys: DiagnosisRecord[] = [];
+  for (let i = 0; i < decoyCount; i += 1) {
+    // random() is documented/injectable and only contractually promised to behave like
+    // Math.random ([0, 1)); clamp so a boundary value of exactly 1 can't push the index
+    // past the last valid entry and splice() out an undefined.
+    const index = Math.min(Math.floor(random() * remainingPool.length), remainingPool.length - 1);
+    decoys.push(remainingPool.splice(index, 1)[0]!);
+  }
+
+  return [correct, ...decoys].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export async function selectNextCase(
   prisma: RoundPrismaClient,
   gameSessionId: string,
@@ -467,7 +502,9 @@ export async function startRound(
     gameSession: toGameSessionResponse(session),
     ownedItems: ownedItems.map(toOwnedItemResponse),
     case: toCaseResponse(nextCase, visibleExaminationShopItemIds),
-    diagnosisOptions: diagnoses.map(toDiagnosisResponse),
+    diagnosisOptions: selectDiagnosisOptions(diagnoses, nextCase.correctDiagnosisId).map(
+      toDiagnosisResponse,
+    ),
     treatmentOptions: treatments.map(toTreatmentResponse),
   };
 }
