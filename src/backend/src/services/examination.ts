@@ -129,7 +129,11 @@ export async function orderExamination(
   userId: string,
   caseId: string,
   shopItemId: string,
-): Promise<{ gameSession: GameSessionRecord; caseExamination: CaseExaminationRecord }> {
+): Promise<{
+  gameSession: GameSessionRecord;
+  caseExamination: CaseExaminationRecord;
+  timeCostMs: number;
+}> {
   const session = await requireActiveGameSession(prisma, userId);
 
   const gameCase = await prisma.case.findUnique({ where: { id: caseId } });
@@ -200,5 +204,6 @@ export async function orderExamination(
   return {
     gameSession: toGameSessionResponse(updatedSession),
     caseExamination: toCaseExaminationResponse(created),
+    timeCostMs,
   };
 }

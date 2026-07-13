@@ -59,6 +59,7 @@ function makeShopItem(overrides: Partial<ShopCatalogItemRecord> = {}): ShopCatal
     unlockDay: null,
     isActive: true,
     iconImageUrl: null,
+    content: null,
     ...overrides,
   };
 }
@@ -109,6 +110,7 @@ describe('getShopCatalog', () => {
         unlockDay: null,
         iconImageUrl: null,
         owned: false,
+        timeCostMs: null,
       },
     ]);
   });
