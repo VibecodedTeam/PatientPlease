@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { ApiProvider } from '../../../../../providers/Api';
 import { RoundProvider } from '../../../../../views/MainView';
 import { DocumentTableProvider, useDocumentTable } from '../../../../../components/Table/providers/DocumentTable';
 
@@ -19,11 +20,13 @@ describe('DocumentTableProvider', () => {
     );
 
     render(
-      <RoundProvider>
-        <DocumentTableProvider>
-          <DocumentsConsumer />
-        </DocumentTableProvider>
-      </RoundProvider>,
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <DocumentTableProvider>
+            <DocumentsConsumer />
+          </DocumentTableProvider>
+        </RoundProvider>
+      </ApiProvider>,
     );
 
     expect(await screen.findByText('2 documents')).toBeInTheDocument();

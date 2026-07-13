@@ -91,6 +91,9 @@
   border-radius: 999px;
   background: #531516;
   animation: pp-ring 2.2s ease-out infinite;
+  /* Decorative pulse only — must not intercept clicks meant for the PLAY
+     button it stacks over (its transform animation creates a stacking
+     context that would otherwise paint above the button). */
   pointer-events: none;
 }
 

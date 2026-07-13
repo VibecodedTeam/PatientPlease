@@ -131,6 +131,30 @@ describe('POST /api/v1/game/pause', () => {
     });
     expect(updatedDayLog.pausedAt).not.toBeNull();
   });
+
+  it('accumulates totalPausedMs and clears pausedAt when the next /api/v1/round call resumes', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const { gameDayLog } = await createActiveSessionWithOpenDay(userId);
+
+    await app.inject({ method: 'POST', url: '/api/v1/game/pause', headers: { cookie } });
+    await prisma.gameDayLog.update({
+      where: { id: gameDayLog.id },
+      data: { pausedAt: new Date(Date.now() - 5000) },
+    });
+
+    // No Case is seeded in this describe block, so /round may 409 no_cases_remaining once it
+    // gets past the resume step — that's fine, the resume accounting already happened by then.
+    await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+
+    const updatedDayLog = await prisma.gameDayLog.findUniqueOrThrow({
+      where: { id: gameDayLog.id },
+    });
+    expect(updatedDayLog.pausedAt).toBeNull();
+    expect(updatedDayLog.totalPausedMs).toBeGreaterThanOrEqual(5000);
+    expect(updatedDayLog.totalPausedMs).toBeLessThan(6000);
+  });
 });
 
 describe('POST /api/v1/game/reset', () => {

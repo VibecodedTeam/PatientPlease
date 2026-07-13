@@ -18,6 +18,18 @@ describe('resolvePort', () => {
   it('falls back to the default when PORT is an empty string', () => {
     expect(resolvePort('', 4000)).toBe(4000);
   });
+
+  it('falls back to the default when PORT is non-numeric', () => {
+    expect(resolvePort('abc', 4000)).toBe(4000);
+  });
+
+  it('falls back to the default when PORT is "0"', () => {
+    expect(resolvePort('0', 4000)).toBe(4000);
+  });
+
+  it('falls back to the default when PORT is negative', () => {
+    expect(resolvePort('-1', 4000)).toBe(4000);
+  });
 });
 
 describe('resolveGoogleClientId', () => {
