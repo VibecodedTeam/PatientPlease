@@ -16,13 +16,18 @@ const DEFAULT_OPTIONS = [
  */
 export function Diagnose({ title = 'Diagnosis', options = DEFAULT_OPTIONS, onSubmit, className = '', ...rest }) {
   const [selectedId, setSelectedId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedOption = options.find((option) => option.id === selectedId) || null;
 
   const cardClassName = className ? `${styles.card} ${className}` : styles.card;
 
-  function handleSubmit() {
-    if (selectedOption && onSubmit) {
-      onSubmit(selectedOption);
+  async function handleSubmit() {
+    if (!selectedOption || !onSubmit || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onSubmit(selectedOption);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -54,7 +59,7 @@ export function Diagnose({ title = 'Diagnosis', options = DEFAULT_OPTIONS, onSub
         <button
           type="button"
           className={styles.submitButton}
-          disabled={!selectedOption}
+          disabled={!selectedOption || isSubmitting}
           onClick={handleSubmit}
         >
           Submit Diagnosis
