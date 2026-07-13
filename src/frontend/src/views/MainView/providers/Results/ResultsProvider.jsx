@@ -1,6 +1,7 @@
-import React, { createContext, useCallback, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useRound } from '../../../../providers/Round';
+import { useGameSession } from '../GameSession';
 
 export const ResultsContext = createContext(null);
 
@@ -11,8 +12,24 @@ export const ResultsContext = createContext(null);
  */
 export function ResultsProvider({ children }) {
   const { round, submitDiagnosis, refreshRound } = useRound();
+  const { elapsedSeconds } = useGameSession();
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  // elapsedSeconds ticks every second, so a stale closure over it (captured
+  // once when showResult was created) would report the wrong examine time.
+  // Reading it via a ref, updated every render, keeps showResult itself
+  // stable (see its deps below) while still observing the latest value.
+  const elapsedSecondsRef = useRef(elapsedSeconds);
+  elapsedSecondsRef.current = elapsedSeconds;
+
+  // Marks when the current case first appeared, so examineSeconds measures
+  // only the time spent on THIS case, not the whole day so far. Resets
+  // whenever the case identity changes.
+  const caseStartElapsedRef = useRef(elapsedSeconds);
+  useEffect(() => {
+    caseStartElapsedRef.current = elapsedSecondsRef.current;
+  }, [round?.case?.id]);
 
   const showResult = useCallback(
     async (selection) => {
@@ -21,10 +38,16 @@ export function ResultsProvider({ children }) {
       setError(null);
       try {
         const data = await submitDiagnosis(round.case.id, selection.id);
+        const examineSeconds = Math.max(
+          0,
+          elapsedSecondsRef.current - caseStartElapsedRef.current,
+        );
         setResult({
           selection,
           isCorrect: data.result.isDiagnosisCorrect,
           moneyDelta: data.result.moneyDelta,
+          examineSeconds,
+          balance: data.gameSession.money,
         });
       } catch (err) {
         // Caught here (rather than left to reject) so a failed submission

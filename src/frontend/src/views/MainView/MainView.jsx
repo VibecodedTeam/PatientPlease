@@ -142,6 +142,8 @@ function MainViewContent() {
         <ResultPopup
           isCorrect={result.isCorrect}
           moneyDelta={result.moneyDelta}
+          examineSeconds={result.examineSeconds}
+          balance={result.balance}
           onClose={closeResult}
         />
       )}

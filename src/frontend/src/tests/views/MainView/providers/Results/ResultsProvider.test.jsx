@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../../../providers/Api';
 import { RoundProvider } from '../../../../../providers/Round';
+import { GameSessionProvider } from '../../../../../views/MainView/providers/GameSession';
 import { ResultsProvider, useResults } from '../../../../../views/MainView/providers/Results';
 
 const ROUND_RESPONSE = {
@@ -17,6 +18,10 @@ function ResultsConsumer() {
       <span data-testid="is-open">{String(isOpen)}</span>
       <span data-testid="is-correct">{result ? String(result.isCorrect) : 'none'}</span>
       <span data-testid="money-delta">{result ? result.moneyDelta : 'none'}</span>
+      <span data-testid="balance">{result ? result.balance : 'none'}</span>
+      <span data-testid="examine-seconds">
+        {result ? typeof result.examineSeconds : 'none'}
+      </span>
       <span data-testid="has-error">{String(error !== null)}</span>
       <button onClick={() => showResult({ id: 'real-diagnosis-uuid', label: 'Melanoma' })}>
         submit-correct
@@ -45,9 +50,11 @@ async function renderWithProviders() {
   const result = render(
     <ApiProvider baseUrl="http://api.test">
       <RoundProvider>
-        <ResultsProvider>
-          <ResultsConsumer />
-        </ResultsProvider>
+        <GameSessionProvider>
+          <ResultsProvider>
+            <ResultsConsumer />
+          </ResultsProvider>
+        </GameSessionProvider>
       </RoundProvider>
     </ApiProvider>,
   );
@@ -76,6 +83,8 @@ describe('ResultsProvider', () => {
     await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
     expect(screen.getByTestId('is-correct').textContent).toBe('true');
     expect(screen.getByTestId('money-delta').textContent).toBe('50');
+    expect(screen.getByTestId('balance').textContent).toBe('150');
+    expect(screen.getByTestId('examine-seconds').textContent).toBe('number');
   });
 
   it('shows an incorrect result with a negative money delta', async () => {
@@ -91,6 +100,8 @@ describe('ResultsProvider', () => {
     await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
     expect(screen.getByTestId('is-correct').textContent).toBe('false');
     expect(screen.getByTestId('money-delta').textContent).toBe('-20');
+    expect(screen.getByTestId('balance').textContent).toBe('80');
+    expect(screen.getByTestId('examine-seconds').textContent).toBe('number');
   });
 
   it('closeResult closes the popup and refetches the round for the next case', async () => {
@@ -157,9 +168,11 @@ describe('ResultsProvider', () => {
     render(
       <ApiProvider baseUrl="http://api.test">
         <RoundProvider>
-          <ResultsProvider>
-            <ResultsConsumer />
-          </ResultsProvider>
+          <GameSessionProvider>
+            <ResultsProvider>
+              <ResultsConsumer />
+            </ResultsProvider>
+          </GameSessionProvider>
         </RoundProvider>
       </ApiProvider>,
     );
