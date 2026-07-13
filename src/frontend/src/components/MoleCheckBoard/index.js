@@ -1,0 +1,1 @@
+export { MoleCheckBoard } from './MoleCheckBoard';
