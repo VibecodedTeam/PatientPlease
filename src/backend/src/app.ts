@@ -40,7 +40,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const rateLimitMax =
     options.rateLimitMax ?? resolveRateLimitMax(process.env['RATE_LIMIT_MAX'], 100);
   const rateLimitWindowMs =
-    options.rateLimitWindowMs ?? resolveRateLimitWindowMs(process.env['RATE_LIMIT_WINDOW_MS'], 60000);
+    options.rateLimitWindowMs ??
+    resolveRateLimitWindowMs(process.env['RATE_LIMIT_WINDOW_MS'], 60000);
 
   app.register(cors, { origin: frontendOrigin, credentials: true });
   app.register(rateLimitPlugin, { max: rateLimitMax, timeWindow: rateLimitWindowMs });
