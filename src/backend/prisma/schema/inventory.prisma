@@ -2,9 +2,11 @@ enum ShopItemType {
   EQUIPMENT
   HANDBOOK
   PLOT_ITEM
+  EXAMINATION
 }
 
-/// Night-shop purchase catalog: equipment, handbooks, and plot items.
+/// Night-shop purchase catalog: equipment, handbooks, plot items, and examinations.
+/// `content` is only populated for EXAMINATION items: `{ timeCostMs: number }`.
 model ShopItem {
   id           String       @id @default(uuid(7)) @db.Uuid
   sku          String       @unique
@@ -15,9 +17,11 @@ model ShopItem {
   unlockDay    Int?
   isActive     Boolean      @default(true)
   iconImageUrl String?
+  content      Json?
 
-  ownedBy       OwnedItem[]
-  requiredHints CaseHint[]
+  ownedBy           OwnedItem[]
+  requiredHints     CaseHint[]
+  examinationOrders CaseExamination[]
 
   @@index([itemType])
 }
@@ -51,4 +55,21 @@ model CaseHint {
 
   @@index([caseId, sortOrder])
   @@index([requiredShopItemId])
+}
+
+/// A player's order of an EXAMINATION ShopItem against a specific Case — durable across pause/unpause.
+model CaseExamination {
+  id            String      @id @default(uuid(7)) @db.Uuid
+  gameSessionId String      @db.Uuid
+  gameSession   GameSession @relation(fields: [gameSessionId], references: [id])
+  caseId        String      @db.Uuid
+  case          Case        @relation(fields: [caseId], references: [id])
+  shopItemId    String      @db.Uuid
+  shopItem      ShopItem    @relation(fields: [shopItemId], references: [id])
+  isSuccessful  Boolean
+  orderedAt     DateTime    @default(now())
+
+  @@unique([gameSessionId, caseId, shopItemId])
+  @@index([caseId])
+  @@index([shopItemId])
 }

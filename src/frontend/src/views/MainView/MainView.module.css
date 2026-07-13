@@ -40,3 +40,15 @@
   background: #1c1512;
   border-top: 1px solid #221b16;
 }
+
+.gameFinished {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 0 2rem;
+  text-align: center;
+  font-size: 1.5rem;
+  color: #e8ddd2;
+  background: #0d0a08;
+}

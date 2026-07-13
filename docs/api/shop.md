@@ -49,6 +49,11 @@ items.
 Items are filtered to `isActive: true` and (`unlockDay: null` or `unlockDay <= upcomingDayNumber`)
 — locked/inactive items are omitted entirely, never returned with a `locked: true` flag.
 
+`itemType: "EXAMINATION"` items carry a `content: { "timeCostMs": number }` payload (omitted
+from this catalog response's `ShopCatalogItem` shape, same as every other item's `content` would
+be — the catalog never exposes `content`). Owning one lets the player order that examination
+against a case via `POST /api/v1/examinations` — see `docs/api/examinations.md`.
+
 ## `POST /api/v1/shop/purchase`
 
 Buys a `ShopItem` for the caller's session. Does **not** equip it.
