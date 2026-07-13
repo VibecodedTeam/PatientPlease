@@ -3,7 +3,8 @@
 Backend endpoint the frontend calls to start (or resume) a game round for the current day
 phase. It returns everything `MainView` needs to render a fresh appointment in one call: the
 player's `GameSession`, their owned shop items, the next unattempted `Case` (patient,
-documents), and the full diagnosis/treatment option catalogs.
+documents), a narrowed set of diagnosis options for that case, and the full treatment option
+catalog.
 
 ## `POST /api/v1/round`
 
@@ -94,6 +95,13 @@ existing open round looks identical to a client as starting a new one.
 }
 ```
 
+`diagnosisOptions` is **not** the full `Diagnosis` catalog — it's `case.correctDiagnosisId`'s
+diagnosis plus up to 3 randomly-selected decoys from the rest of the catalog (fewer than 4 total
+if the catalog itself has fewer than 4 diagnoses), sorted by `name`. Decoys are chosen fresh on
+every call to this endpoint, including when resuming an already-open round, so the wrong options
+shown for a given case can differ between calls. `treatmentOptions` is unaffected — it's still the
+full `Treatment` catalog.
+
 `case.correctDiagnosisId`, `case.correctTreatmentId`, and `case.resultExplanationText` are never
 included in the response — grading now happens server-side via `POST /api/v1/diagnoses` (see
 `docs/api/diagnoses.md`), so the client has no need to see the answer key. There is no
@@ -123,8 +131,8 @@ On each call, the backend:
    idempotent (see below) while still varying across sessions and once a tied case is
    diagnosed and drops out of the candidate set.
 3. Reuses the session's currently open `GameDayLog` (`endedAt: null`), or opens a new one.
-4. Returns the session's owned shop items plus the full `Diagnosis`/`Treatment` catalogs
-   (unfiltered — every player sees the same menu).
+4. Returns the session's owned shop items, a narrowed `diagnosisOptions` list for the case
+   (see the `diagnosisOptions` note above), and the full `Treatment` catalog.
 
 Calling this endpoint again while a `GameDayLog` is still open (i.e. before the current case
 is resolved) returns the same case and does not create a duplicate `GameDayLog`.
