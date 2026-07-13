@@ -15,3 +15,5 @@ blob-report/
 # pnpm only (CLAUDE.md Hard Constraint #9) — no npm/yarn lockfiles
 package-lock.json
 yarn.lock
+
+src/backend/tmp/
