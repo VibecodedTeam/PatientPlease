@@ -154,6 +154,15 @@ export function RoundProvider({ children }) {
     [api],
   );
 
+  const orderExamination = useCallback(
+    async (caseId, shopItemId) => {
+      const data = await api.post(ENDPOINTS.examinations.order, { caseId, shopItemId });
+      setRound((current) => (current ? { ...current, gameSession: data.gameSession } : current));
+      return data;
+    },
+    [api],
+  );
+
   const value = {
     round,
     isLoading,
@@ -170,6 +179,7 @@ export function RoundProvider({ children }) {
     loadShopCatalog,
     purchaseShopItem,
     submitDiagnosis,
+    orderExamination,
   };
 
   return <RoundContext.Provider value={value}>{children}</RoundContext.Provider>;

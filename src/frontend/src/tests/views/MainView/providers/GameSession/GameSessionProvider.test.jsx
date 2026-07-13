@@ -9,8 +9,17 @@ import {
 } from '../../../../../views/MainView/providers/GameSession';
 
 function TestConsumer() {
-  const { elapsedSeconds, isPaused, isDayOver, pauseTimer, resumeTimer, resetDay, resetGame, endDay } =
-    useGameSession();
+  const {
+    elapsedSeconds,
+    isPaused,
+    isDayOver,
+    pauseTimer,
+    resumeTimer,
+    resetDay,
+    resetGame,
+    endDay,
+    addElapsedSeconds,
+  } = useGameSession();
   const [dayLog, setDayLog] = React.useState(null);
   return (
     <div>
@@ -23,6 +32,8 @@ function TestConsumer() {
       <button onClick={resetDay}>reset-day</button>
       <button onClick={resetGame}>reset-game</button>
       <button onClick={() => endDay().then((data) => setDayLog(data.dayLog))}>end-day</button>
+      <button onClick={() => addElapsedSeconds(90)}>add-90</button>
+      <button onClick={() => addElapsedSeconds(DAY_DURATION_SECONDS)}>add-full-day</button>
     </div>
   );
 }
@@ -265,6 +276,36 @@ describe('GameSessionProvider / useGameSession', () => {
       expect(screen.getByTestId('day-log').textContent).toBe(JSON.stringify(dayLogResponse.dayLog)),
     );
     expect(screen.getByTestId('elapsed').textContent).toBe('0');
+  });
+
+  it('addElapsedSeconds increases elapsedSeconds by the given amount', () => {
+    renderWithProviders();
+    act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    act(() => {
+      screen.getByText('add-90').click();
+    });
+
+    expect(screen.getByTestId('elapsed').textContent).toBe('93');
+    expect(screen.getByTestId('paused').textContent).toBe('false');
+  });
+
+  it('addElapsedSeconds freezes the timer once the total reaches DAY_DURATION_SECONDS', () => {
+    renderWithProviders();
+
+    act(() => {
+      screen.getByText('add-full-day').click();
+    });
+
+    expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS));
+    expect(screen.getByTestId('paused').textContent).toBe('true');
+
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS));
   });
 
   it('does not auto-resume when the document becomes visible again', () => {
