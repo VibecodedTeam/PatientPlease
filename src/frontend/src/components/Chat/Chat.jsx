@@ -37,7 +37,6 @@ export function Chat({ gameSessionId, caseId }) {
   // once, so re-load explicitly whenever the real ids become available.
   useEffect(() => {
     setMessages(loadChatMessages(gameSessionId, caseId));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameSessionId, caseId]);
 
   useEffect(() => {

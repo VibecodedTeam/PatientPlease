@@ -40,7 +40,6 @@ model Case {
   diagnosisAttempts DiagnosisAttempt[]
   chatMessages      ChatMessage[]
   gameplayLogs      GameplayLog[]
-  documentReveals   CaseDocumentReveal[]
   examinations      CaseExamination[]
   documentReveals   CaseDocumentReveal[]
 

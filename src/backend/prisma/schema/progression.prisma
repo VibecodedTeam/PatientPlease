@@ -21,7 +21,6 @@ model GameSession {
   chatMessages     ChatMessage[]
   gameplayLogs     GameplayLog[]
   dayLogs          GameDayLog[]
-  documentReveals  CaseDocumentReveal[]
   caseExaminations CaseExamination[]
   documentReveals  CaseDocumentReveal[]
 
