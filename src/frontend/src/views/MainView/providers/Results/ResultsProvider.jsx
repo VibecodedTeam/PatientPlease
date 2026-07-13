@@ -12,17 +12,25 @@ export const ResultsContext = createContext(null);
 export function ResultsProvider({ children }) {
   const { round, submitDiagnosis, refreshRound } = useRound();
   const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
 
   const showResult = useCallback(
     async (selection) => {
       // No real case loaded yet means there's nothing to grade against.
       if (!round?.case) return;
-      const data = await submitDiagnosis(round.case.id, selection.id);
-      setResult({
-        selection,
-        isCorrect: data.result.isDiagnosisCorrect,
-        moneyDelta: data.result.moneyDelta,
-      });
+      setError(null);
+      try {
+        const data = await submitDiagnosis(round.case.id, selection.id);
+        setResult({
+          selection,
+          isCorrect: data.result.isDiagnosisCorrect,
+          moneyDelta: data.result.moneyDelta,
+        });
+      } catch (err) {
+        // Caught here (rather than left to reject) so a failed submission
+        // surfaces via `error` instead of becoming an unhandled rejection.
+        setError(err);
+      }
     },
     [round, submitDiagnosis],
   );
@@ -34,7 +42,7 @@ export function ResultsProvider({ children }) {
     refreshRound();
   }, [refreshRound]);
 
-  const value = { isOpen: result !== null, result, showResult, closeResult };
+  const value = { isOpen: result !== null, result, error, showResult, closeResult };
 
   return <ResultsContext.Provider value={value}>{children}</ResultsContext.Provider>;
 }

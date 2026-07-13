@@ -13,8 +13,16 @@ const DEFAULT_OPTIONS = [
  * @param {string} props.title - Panel heading, e.g. "Diagnosis".
  * @param {{id: string, label: string}[]} props.options - Selectable diagnosis options.
  * @param {function({id: string, label: string}): void} [props.onSubmit] - Called with the selected option when the player submits.
+ * @param {string} [props.errorMessage] - Shown near the submit button when the last submission failed.
  */
-export function Diagnose({ title = 'Diagnosis', options = DEFAULT_OPTIONS, onSubmit, className = '', ...rest }) {
+export function Diagnose({
+  title = 'Diagnosis',
+  options = DEFAULT_OPTIONS,
+  onSubmit,
+  errorMessage,
+  className = '',
+  ...rest
+}) {
   const [selectedId, setSelectedId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedOption = options.find((option) => option.id === selectedId) || null;
@@ -64,6 +72,7 @@ export function Diagnose({ title = 'Diagnosis', options = DEFAULT_OPTIONS, onSub
         >
           Submit Diagnosis
         </button>
+        {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
       </div>
     </div>
   );
@@ -78,5 +87,6 @@ Diagnose.propTypes = {
     })
   ),
   onSubmit: PropTypes.func,
+  errorMessage: PropTypes.string,
   className: PropTypes.string,
 };
