@@ -22,6 +22,8 @@ import type { GoogleIdTokenVerifier } from './services/auth.js';
 export interface BuildAppOptions {
   /** Overrides the real google-auth-library OAuth2Client — used by tests to avoid real network calls to Google. */
   googleClient?: GoogleIdTokenVerifier;
+  /** Enables the POST /auth/dev-session login bypass — must never be true in production (see resolveDevSessionEnabled). */
+  enableDevSession?: boolean;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
@@ -38,6 +40,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   app.register(authRoutes, {
     googleClientId,
     sessionTtlMs,
+    enableDevSession: options.enableDevSession ?? false,
     ...(options.googleClient ? { googleClient: options.googleClient } : {}),
   });
   app.register(healthRoutes);

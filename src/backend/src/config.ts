@@ -49,3 +49,8 @@ export function resolveSessionTtlMs(value: string | undefined): number {
   }
   return parsed;
 }
+
+/** Strictly gates the dev-session login bypass — only the literal string "true" enables it, so a typo'd or truthy-but-wrong value (e.g. "1", "yes") never accidentally exposes the bypass. */
+export function resolveDevSessionEnabled(value: string | undefined): boolean {
+  return value === 'true';
+}
