@@ -9,6 +9,8 @@ import {
   resolveGeminiApiKey,
   resolveGeminiModel,
   resolveGoogleClientId,
+  resolveRateLimitMax,
+  resolveRateLimitWindowMs,
   resolveSessionTtlMs,
   resolveWhisperApiKey,
   resolveWhisperBaseUrl,
@@ -16,6 +18,7 @@ import {
 } from './config.js';
 import cookiePlugin from './plugins/cookie.js';
 import currentUserPlugin from './plugins/current-user.js';
+import rateLimitPlugin from './plugins/rate-limit.js';
 import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import dayRoutes from './routes/day.js';
@@ -32,6 +35,10 @@ import { createWhisperClient, type TranscriptionClient } from './services/transc
 export interface BuildAppOptions {
   /** Overrides the real google-auth-library OAuth2Client — used by tests to avoid real network calls to Google. */
   googleClient?: GoogleIdTokenVerifier;
+  /** Overrides the resolved request cap for the rate-limit plugin — used by tests to force throttling without waiting out real time windows. */
+  rateLimitMax?: number;
+  /** Overrides the resolved window (ms) for the rate-limit plugin — used by tests alongside rateLimitMax. */
+  rateLimitWindowMs?: number;
   /** Overrides the real Whisper transcription client — used by tests to avoid real network calls. */
   transcriptionClient?: TranscriptionClient;
   /** Overrides the real Gemini client — used by tests to avoid real network calls. */
@@ -45,6 +52,11 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const googleClientId = resolveGoogleClientId(process.env['GOOGLE_CLIENT_ID']);
   const sessionTtlMs = resolveSessionTtlMs(process.env['SESSION_TTL_MS']);
   const frontendOrigin = resolveFrontendOrigin(process.env['FRONTEND_ORIGIN']);
+  const rateLimitMax =
+    options.rateLimitMax ?? resolveRateLimitMax(process.env['RATE_LIMIT_MAX'], 100);
+  const rateLimitWindowMs =
+    options.rateLimitWindowMs ??
+    resolveRateLimitWindowMs(process.env['RATE_LIMIT_WINDOW_MS'], 60000);
   const chatLlmProvider = resolveChatLlmProvider(process.env['CHAT_LLM_PROVIDER']);
   const whisperBaseUrl = resolveWhisperBaseUrl(process.env['WHISPER_BASE_URL']);
   const whisperModel = resolveWhisperModel(process.env['WHISPER_MODEL']);
@@ -52,6 +64,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const chatAudioMaxBytes = resolveChatAudioMaxBytes(process.env['CHAT_AUDIO_MAX_BYTES']);
 
   app.register(cors, { origin: frontendOrigin, credentials: true });
+  app.register(rateLimitPlugin, { max: rateLimitMax, timeWindow: rateLimitWindowMs });
   app.register(cookiePlugin, { secret: cookieSecret });
   app.register(currentUserPlugin);
   app.register(multipart, { attachFieldsToBody: true, limits: { fileSize: chatAudioMaxBytes } });
