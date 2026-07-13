@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Wall } from '../../../components/Wall';
 import { ApiProvider } from '../../../providers/Api';
 import { RoundProvider } from '../../../providers/Round';
+import { GameSessionProvider } from '../../../views/MainView/providers/GameSession';
 
 const OWNED_ITEMS = [
   {
@@ -64,7 +65,9 @@ function mockRoundFetch(ownedItems) {
 function renderWithProviders(ui) {
   return render(
     <ApiProvider baseUrl="http://api.test">
-      <RoundProvider>{ui}</RoundProvider>
+      <RoundProvider>
+        <GameSessionProvider>{ui}</GameSessionProvider>
+      </RoundProvider>
     </ApiProvider>,
   );
 }
@@ -127,10 +130,10 @@ describe('Wall', () => {
 
     await user.click(screen.getByRole('button', { name: /open test orders/i }));
     expect(screen.getByRole('dialog', { name: /order tests/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Zleć badania' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Order laboratory tests' })).toBeInTheDocument();
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Anuluj' })).toBeInTheDocument());
-    await user.click(screen.getByRole('button', { name: 'Anuluj' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^close$/i })).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /^close$/i }));
     expect(screen.queryByRole('dialog', { name: /order tests/i })).not.toBeInTheDocument();
   });
 
