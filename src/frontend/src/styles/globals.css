@@ -20,5 +20,17 @@ body {
   --color-navy: #193447;
   --color-ink: #212129;
   --color-maroon: #531516;
-  --color-teal: #075247;
+  --color-teal: #073B33;
+
+  --color-bg-primary: color-mix(in srgb, var(--color-ink) 92%, black);
+  --color-bg-secondary: var(--color-navy);
+  --color-surface: var(--color-slate);
+  --color-text: color-mix(in srgb, var(--color-taupe) 65%, white);
+  --color-text-muted: color-mix(in srgb, var(--color-taupe) 75%, white);
+  --color-text-on-light: color-mix(in srgb, var(--color-ink) 90%, black);
+  --color-border: var(--color-slate);
+  --color-accent-danger: var(--color-maroon);
+  --color-accent-success: var(--color-teal);
+  --color-accent-danger-text: color-mix(in srgb, var(--color-maroon) 45%, white);
+  --color-accent-success-text: color-mix(in srgb, var(--color-teal) 45%, white);
 }

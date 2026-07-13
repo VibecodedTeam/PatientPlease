@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import styles from './Chat.module.css';
 import { useApi } from '../../providers/Api';
+import { loadChatMessages, saveChatMessages, clearAllChatMessages } from './internal/chatStorage';
 
 const PORTRAIT_FILES = [
   '001_45-year-old-male-stern-square-jaw-recedi_20260709-152719.png',
@@ -26,10 +27,27 @@ function pickRandomPortrait() {
 export function Chat({ gameSessionId, caseId }) {
   const api = useApi();
   const [portrait] = useState(pickRandomPortrait);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => loadChatMessages(gameSessionId, caseId));
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
+
+  // gameSessionId/caseId can arrive after Chat's first mount (the parent view
+  // still awaiting round data) — the useState initializer above only runs
+  // once, so re-load explicitly whenever the real ids become available.
+  useEffect(() => {
+    setMessages(loadChatMessages(gameSessionId, caseId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameSessionId, caseId]);
+
+  useEffect(() => {
+    saveChatMessages(gameSessionId, caseId, messages);
+  }, [gameSessionId, caseId, messages]);
+
+  function clearHistory() {
+    clearAllChatMessages();
+    setMessages([]);
+  }
 
   async function sendDoctorReply() {
     const text = draft.trim();
@@ -79,6 +97,9 @@ export function Chat({ gameSessionId, caseId }) {
     <aside className={styles.chat} aria-label="Patient chat panel">
       <header className={styles.header}>
         <h1 className={styles.headerTitle}>Patient Chart</h1>
+        <button type="button" className={styles.clearButton} onClick={clearHistory}>
+          Clear history
+        </button>
       </header>
 
       <section className={styles.face}>

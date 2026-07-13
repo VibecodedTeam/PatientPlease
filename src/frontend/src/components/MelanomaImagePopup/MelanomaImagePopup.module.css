@@ -12,7 +12,7 @@
   height: 340px;
   display: flex;
   flex-direction: column;
-  background: #000;
+  background: var(--color-bg-primary);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -22,7 +22,7 @@
   flex-shrink: 0;
   border: none;
   background: transparent;
-  color: #fff;
+  color: var(--color-text);
   font-size: 1.25rem;
   line-height: 1;
   padding: 4px 8px;
