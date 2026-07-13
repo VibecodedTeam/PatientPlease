@@ -28,6 +28,9 @@ describe('endpointList', () => {
       diagnoses: {
         submit: '/api/v1/diagnoses',
       },
+      examinations: {
+        order: '/api/v1/examinations',
+      },
       shop: {
         list: '/api/v1/shop',
         purchase: '/api/v1/shop/purchase',
