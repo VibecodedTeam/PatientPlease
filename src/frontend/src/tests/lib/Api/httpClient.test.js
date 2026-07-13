@@ -43,4 +43,17 @@ describe('createHttpClient', () => {
     const request = global.fetch.mock.calls[0][0];
     expect(request.credentials).toBe('omit');
   });
+
+  it('omits the Content-Type header for a bodyless POST', async () => {
+    // Fastify rejects a request that declares `Content-Type: application/json`
+    // but sends no body at all (FST_ERR_CTP_EMPTY_JSON_BODY) — a bodyless
+    // POST like `POST /api/v1/round` must not carry that header.
+    global.fetch = jest.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+
+    const client = createHttpClient('http://api.test');
+    await client.post('/things');
+
+    const request = global.fetch.mock.calls[0][0];
+    expect(request.headers.get('content-type')).toBeNull();
+  });
 });

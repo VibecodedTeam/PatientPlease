@@ -39,16 +39,28 @@ export function createHttpClient(baseUrl = DEFAULT_BASE_URL, { withCredentials =
     return unwrap(await instance.get(path, config));
   }
 
+  // Fastify rejects a request that declares `Content-Type: application/json`
+  // but carries no body at all (FST_ERR_CTP_EMPTY_JSON_BODY) — a bodyless
+  // call like `POST /api/v1/round` must not carry that header.
+  function configFor(body, config) {
+    if (body !== undefined) return config;
+    // `false` (not `undefined`) is required here: axios always forces a
+    // default Content-Type on POST/PUT/PATCH unless the header is explicitly
+    // `false`, which is the one value its own default-setting logic treats
+    // as "leave this header alone".
+    return { ...config, headers: { ...config.headers, 'Content-Type': false } };
+  }
+
   async function post(path, body, config = {}) {
-    return unwrap(await instance.post(path, body, config));
+    return unwrap(await instance.post(path, body, configFor(body, config)));
   }
 
   async function put(path, body, config = {}) {
-    return unwrap(await instance.put(path, body, config));
+    return unwrap(await instance.put(path, body, configFor(body, config)));
   }
 
   async function patch(path, body, config = {}) {
-    return unwrap(await instance.patch(path, body, config));
+    return unwrap(await instance.patch(path, body, configFor(body, config)));
   }
 
   async function del(path, config = {}) {

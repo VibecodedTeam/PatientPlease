@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import styles from './Chat.module.css';
+import { useApi } from '../../providers/Api';
 
 const PORTRAIT_FILES = [
   '001_45-year-old-male-stern-square-jaw-recedi_20260709-152719.png',
@@ -14,37 +16,56 @@ const PORTRAIT_FILES = [
   '010_middle-aged-female-rounded-cheeks-should_20260709-153146.png',
 ];
 
-const OPENING_LINE = "Good morning... I've come in because since yesterday there's been a pressure in my chest.";
-
-const CANNED_REPLIES = [
-  'This chest pain started yesterday evening, doctor…',
-  "I'm a bit short of breath, especially climbing stairs.",
-  "I only take my blood pressure medication, nothing else.",
-  "No, I haven't smoked in ten years. But I used to smoke a pack a day.",
-  'My father died of a heart attack at my age… I worry it might be the same.',
-];
-
 function pickRandomPortrait() {
   return PORTRAIT_FILES[Math.floor(Math.random() * PORTRAIT_FILES.length)];
 }
 
-export function Chat() {
+/**
+ * @param {{ gameSessionId: string, caseId: string }} props
+ */
+export function Chat({ gameSessionId, caseId }) {
+  const api = useApi();
   const [portrait] = useState(pickRandomPortrait);
-  const [messages, setMessages] = useState([{ from: 'patient', text: OPENING_LINE }]);
-  const [replyIndex, setReplyIndex] = useState(0);
+  const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState(null);
 
-  function sendDoctorReply() {
+  async function sendDoctorReply() {
     const text = draft.trim();
-    if (!text) return;
+    if (!text || isSending) return;
 
-    setMessages((prev) => [
-      ...prev,
-      { from: 'doctor', text },
-      { from: 'patient', text: CANNED_REPLIES[replyIndex % CANNED_REPLIES.length] },
-    ]);
-    setReplyIndex((i) => i + 1);
+    setIsSending(true);
+    setError(null);
     setDraft('');
+
+    const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setMessages((prev) => [...prev, { id: pendingId, sender: 'PLAYER', content: text }]);
+
+    const formData = new FormData();
+    formData.append('gameSessionId', gameSessionId);
+    formData.append('caseId', caseId);
+    formData.append('text', text);
+
+    try {
+      const data = await api.post('/api/v1/chat', formData, {
+        headers: { 'Content-Type': undefined },
+      });
+      setMessages((prev) => [...prev.filter((message) => message.id !== pendingId), ...data.chatMessages]);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Chat: POST /api/v1/chat failed', {
+        status: err?.response?.status,
+        body: err?.response?.data,
+        message: err?.message,
+        error: err,
+      });
+      setMessages((prev) => prev.filter((message) => message.id !== pendingId));
+      setDraft(text);
+      setError('Could not send message. Try again.');
+    } finally {
+      setIsSending(false);
+    }
   }
 
   function handleKeyDown(event) {
@@ -69,16 +90,18 @@ export function Chat() {
       </section>
 
       <div className={styles.log} role="log" aria-live="polite">
-        {messages.map((message, index) => (
+        {messages.map((message) => (
           <div
-            key={index}
-            className={`${styles.msg} ${message.from === 'patient' ? styles.msgPatient : styles.msgDoctor}`}
+            key={message.id}
+            className={`${styles.msg} ${message.sender === 'PATIENT' ? styles.msgPatient : styles.msgDoctor}`}
           >
-            <span className={styles.who}>{message.from === 'patient' ? 'Patient' : 'Doctor'}</span>
-            {message.text}
+            <span className={styles.who}>{message.sender === 'PATIENT' ? 'Patient' : 'Doctor'}</span>
+            {message.content}
           </div>
         ))}
       </div>
+
+      {error && <p className={styles.errorText}>{error}</p>}
 
       <div className={styles.inputRow}>
         <textarea
@@ -86,13 +109,24 @@ export function Chat() {
           aria-label="Doctor reply"
           placeholder="Ask the patient a question…"
           value={draft}
+          disabled={isSending}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={handleKeyDown}
         />
-        <button type="button" className={styles.sendButton} onClick={sendDoctorReply}>
-          Send
+        <button
+          type="button"
+          className={styles.sendButton}
+          disabled={isSending}
+          onClick={sendDoctorReply}
+        >
+          {isSending ? 'Sending…' : 'Send'}
         </button>
       </div>
     </aside>
   );
 }
+
+Chat.propTypes = {
+  gameSessionId: PropTypes.string.isRequired,
+  caseId: PropTypes.string.isRequired,
+};

@@ -28,6 +28,15 @@ done
 
 export DATABASE_URL="${DATABASE_URL:-postgresql://game:game@localhost:5432/skin_disease_game}"
 
+# Local-only secrets (e.g. GEMINI_API_KEY) live outside .env so they're never
+# committed; gitignored, loaded here if present.
+if [ -f src/backend/.env.secrets ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source src/backend/.env.secrets
+  set +a
+fi
+
 pnpm --filter ./src/backend dev &
 pnpm --filter ./src/frontend dev &
 

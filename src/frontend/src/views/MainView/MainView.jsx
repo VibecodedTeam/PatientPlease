@@ -18,7 +18,7 @@ const TERMINAL_MESSAGES = {
  * the empty desk it would otherwise show.
  */
 function MainViewContent() {
-  const { terminalState } = useRound();
+  const { round, terminalState } = useRound();
   const [activeView, setActiveView] = useState('scene');
 
   if (terminalState) {
@@ -51,13 +51,14 @@ function MainViewContent() {
           </button>
         </div>
         <div className={styles.patientAreaContent}>
-          {activeView === 'scene' ? (
+          <div className={activeView === 'scene' ? styles.pane : styles.paneHidden}>
             <PatientSceneProvider url="/3DModels/FinalBaseMesh.obj">
               <PatientScene />
             </PatientSceneProvider>
-          ) : (
-            <Chat />
-          )}
+          </div>
+          <div className={activeView === 'chat' ? styles.pane : styles.paneHidden}>
+            <Chat gameSessionId={round?.gameSession?.id} caseId={round?.case?.id} />
+          </div>
         </div>
       </section>
       <div className={styles.rightColumn}>

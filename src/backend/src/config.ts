@@ -74,7 +74,7 @@ export function resolveWhisperApiKey(value: string | undefined): string | undefi
   return value ? value : undefined;
 }
 
-const DEFAULT_GEMINI_MODEL = 'gemini-2.0-flash';
+const DEFAULT_GEMINI_MODEL = 'gemini-flash-lite-latest';
 
 export function resolveGeminiModel(value: string | undefined): string {
   return value ? value : DEFAULT_GEMINI_MODEL;

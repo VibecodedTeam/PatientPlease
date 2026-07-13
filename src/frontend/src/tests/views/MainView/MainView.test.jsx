@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 // This file avoids JSX everywhere (uses React.createElement instead): esbuild-jest
 // routes any file containing "mock(" through an extra babel pass that strips the
@@ -62,5 +63,42 @@ describe('MainView', () => {
     renderMainView();
 
     await waitFor(() => expect(screen.getByText(/game over/i)).toBeInTheDocument());
+  });
+
+  it('keeps chat messages after switching to the 3D view and back', async () => {
+    const user = userEvent.setup();
+    global.fetch = jest.fn().mockImplementation((input) => {
+      const url = typeof input === 'string' ? input : input.url;
+      if (url.includes('/api/v1/chat')) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              chatMessages: [
+                { id: 'm1', sender: 'PLAYER', content: 'How are you feeling?', sentAt: '2026-07-13T00:00:00.000Z', sortOrder: 1 },
+                { id: 'm2', sender: 'PATIENT', content: 'A bit better today.', sentAt: '2026-07-13T00:00:01.000Z', sortOrder: 2 },
+              ],
+              revealedDocuments: [],
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({ case: { documents: [] } }), { status: 200 }));
+    });
+
+    renderMainView();
+    await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: /^chat$/i }));
+    const input = screen.getByLabelText(/doctor reply/i);
+    await user.type(input, 'How are you feeling?');
+    await user.click(screen.getByRole('button', { name: /send/i }));
+    await waitFor(() => expect(screen.getByText('A bit better today.')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: /3d view/i }));
+    await user.click(screen.getByRole('button', { name: /^chat$/i }));
+
+    expect(screen.getByText('A bit better today.')).toBeInTheDocument();
+    expect(screen.getByText('How are you feeling?')).toBeInTheDocument();
   });
 });
