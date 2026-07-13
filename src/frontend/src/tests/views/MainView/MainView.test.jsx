@@ -199,6 +199,41 @@ describe('MainView', () => {
     await waitFor(() => expect(screen.getByText(/game over/i)).toBeInTheDocument());
   });
 
+  it('allows resetting the game from the completion screen, so a finished session is not a dead end', async () => {
+    let hasReset = false;
+    mockFetchRoutes({
+      '/api/v1/round': () => {
+        if (!hasReset) {
+          return new Response(JSON.stringify({ error: 'game_completed' }), { status: 409 });
+        }
+        return DEFAULT_ROUTES['/api/v1/round']();
+      },
+      '/api/v1/game/reset': () => {
+        hasReset = true;
+        return new Response(JSON.stringify({ gameSession: {} }), { status: 200 });
+      },
+    });
+    const user = userEvent.setup();
+
+    renderMainView();
+    await waitFor(() => expect(screen.getByText(/completed every case/i)).toBeInTheDocument());
+
+    await user.click(screen.getByText('Open Settings'));
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+
+    await user.click(screen.getByText('Back to start of game'));
+    await user.click(screen.getByText('Confirm'));
+
+    await waitFor(() =>
+      expect(screen.queryByText(/completed every case/i)).not.toBeInTheDocument(),
+    );
+    await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+    const resetCalls = global.fetch.mock.calls.filter(
+      ([request]) => new URL(request.url).pathname === '/api/v1/game/reset',
+    );
+    expect(resetCalls).toHaveLength(1);
+  });
+
   it('refetches the round every time MainView mounts, so returning from night shows the new case', async () => {
     let roundCallCount = 0;
     // Two calls happen on the very first mount: RoundProvider's own

@@ -77,8 +77,19 @@ function MainViewContent() {
 
   if (terminalState) {
     return (
-      <div className={styles.gameFinished} role="status">
-        {TERMINAL_MESSAGES[terminalState]}
+      <div className={styles.screen}>
+        <div className={styles.gameFinished} role="status">
+          {TERMINAL_MESSAGES[terminalState]}
+        </div>
+        <button type="button" className={styles.settingsButton} onClick={handleOpenSettings}>
+          <span className={styles.gearIcon} aria-hidden="true">
+            ⚙
+          </span>
+          <span>Open Settings</span>
+        </button>
+        {isSettingsOpen && (
+          <Settings onClose={handleCloseSettings} autoPaused={settingsAutoOpened} />
+        )}
       </div>
     );
   }
