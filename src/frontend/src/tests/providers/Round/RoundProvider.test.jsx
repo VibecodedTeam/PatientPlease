@@ -368,6 +368,61 @@ describe('RoundProvider', () => {
     });
   });
 
+  it('orderExamination POSTs /api/v1/examinations with caseId and shopItemId, updates round.gameSession, and resolves with timeCostMs', async () => {
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        return Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 100 } }), { status: 200 }));
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            gameSession: { money: 50 },
+            caseExamination: { id: 'ce1' },
+            timeCostMs: 90000,
+          }),
+          { status: 200 },
+        ),
+      );
+    });
+
+    function Probe() {
+      const { round, orderExamination } = useRound();
+      const [timeCostMs, setTimeCostMs] = React.useState(null);
+      return (
+        <div>
+          <span data-testid="money">{round?.gameSession?.money ?? 'none'}</span>
+          <span data-testid="time-cost">{timeCostMs ?? 'none'}</span>
+          <button
+            onClick={() =>
+              orderExamination('c1', 's1').then((data) => setTimeCostMs(data.timeCostMs))
+            }
+          >
+            order
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('100'));
+
+    await userEvent.setup().click(screen.getByText('order'));
+
+    await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('50'));
+    expect(screen.getByTestId('time-cost').textContent).toBe('90000');
+    const request = lastRequest();
+    expect(request.method).toBe('POST');
+    expect(request.url).toBe('http://api.test/api/v1/examinations');
+    expect(await request.clone().json()).toEqual({ caseId: 'c1', shopItemId: 's1' });
+  });
+
   it('resetDay refetches the round so a new case replaces the old one', async () => {
     let roundCallCount = 0;
     global.fetch = jest.fn().mockImplementation((request) => {
