@@ -1,0 +1,93 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.6rem 0.7rem;
+  background-color: #fffdf7;
+  border: 1px solid #d8cfba;
+  border-radius: 8px;
+  animation: rowPopIn 0.15s ease-out backwards;
+}
+
+@keyframes rowPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.letterBadge {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  background-color: var(--color-ink);
+  color: #f4efe1;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.label {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.description {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #4a4436;
+}
+
+.switch {
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 1.4rem;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  background-color: #c9c2b4;
+  border: 2px solid #8a8272;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+}
+
+.switchThumb {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.switchOn {
+  background-color: var(--color-teal);
+  border-color: #054a3d;
+}
+
+.switchOn .switchThumb {
+  transform: translateX(1.1rem);
+}
