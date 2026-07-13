@@ -45,6 +45,23 @@ model CaseDocument {
 
   content Json?
 
+  reveals CaseDocumentReveal[]
+
   @@unique([attentionPointRegion, caseId])
   @@index([caseId, sortOrder])
+}
+
+/// Tracks which case documents a GameSession has unlocked via chat, so reveals dedupe across turns.
+model CaseDocumentReveal {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  gameSessionId  String       @db.Uuid
+  gameSession    GameSession  @relation(fields: [gameSessionId], references: [id])
+  caseId         String       @db.Uuid
+  case           Case         @relation(fields: [caseId], references: [id])
+  caseDocumentId String       @db.Uuid
+  caseDocument   CaseDocument @relation(fields: [caseDocumentId], references: [id])
+  revealedAt     DateTime     @default(now())
+
+  @@unique([gameSessionId, caseDocumentId])
+  @@index([gameSessionId, caseId])
 }
