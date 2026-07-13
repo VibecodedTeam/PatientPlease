@@ -4,12 +4,11 @@ import { StatisticsPopup } from '../../../components/StatisticsPopup';
 
 const STATISTICS = {
   dayNumber: 3,
-  startingMoney: 100,
-  endingMoney: 130,
-  casesAttempted: 2,
-  casesCorrect: 2,
-  moneyMade: 30,
-  moneyLost: 0,
+  casesAttempted: 4,
+  casesCorrect: 3,
+  moneyEarned: 150,
+  endingMoney: 250,
+  elapsedMs: 65000,
 };
 
 describe('StatisticsPopup', () => {
@@ -17,16 +16,25 @@ describe('StatisticsPopup', () => {
     document.body.innerHTML = '<div id="overlay-root"></div>';
   });
 
-  it('shows the Daily Statistics title, money made/lost boxes, and the ending money sum', () => {
+  it('shows the Daily Statistics title, correct/attempted count, signed money earned, ending balance, and day time', () => {
     render(<StatisticsPopup statistics={STATISTICS} onClose={() => {}} />);
 
     expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument();
-    expect(screen.getByText('Money Made')).toBeInTheDocument();
-    expect(screen.getByText('$30')).toBeInTheDocument();
-    expect(screen.getByText('Money Lost')).toBeInTheDocument();
-    expect(screen.getByText('$0')).toBeInTheDocument();
-    expect(screen.getByText('Ending Money')).toBeInTheDocument();
-    expect(screen.getByText('$130')).toBeInTheDocument();
+    expect(screen.getByText('3 / 4')).toBeInTheDocument();
+    expect(screen.getByText('+$150')).toBeInTheDocument();
+    expect(screen.getByText('$250')).toBeInTheDocument();
+    expect(screen.getByText('1:05')).toBeInTheDocument();
+  });
+
+  it('shows a negative sign for a net loss', () => {
+    render(
+      <StatisticsPopup
+        statistics={{ ...STATISTICS, moneyEarned: -40, endingMoney: 60 }}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByText('-$40')).toBeInTheDocument();
   });
 
   it('calls onClose exactly once when the continue button is clicked', () => {

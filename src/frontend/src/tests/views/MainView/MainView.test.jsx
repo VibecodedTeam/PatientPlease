@@ -396,7 +396,14 @@ describe('MainView', () => {
         new Response(
           JSON.stringify({
             gameSession: { consecutiveBadDiagnosisCount: 0 },
-            dayLog: { dayNumber: 1, startingMoney: 100, endingMoney: 130, casesAttempted: 2, casesCorrect: 2 },
+            dayLog: {
+              dayNumber: 1,
+              startingMoney: 100,
+              endingMoney: 130,
+              casesAttempted: 2,
+              casesCorrect: 2,
+              elapsedMs: 65000,
+            },
           }),
           { status: 200 },
         ),
@@ -430,7 +437,14 @@ describe('MainView', () => {
         new Response(
           JSON.stringify({
             gameSession: { consecutiveBadDiagnosisCount: 0 },
-            dayLog: { dayNumber: 1, startingMoney: 100, endingMoney: 130, casesAttempted: 2, casesCorrect: 2 },
+            dayLog: {
+              dayNumber: 1,
+              startingMoney: 100,
+              endingMoney: 130,
+              casesAttempted: 2,
+              casesCorrect: 2,
+              elapsedMs: 65000,
+            },
           }),
           { status: 200 },
         ),
