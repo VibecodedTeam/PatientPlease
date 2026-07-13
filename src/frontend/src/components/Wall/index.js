@@ -1,1 +1,1 @@
-export { Wall, bookShape } from './Wall';
+export { Wall } from './Wall';
