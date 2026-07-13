@@ -3,6 +3,8 @@ import {
   resolveFrontendOrigin,
   resolveGoogleClientId,
   resolvePort,
+  resolveRateLimitMax,
+  resolveRateLimitWindowMs,
   resolveSessionTtlMs,
 } from '../src/config.js';
 
@@ -117,5 +119,49 @@ describe('resolveSessionTtlMs', () => {
     expect(() => resolveSessionTtlMs('thirty-days')).toThrow(
       'SESSION_TTL_MS environment variable must be a number',
     );
+  });
+});
+
+describe('resolveRateLimitMax', () => {
+  it('returns the parsed value when RATE_LIMIT_MAX is set', () => {
+    expect(resolveRateLimitMax('50', 100)).toBe(50);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is unset', () => {
+    expect(resolveRateLimitMax(undefined, 100)).toBe(100);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is an empty string', () => {
+    expect(resolveRateLimitMax('', 100)).toBe(100);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is non-numeric', () => {
+    expect(resolveRateLimitMax('abc', 100)).toBe(100);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is "0"', () => {
+    expect(resolveRateLimitMax('0', 100)).toBe(100);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is negative', () => {
+    expect(resolveRateLimitMax('-1', 100)).toBe(100);
+  });
+});
+
+describe('resolveRateLimitWindowMs', () => {
+  it('returns the parsed value when RATE_LIMIT_WINDOW_MS is set', () => {
+    expect(resolveRateLimitWindowMs('30000', 60000)).toBe(30000);
+  });
+
+  it('falls back to the default when RATE_LIMIT_WINDOW_MS is unset', () => {
+    expect(resolveRateLimitWindowMs(undefined, 60000)).toBe(60000);
+  });
+
+  it('falls back to the default when RATE_LIMIT_WINDOW_MS is an empty string', () => {
+    expect(resolveRateLimitWindowMs('', 60000)).toBe(60000);
+  });
+
+  it('falls back to the default when RATE_LIMIT_WINDOW_MS is non-numeric', () => {
+    expect(resolveRateLimitWindowMs('abc', 60000)).toBe(60000);
   });
 });

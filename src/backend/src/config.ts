@@ -49,3 +49,13 @@ export function resolveSessionTtlMs(value: string | undefined): number {
   }
   return parsed;
 }
+
+export function resolveRateLimitMax(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+export function resolveRateLimitWindowMs(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
