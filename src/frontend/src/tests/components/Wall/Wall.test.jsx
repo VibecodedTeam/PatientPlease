@@ -83,6 +83,14 @@ describe('Wall', () => {
     expect(await screen.findByRole('region', { name: /doctor office wall/i })).toBeInTheDocument();
   });
 
+  it('shows the hardcoded ABCDE mole-check board on the wall', async () => {
+    mockRoundFetch(OWNED_ITEMS);
+    renderWithProviders(<Wall />);
+    expect(
+      await screen.findByRole('button', { name: /open the abcde mole self-check/i }),
+    ).toBeInTheDocument();
+  });
+
   it('renders the titles of the owned handbooks and equipment from useWallInventory', async () => {
     mockRoundFetch(OWNED_ITEMS);
     renderWithProviders(<Wall />);
