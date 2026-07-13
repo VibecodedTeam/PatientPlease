@@ -320,6 +320,54 @@ describe('RoundProvider', () => {
     expect(await request.clone().json()).toEqual({ shopItemId: 'shop-item-1' });
   });
 
+  it('submitDiagnosis POSTs /api/v1/diagnoses with caseId and selectedDiagnosisId, and updates round.gameSession', async () => {
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        return Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 100 } }), { status: 200 }));
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            gameSession: { money: 150 },
+            result: { isDiagnosisCorrect: true, isTreatmentCorrect: null, moneyDelta: 50 },
+          }),
+          { status: 200 },
+        ),
+      );
+    });
+
+    function Probe() {
+      const { round, submitDiagnosis } = useRound();
+      return (
+        <div>
+          <span data-testid="money">{round?.gameSession?.money ?? 'none'}</span>
+          <button onClick={() => submitDiagnosis('case-1', 'diagnosis-1')}>submit</button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('100'));
+
+    await userEvent.setup().click(screen.getByText('submit'));
+
+    await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('150'));
+    const request = lastRequest();
+    expect(request.method).toBe('POST');
+    expect(request.url).toBe('http://api.test/api/v1/diagnoses');
+    expect(await request.clone().json()).toEqual({
+      caseId: 'case-1',
+      selectedDiagnosisId: 'diagnosis-1',
+    });
+  });
+
   it('resetDay refetches the round so a new case replaces the old one', async () => {
     let roundCallCount = 0;
     global.fetch = jest.fn().mockImplementation((request) => {
