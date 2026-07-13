@@ -19,6 +19,7 @@ import currentUserPlugin from './plugins/current-user.js';
 import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import dayRoutes from './routes/day.js';
+import examinationRoutes from './routes/examinations.js';
 import gameRoutes from './routes/game.js';
 import healthRoutes from './routes/health.js';
 import inventoryRoutes from './routes/inventory.js';
@@ -82,6 +83,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   });
   app.register(shopRoutes);
   app.register(inventoryRoutes);
+  app.register(examinationRoutes);
 
   return app;
 }

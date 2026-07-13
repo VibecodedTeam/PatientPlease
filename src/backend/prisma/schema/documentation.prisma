@@ -5,6 +5,7 @@ enum CaseDocumentType {
   CLINICAL_SYMPTOMS
   FAMILY_HISTORY
   WEATHER_HISTORY
+  EXAMINATION_RESULTS
 }
 
 enum BodyRegion {
@@ -28,14 +29,14 @@ enum BodyRegion {
 /// Image-specific fields are typed; everything else whose shape varies by
 /// `type` lives in `content`, validated per-type at the API boundary.
 model CaseDocument {
-  id               String           @id @default(uuid(7)) @db.Uuid
-  caseId           String           @db.Uuid
-  case             Case             @relation(fields: [caseId], references: [id])
-  attentionPointRegion  BodyRegion?
-  type             CaseDocumentType
-  title            String
-  documentDate     DateTime?
-  sortOrder        Int
+  id                   String           @id @default(uuid(7)) @db.Uuid
+  caseId               String           @db.Uuid
+  case                 Case             @relation(fields: [caseId], references: [id])
+  attentionPointRegion BodyRegion?
+  type                 CaseDocumentType
+  title                String
+  documentDate         DateTime?
+  sortOrder            Int
 
   imageUrl      String?
   imageWidthPx  Int?
@@ -46,8 +47,8 @@ model CaseDocument {
 
   reveals CaseDocumentReveal[]
 
-  @@index([caseId, sortOrder])
   @@unique([attentionPointRegion, caseId])
+  @@index([caseId, sortOrder])
 }
 
 /// Tracks which case documents a GameSession has unlocked via chat, so reveals dedupe across turns.

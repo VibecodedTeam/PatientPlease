@@ -81,18 +81,48 @@ jobs:
       - name: Verify database alive
         run: docker compose -p ci -f docker/docker-compose.yml exec -T postgres pg_isready -U game -d skin_disease_game
 
-      - name: Verify backend alive
-        run: curl --fail --silent --show-error http://localhost:4000/health
-
-      - name: Verify frontend alive
-        run: curl --fail --silent --show-error http://localhost:4173/
-
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+
+      - name: Install backend dependencies
+        run: pnpm install --frozen-lockfile --filter backend
+
+      - name: Seed database (CI verification only)
+        env:
+          DATABASE_URL: postgresql://game:game@localhost:5432/skin_disease_game
+        run: |
+          pnpm --filter backend exec prisma generate
+          pnpm --filter backend exec tsx src/db/seed.ts --force
+
+      - name: Verify seed data
+        run: |
+          check_count() {
+            table="$1"
+            count=$(docker compose -p ci -f docker/docker-compose.yml exec -T postgres \
+              psql -U game -d skin_disease_game -tAc "SELECT count(*) FROM \"$table\";" | tr -d '[:space:]')
+            echo "$table: $count rows"
+            if [ "$count" -lt 20 ]; then
+              echo "Expected at least 20 seeded rows in $table, got $count" >&2
+              exit 1
+            fi
+          }
+          check_count Diagnosis
+          check_count Treatment
+          check_count ShopItem
+          check_count Patient
+          check_count "Case"
+          check_count CaseDocument
+          check_count CaseHint
+
+      - name: Verify backend alive
+        run: curl --fail --silent --show-error http://localhost:4000/health
+
+      - name: Verify frontend alive
+        run: curl --fail --silent --show-error http://localhost:4173/
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile --filter frontend

@@ -47,6 +47,32 @@ diagnosed correctly (including a zero-attempt day), and otherwise increases by t
 of incorrect diagnoses. None of this yet feeds back into `POST /api/v1/round` or otherwise gates
 play — see `docs/superpowers/specs/2026-07-08-day-statistics-design.md`.
 
+The day must have reached at least `MIN_DAY_DURATION_MS` (10 minutes;
+`src/backend/src/constants.ts`) of **effective elapsed time** before it can be ended — a
+server-side anti-cheat check, independent of whatever timer the frontend displays. This is a
+hard minimum, not a forced maximum: the frontend is expected to run its own ~10-minute countdown
+and call this endpoint once it elapses (after letting the player finish whatever patient they
+were already examining), but the backend only ever verifies "has enough time passed," never
+"has too much."
+
+Effective elapsed time is not simply `Date.now() - GameDayLog.startedAt` — it accounts for time
+spent paused and time added by in-game actions:
+
+    effectiveElapsedMs = (now - startedAt) - totalPausedMs + extraElapsedMs
+
+- `totalPausedMs` accumulates every pause/resume cycle: `POST /api/v1/game/pause` stamps
+  `pausedAt`, and the *next* resume (the implicit `PAUSED` → `ACTIVE` transition inside
+  `POST /api/v1/round`, see `docs/api/game.md`) adds `now - pausedAt` into `totalPausedMs` and
+  clears `pausedAt` back to `null`. This is cumulative across any number of pause cycles within
+  the same day — pausing a second (or third) time no longer clobbers the first pause's duration.
+- `extraElapsedMs` accumulates time added by ordering an examination
+  (`POST /api/v1/examinations`, see `docs/api/examinations.md`) — each `ShopItem`'s
+  `content.timeCostMs` is added on top, so ordering examinations lets the floor be reached
+  sooner, the same direction as time already passing.
+
+The calculation lives in `computeEffectiveElapsedMs` (`src/backend/src/services/dayElapsed.ts`),
+shared by `endDay` and the examination-ordering service.
+
 ### Request
 
     POST /api/v1/day/end
@@ -61,7 +87,8 @@ No request body.
 | No/invalid session cookie                            | 401    | `{ "error": "unauthenticated" }`                                                                                                                                 |
 | No `GameSession`, or latest one is not `ACTIVE`      | 409    | `{ "error": "no_active_game" }`                                                                                                                                  |
 | Session is `ACTIVE` but has no open `GameDayLog`     | 409    | `{ "error": "no_open_day" }`                                                                                                                                     |
-| Success                                              | 200    | `{ "gameSession": { ..., "consecutiveBadDiagnosisCount" }, "dayLog": { "id", "dayNumber", "startingMoney", "endingMoney", "casesAttempted", "casesCorrect", "thresholdMet", "penaltyApplied", "endedAt" } }` |
+| Open `GameDayLog` has been open less than `MIN_DAY_DURATION_MS` | 409 | `{ "error": "day_not_elapsed", "remainingMs": 342000 }` |
+| Success                                              | 200    | `{ "gameSession": { ..., "consecutiveBadDiagnosisCount" }, "dayLog": { "id", "dayNumber", "startingMoney", "endingMoney", "casesAttempted", "casesCorrect", "thresholdMet", "penaltyApplied", "startedAt", "endedAt" } }` |
 
 Calling this twice in a row is safe: the second call finds no open day log and returns
 `409 no_open_day`, which doubles as an "you're already at night" signal.

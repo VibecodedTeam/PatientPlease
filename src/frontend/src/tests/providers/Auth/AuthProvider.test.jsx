@@ -120,4 +120,26 @@ describe('AuthProvider / useAuth', () => {
     expect(new URL(logoutRequest.url).pathname).toBe('/auth/logout');
     expect(logoutRequest.method).toBe('POST');
   });
+
+  it('logout() still clears local auth state when POST /auth/logout fails', async () => {
+    const user = userEvent.setup();
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ user: USER }), { status: 200 }))
+      .mockResolvedValueOnce(new Response('server error', { status: 500 }));
+
+    renderWithProviders(
+      <AuthProvider>
+        <TestConsumer />
+      </AuthProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('authenticated'));
+
+    await user.click(screen.getByText('Logout'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('status')).toHaveTextContent('unauthenticated'),
+    );
+    expect(screen.getByTestId('user')).toHaveTextContent('none');
+  });
 });

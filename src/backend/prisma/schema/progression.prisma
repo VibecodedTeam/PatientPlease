@@ -17,11 +17,12 @@ model GameSession {
   createdAt                    DateTime          @default(now())
   updatedAt                    DateTime          @updatedAt
 
-  ownedItems        OwnedItem[]
-  chatMessages      ChatMessage[]
-  gameplayLogs      GameplayLog[]
-  dayLogs           GameDayLog[]
-  documentReveals   CaseDocumentReveal[]
+  ownedItems       OwnedItem[]
+  chatMessages     ChatMessage[]
+  gameplayLogs     GameplayLog[]
+  dayLogs          GameDayLog[]
+  documentReveals  CaseDocumentReveal[]
+  caseExaminations CaseExamination[]
 
   @@index([userId, status])
 }
@@ -35,11 +36,13 @@ model GameDayLog {
   startingMoney  Int
   endingMoney    Int?
   thresholdMet   Boolean?
-  casesAttempted Int @default(0)
-  casesCorrect   Int @default(0)
-  penaltyApplied Boolean?     @default(false)
+  casesAttempted Int         @default(0)
+  casesCorrect   Int         @default(0)
+  penaltyApplied Boolean?    @default(false)
   startedAt      DateTime
   pausedAt       DateTime?
+  totalPausedMs  Int         @default(0)
+  extraElapsedMs Int         @default(0)
   endedAt        DateTime?
 
   diagnosisAttempts DiagnosisAttempt[]

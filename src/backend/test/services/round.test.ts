@@ -1,6 +1,9 @@
 import { jest } from '@jest/globals';
 import {
+  GameCompletedError,
+  GameOverError,
   NoCasesRemainingError,
+  pickIndexForSeed,
   resolveGameSession,
   resolveOpenGameDayLog,
   selectNextCase,
@@ -20,10 +23,12 @@ function createMockPrisma() {
     },
     case: {
       findFirst: jest.fn<RoundPrismaClient['case']['findFirst']>(),
+      findMany: jest.fn<RoundPrismaClient['case']['findMany']>(),
     },
     gameDayLog: {
       findFirst: jest.fn<RoundPrismaClient['gameDayLog']['findFirst']>(),
       create: jest.fn<RoundPrismaClient['gameDayLog']['create']>(),
+      update: jest.fn<RoundPrismaClient['gameDayLog']['update']>(),
     },
     ownedItem: {
       findMany: jest.fn<RoundPrismaClient['ownedItem']['findMany']>(),
@@ -33,6 +38,9 @@ function createMockPrisma() {
     },
     treatment: {
       findMany: jest.fn<RoundPrismaClient['treatment']['findMany']>(),
+    },
+    caseExamination: {
+      findMany: jest.fn<RoundPrismaClient['caseExamination']['findMany']>(),
     },
   };
 }
@@ -94,6 +102,10 @@ function makeGameDayLog(overrides: Partial<GameDayLogRecord> = {}): GameDayLogRe
     casesCorrect: 0,
     thresholdMet: null,
     penaltyApplied: false,
+    startedAt: new Date('2026-07-01T00:00:00.000Z'),
+    pausedAt: null,
+    totalPausedMs: 0,
+    extraElapsedMs: 0,
     endedAt: null,
     ...overrides,
   };
@@ -132,6 +144,7 @@ describe('resolveGameSession', () => {
     prisma.gameSession.findFirst.mockResolvedValue(paused);
     const resumed = makeSession({ id: 'paused-session-uuid', status: 'ACTIVE' });
     prisma.gameSession.update.mockResolvedValue(resumed);
+    prisma.gameDayLog.findFirst.mockResolvedValue(null);
 
     const result = await resolveGameSession(prisma, 'user-uuid');
 
@@ -142,32 +155,116 @@ describe('resolveGameSession', () => {
     expect(result).toEqual(resumed);
   });
 
-  it.each(['GAME_OVER', 'COMPLETED'] as const)(
-    'creates a fresh session when the latest one is %s',
-    async (status) => {
-      const prisma = createMockPrisma();
-      prisma.gameSession.findFirst.mockResolvedValue(makeSession({ status }));
-      const created = makeSession({ id: 'fresh-session-uuid' });
-      prisma.gameSession.create.mockResolvedValue(created);
+  it('accumulates totalPausedMs and clears pausedAt when resuming with a stamped pausedAt', async () => {
+    const prisma = createMockPrisma();
+    const paused = makeSession({ id: 'paused-session-uuid', status: 'PAUSED' });
+    prisma.gameSession.findFirst.mockResolvedValue(paused);
+    const resumed = makeSession({ id: 'paused-session-uuid', status: 'ACTIVE' });
+    prisma.gameSession.update.mockResolvedValue(resumed);
+    const pausedAt = new Date(Date.now() - 5000);
+    prisma.gameDayLog.findFirst.mockResolvedValue(
+      makeGameDayLog({ id: 'open-log-uuid', pausedAt, totalPausedMs: 1000 }),
+    );
+    prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
 
-      const result = await resolveGameSession(prisma, 'user-uuid');
+    await resolveGameSession(prisma, 'user-uuid');
 
-      expect(prisma.gameSession.create).toHaveBeenCalledWith({
-        data: { userId: 'user-uuid', money: 0, consecutiveBadDiagnosisCount: 0, status: 'ACTIVE' },
-      });
-      expect(prisma.gameSession.update).not.toHaveBeenCalled();
-      expect(result).toEqual(created);
-    },
-  );
+    expect(prisma.gameDayLog.findFirst).toHaveBeenCalledWith({
+      where: { gameSessionId: 'paused-session-uuid', endedAt: null },
+    });
+    expect(prisma.gameDayLog.update).toHaveBeenCalledTimes(1);
+    const call = prisma.gameDayLog.update.mock.calls[0]?.[0] as {
+      where: { id: string };
+      data: { pausedAt: null; totalPausedMs: number };
+    };
+    expect(call.where).toEqual({ id: 'open-log-uuid' });
+    expect(call.data.pausedAt).toBeNull();
+    expect(call.data.totalPausedMs).toBeGreaterThanOrEqual(1000 + 5000);
+    expect(call.data.totalPausedMs).toBeLessThan(1000 + 6000);
+  });
+
+  it('does not call gameDayLog.update when resuming a session whose open day log has no pausedAt', async () => {
+    const prisma = createMockPrisma();
+    const paused = makeSession({ id: 'paused-session-uuid', status: 'PAUSED' });
+    prisma.gameSession.findFirst.mockResolvedValue(paused);
+    prisma.gameSession.update.mockResolvedValue(makeSession({ status: 'ACTIVE' }));
+    prisma.gameDayLog.findFirst.mockResolvedValue(
+      makeGameDayLog({ id: 'open-log-uuid', pausedAt: null }),
+    );
+
+    await resolveGameSession(prisma, 'user-uuid');
+
+    expect(prisma.gameDayLog.update).not.toHaveBeenCalled();
+  });
+
+  it('does not call gameDayLog.update when resuming a session with no open day log', async () => {
+    const prisma = createMockPrisma();
+    const paused = makeSession({ id: 'paused-session-uuid', status: 'PAUSED' });
+    prisma.gameSession.findFirst.mockResolvedValue(paused);
+    prisma.gameSession.update.mockResolvedValue(makeSession({ status: 'ACTIVE' }));
+    prisma.gameDayLog.findFirst.mockResolvedValue(null);
+
+    await expect(resolveGameSession(prisma, 'user-uuid')).resolves.toBeDefined();
+    expect(prisma.gameDayLog.update).not.toHaveBeenCalled();
+  });
+
+  it('throws GameCompletedError and creates no new session when the latest is COMPLETED', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession({ status: 'COMPLETED' }));
+
+    await expect(resolveGameSession(prisma, 'user-uuid')).rejects.toThrow(GameCompletedError);
+    // A finished game must NOT silently spawn a fresh money:0 session and replay.
+    expect(prisma.gameSession.create).not.toHaveBeenCalled();
+    expect(prisma.gameSession.update).not.toHaveBeenCalled();
+  });
+
+  it('throws GameOverError and creates no new session when the latest is GAME_OVER', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession({ status: 'GAME_OVER' }));
+
+    await expect(resolveGameSession(prisma, 'user-uuid')).rejects.toThrow(GameOverError);
+    expect(prisma.gameSession.create).not.toHaveBeenCalled();
+    expect(prisma.gameSession.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('pickIndexForSeed', () => {
+  it('returns an index within [0, length)', () => {
+    const index = pickIndexForSeed('session-uuid', 5);
+
+    expect(index).toBeGreaterThanOrEqual(0);
+    expect(index).toBeLessThan(5);
+  });
+
+  it('is deterministic for the same seed and length', () => {
+    const first = pickIndexForSeed('session-uuid', 5);
+    const second = pickIndexForSeed('session-uuid', 5);
+
+    expect(second).toBe(first);
+  });
+
+  it('always returns 0 when there is only one candidate', () => {
+    expect(pickIndexForSeed('session-uuid', 1)).toBe(0);
+  });
+
+  it('can select different indices for different seeds', () => {
+    const indices = new Set(
+      ['session-a', 'session-b', 'session-c', 'session-d', 'session-e'].map((seed) =>
+        pickIndexForSeed(seed, 5),
+      ),
+    );
+
+    expect(indices.size).toBeGreaterThan(1);
+  });
 });
 
 describe('selectNextCase', () => {
-  it('queries active, un-attempted cases ordered by difficulty ascending', async () => {
+  it('queries the minimum difficulty among active, un-attempted cases', async () => {
     const prisma = createMockPrisma();
-    const found = makeCase();
-    prisma.case.findFirst.mockResolvedValue(found);
+    prisma.case.findFirst.mockResolvedValue({ difficulty: 2 });
+    prisma.case.findMany.mockResolvedValue([makeCase({ difficulty: 2 })]);
 
-    const result = await selectNextCase(prisma, 'session-uuid');
+    await selectNextCase(prisma, 'session-uuid');
 
     expect(prisma.case.findFirst).toHaveBeenCalledWith({
       where: {
@@ -175,18 +272,77 @@ describe('selectNextCase', () => {
         diagnosisAttempts: { none: { gameDayLog: { gameSessionId: 'session-uuid' } } },
       },
       orderBy: { difficulty: 'asc' },
-      include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
+      select: { difficulty: true },
     });
-    expect(result).toEqual(found);
   });
 
-  it('returns null when no case matches', async () => {
+  it('fetches every active, un-attempted case at that minimum difficulty', async () => {
+    const prisma = createMockPrisma();
+    prisma.case.findFirst.mockResolvedValue({ difficulty: 2 });
+    prisma.case.findMany.mockResolvedValue([makeCase({ difficulty: 2 })]);
+
+    await selectNextCase(prisma, 'session-uuid');
+
+    expect(prisma.case.findMany).toHaveBeenCalledWith({
+      where: {
+        isActive: true,
+        difficulty: 2,
+        diagnosisAttempts: { none: { gameDayLog: { gameSessionId: 'session-uuid' } } },
+      },
+      orderBy: { id: 'asc' },
+      include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
+    });
+  });
+
+  it('deterministically picks among tied candidates based on the game session id', async () => {
+    const prisma = createMockPrisma();
+    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    const candidates = [
+      makeCase({ id: 'case-a' }),
+      makeCase({ id: 'case-b' }),
+      makeCase({ id: 'case-c' }),
+    ];
+    prisma.case.findMany.mockResolvedValue(candidates);
+    const expectedIndex = pickIndexForSeed('session-uuid', candidates.length);
+
+    const result = await selectNextCase(prisma, 'session-uuid');
+
+    expect(result).toEqual(candidates[expectedIndex]);
+  });
+
+  it('returns the same case across repeated calls for the same session and candidate set', async () => {
+    const prisma = createMockPrisma();
+    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    const candidates = [
+      makeCase({ id: 'case-a' }),
+      makeCase({ id: 'case-b' }),
+      makeCase({ id: 'case-c' }),
+    ];
+    prisma.case.findMany.mockResolvedValue(candidates);
+
+    const first = await selectNextCase(prisma, 'session-uuid');
+    const second = await selectNextCase(prisma, 'session-uuid');
+
+    expect(second).toEqual(first);
+  });
+
+  it('returns the sole candidate when only one case ties at the lowest difficulty', async () => {
+    const prisma = createMockPrisma();
+    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    const onlyCase = makeCase({ id: 'case-only' });
+    prisma.case.findMany.mockResolvedValue([onlyCase]);
+
+    await expect(selectNextCase(prisma, 'session-uuid')).resolves.toEqual(onlyCase);
+  });
+
+  it('returns null when no case matches, without querying for tied candidates', async () => {
     const prisma = createMockPrisma();
     prisma.case.findFirst.mockResolvedValue(null);
 
     const result = await selectNextCase(prisma, 'session-uuid');
 
     expect(result).toBeNull();
+    expect(prisma.case.findMany).not.toHaveBeenCalled();
   });
 });
 
@@ -253,7 +409,8 @@ describe('resolveOpenGameDayLog', () => {
 describe('startRound', () => {
   function primeHappyPath(prisma: ReturnType<typeof createMockPrisma>) {
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
-    prisma.case.findFirst.mockResolvedValue(makeCase());
+    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findMany.mockResolvedValue([makeCase()]);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog());
     prisma.ownedItem.findMany.mockResolvedValue([
       {
@@ -278,6 +435,7 @@ describe('startRound', () => {
     prisma.treatment.findMany.mockResolvedValue([
       { id: 'treatment-uuid', code: 'REFER_ONCO', name: 'Refer to oncology', kind: 'REFERRAL' },
     ]);
+    prisma.caseExamination.findMany.mockResolvedValue([]);
   }
 
   it('shapes the full happy-path response', async () => {
@@ -355,12 +513,14 @@ describe('startRound', () => {
   it('never leaks answer-key fields present on the raw Case record', async () => {
     const prisma = createMockPrisma();
     primeHappyPath(prisma);
-    prisma.case.findFirst.mockResolvedValue({
-      ...makeCase(),
-      correctDiagnosisId: 'diagnosis-uuid',
-      correctTreatmentId: 'treatment-uuid',
-      resultExplanationText: 'It was melanoma.',
-    } as CaseRecord);
+    prisma.case.findMany.mockResolvedValue([
+      {
+        ...makeCase(),
+        correctDiagnosisId: 'diagnosis-uuid',
+        correctTreatmentId: 'treatment-uuid',
+        resultExplanationText: 'It was melanoma.',
+      } as CaseRecord,
+    ]);
 
     const result = await startRound(prisma, 'user-uuid');
 
@@ -419,5 +579,82 @@ describe('startRound', () => {
     });
     expect(prisma.gameDayLog.findFirst).not.toHaveBeenCalled();
     expect(prisma.ownedItem.findMany).not.toHaveBeenCalled();
+  });
+
+  it('omits an EXAMINATION_RESULTS document when no successful CaseExamination matches its shopItemId', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.case.findMany.mockResolvedValue([
+      makeCase({
+        documents: [
+          ...makeCase().documents,
+          {
+            id: 'exam-doc-uuid',
+            attentionPointRegion: null,
+            type: 'EXAMINATION_RESULTS',
+            title: 'Biopsy results',
+            documentDate: null,
+            sortOrder: 2,
+            imageUrl: null,
+            imageWidthPx: null,
+            imageHeightPx: null,
+            imageAltText: null,
+            content: { shopItemId: 'exam-shop-item-uuid' },
+          },
+        ],
+      }),
+    ]);
+    prisma.caseExamination.findMany.mockResolvedValue([]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(prisma.caseExamination.findMany).toHaveBeenCalledWith({
+      where: { gameSessionId: 'session-uuid', caseId: 'case-uuid', isSuccessful: true },
+      select: { shopItemId: true },
+    });
+    expect(result.case.documents.map((document) => document.id)).toEqual(['document-uuid']);
+  });
+
+  it('includes an EXAMINATION_RESULTS document once a successful CaseExamination references its shopItemId', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.case.findMany.mockResolvedValue([
+      makeCase({
+        documents: [
+          ...makeCase().documents,
+          {
+            id: 'exam-doc-uuid',
+            attentionPointRegion: null,
+            type: 'EXAMINATION_RESULTS',
+            title: 'Biopsy results',
+            documentDate: null,
+            sortOrder: 2,
+            imageUrl: null,
+            imageWidthPx: null,
+            imageHeightPx: null,
+            imageAltText: null,
+            content: { shopItemId: 'exam-shop-item-uuid' },
+          },
+        ],
+      }),
+    ]);
+    prisma.caseExamination.findMany.mockResolvedValue([{ shopItemId: 'exam-shop-item-uuid' }]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(result.case.documents.map((document) => document.id)).toEqual([
+      'document-uuid',
+      'exam-doc-uuid',
+    ]);
+  });
+
+  it('never filters non-EXAMINATION_RESULTS document types', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.caseExamination.findMany.mockResolvedValue([]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(result.case.documents.map((document) => document.id)).toEqual(['document-uuid']);
   });
 });

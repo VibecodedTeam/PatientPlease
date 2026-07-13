@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../src/app.js';
 import { prisma } from '../../src/db/prisma.js';
 import type { GoogleIdTokenVerifier } from '../../src/services/auth.js';
+import { pickIndexForSeed } from '../../src/services/round.js';
 
 function extractSessionCookie(response: {
   headers: { 'set-cookie'?: string | string[] | undefined };
@@ -93,6 +94,7 @@ describe('POST /api/v1/round', () => {
   let app: FastifyInstance;
 
   afterEach(async () => {
+    await prisma.caseExamination.deleteMany({});
     await prisma.diagnosisAttempt.deleteMany({});
     await prisma.gameDayLog.deleteMany({});
     await prisma.ownedItem.deleteMany({});
@@ -205,6 +207,26 @@ describe('POST /api/v1/round', () => {
     expect(dayLogCount).toBe(1);
   });
 
+  it('breaks ties at the lowest difficulty deterministically by session id, and stays on that case until diagnosed', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    const caseA = await createCase(diagnosis.id, treatment.id);
+    const caseB = await createCase(diagnosis.id, treatment.id);
+    const candidates = [caseA, caseB].sort((a, b) => (a.id < b.id ? -1 : 1));
+
+    const first = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const firstBody = first.json<{ gameSession: { id: string }; case: { id: string } }>();
+    const expectedIndex = pickIndexForSeed(firstBody.gameSession.id, candidates.length);
+    expect(firstBody.case.id).toBe(candidates[expectedIndex]?.id);
+
+    const second = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const secondBody = second.json<{ case: { id: string } }>();
+    expect(secondBody.case.id).toBe(firstBody.case.id);
+  });
+
   it('returns 409 and marks the session COMPLETED once every active Case has a DiagnosisAttempt in this session', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();
@@ -240,5 +262,100 @@ describe('POST /api/v1/round', () => {
       where: { id: firstBody.gameSession.id },
     });
     expect(gameSession.status).toBe('COMPLETED');
+  });
+
+  it('returns 409 game_completed for a COMPLETED session without wiping money or spawning a new session', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const completed = await prisma.gameSession.create({
+      data: { userId, money: 250, status: 'COMPLETED' },
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/round',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'game_completed' });
+    // No new session created, and the finished session's money is untouched.
+    const sessions = await prisma.gameSession.findMany({ where: { userId } });
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]?.id).toBe(completed.id);
+    expect(sessions[0]?.money).toBe(250);
+  });
+
+  it('returns 409 game_over for a GAME_OVER session without spawning a new session', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    await prisma.gameSession.create({
+      data: { userId, money: 0, status: 'GAME_OVER' },
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/round',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'game_over' });
+    const sessions = await prisma.gameSession.findMany({ where: { userId } });
+    expect(sessions).toHaveLength(1);
+  });
+
+  it('hides an EXAMINATION_RESULTS document until a successful CaseExamination exists for it', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    const gameCase = await createCase(diagnosis.id, treatment.id);
+    const shopItem = await prisma.shopItem.create({
+      data: {
+        sku: 'biopsy-1',
+        name: 'Biopsy',
+        description: 'test',
+        itemType: 'EXAMINATION',
+        price: 20,
+        content: { timeCostMs: 60000 },
+      },
+    });
+    await prisma.caseDocument.create({
+      data: {
+        caseId: gameCase.id,
+        type: 'EXAMINATION_RESULTS',
+        title: 'Biopsy results',
+        sortOrder: 2,
+        content: { shopItemId: shopItem.id },
+      },
+    });
+
+    const first = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const firstBody = first.json<{
+      gameSession: { id: string };
+      case: { documents: { type: string }[] };
+    }>();
+    expect(firstBody.case.documents.map((document) => document.type)).not.toContain(
+      'EXAMINATION_RESULTS',
+    );
+
+    await prisma.caseExamination.create({
+      data: {
+        gameSessionId: firstBody.gameSession.id,
+        caseId: gameCase.id,
+        shopItemId: shopItem.id,
+        isSuccessful: true,
+      },
+    });
+
+    const second = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const secondBody = second.json<{ case: { documents: { type: string }[] } }>();
+    expect(secondBody.case.documents.map((document) => document.type)).toContain(
+      'EXAMINATION_RESULTS',
+    );
   });
 });

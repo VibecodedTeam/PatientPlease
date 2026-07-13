@@ -15,6 +15,13 @@ jest.mock('../../../components/PatientScene', () => ({
 }));
 
 const { MainView } = require('../../../views/MainView');
+const { ApiProvider } = require('../../../providers/Api');
+
+function renderMainView() {
+  return render(
+    React.createElement(ApiProvider, { baseUrl: 'http://api.test' }, React.createElement(MainView)),
+  );
+}
 
 describe('MainView', () => {
   beforeEach(() => {
@@ -24,15 +31,36 @@ describe('MainView', () => {
   });
 
   it('renders the wall with the pinned board', () => {
-    render(React.createElement(MainView));
+    renderMainView();
     expect(screen.getByRole('region', { name: /doctor office wall/i })).toBeInTheDocument();
     expect(screen.getByText('Patients left today: 5')).toBeInTheDocument();
   });
 
   it('renders the patient documents desk', async () => {
-    render(React.createElement(MainView));
+    renderMainView();
 
     await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
     expect(screen.getByText('Patient Information')).toBeInTheDocument();
+  });
+
+  it('shows a completion message instead of the desk when the game is finished', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ error: 'game_completed' }), { status: 409 }));
+
+    renderMainView();
+
+    await waitFor(() => expect(screen.getByText(/completed every case/i)).toBeInTheDocument());
+    expect(screen.queryByText('Patient Information')).not.toBeInTheDocument();
+  });
+
+  it('shows a game-over message when the session is over', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ error: 'game_over' }), { status: 409 }));
+
+    renderMainView();
+
+    await waitFor(() => expect(screen.getByText(/game over/i)).toBeInTheDocument());
   });
 });

@@ -1,5 +1,7 @@
 import { jest } from '@jest/globals';
+import { MIN_DAY_DURATION_MS } from '../../src/constants.js';
 import {
+  DayNotElapsedError,
   NoActiveGameError,
   NoOpenDayError,
   endDay,
@@ -58,6 +60,12 @@ function makeGameDayLog(overrides: Partial<GameDayLogRecord> = {}): GameDayLogRe
     casesCorrect: 0,
     thresholdMet: null,
     penaltyApplied: false,
+    // Far enough in the past that endDay's minimum-duration gate never trips
+    // unless a test deliberately overrides startedAt to something recent.
+    startedAt: new Date('2020-01-01T00:00:00.000Z'),
+    pausedAt: null,
+    totalPausedMs: 0,
+    extraElapsedMs: 0,
     endedAt: null,
     ...overrides,
   };
@@ -239,6 +247,7 @@ describe('resetDay', () => {
         thresholdMet: null,
         penaltyApplied: false,
         pausedAt: null,
+        totalPausedMs: 0,
       },
     });
     expect(result).toEqual(refunded);
@@ -255,6 +264,60 @@ describe('resetDay', () => {
     expect(prisma.gameSession.update).toHaveBeenCalledWith({
       where: { id: 'session-uuid' },
       data: { money: 50, status: 'ACTIVE' },
+    });
+  });
+
+  it('accumulates the current pausedAt interval into totalPausedMs before clearing it', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    const pausedAt = new Date(Date.now() - 5000);
+    const openLog = makeGameDayLog({
+      id: 'open-log-uuid',
+      pausedAt,
+      totalPausedMs: 1000,
+    });
+    prisma.gameDayLog.findFirst.mockResolvedValue(openLog);
+    prisma.gameSession.update.mockResolvedValue(makeSession());
+
+    await resetDay(prisma, 'user-uuid');
+
+    expect(prisma.gameDayLog.update).toHaveBeenCalledWith({
+      where: { id: 'open-log-uuid' },
+      data: {
+        casesAttempted: 0,
+        casesCorrect: 0,
+        thresholdMet: null,
+        penaltyApplied: false,
+        pausedAt: null,
+        totalPausedMs: expect.any(Number) as number,
+      },
+    });
+    const call = prisma.gameDayLog.update.mock.calls[0]?.[0] as {
+      data: { totalPausedMs: number };
+    };
+    expect(call.data.totalPausedMs).toBeGreaterThanOrEqual(1000 + 5000);
+    expect(call.data.totalPausedMs).toBeLessThan(1000 + 6000);
+  });
+
+  it('leaves totalPausedMs unchanged when pausedAt was already null', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    const openLog = makeGameDayLog({ id: 'open-log-uuid', pausedAt: null, totalPausedMs: 1000 });
+    prisma.gameDayLog.findFirst.mockResolvedValue(openLog);
+    prisma.gameSession.update.mockResolvedValue(makeSession());
+
+    await resetDay(prisma, 'user-uuid');
+
+    expect(prisma.gameDayLog.update).toHaveBeenCalledWith({
+      where: { id: 'open-log-uuid' },
+      data: {
+        casesAttempted: 0,
+        casesCorrect: 0,
+        thresholdMet: null,
+        penaltyApplied: false,
+        pausedAt: null,
+        totalPausedMs: 1000,
+      },
     });
   });
 
@@ -300,6 +363,88 @@ describe('endDay', () => {
     expect(prisma.gameDayLog.update).not.toHaveBeenCalled();
   });
 
+  it('throws DayNotElapsedError when less than MIN_DAY_DURATION_MS has passed since startedAt', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    prisma.gameDayLog.findFirst.mockResolvedValue(
+      makeGameDayLog({ id: 'open-log-uuid', startedAt: new Date() }),
+    );
+
+    await expect(endDay(prisma, 'user-uuid')).rejects.toThrow(DayNotElapsedError);
+    expect(prisma.diagnosisAttempt.findMany).not.toHaveBeenCalled();
+    expect(prisma.gameDayLog.update).not.toHaveBeenCalled();
+  });
+
+  it('DayNotElapsedError carries the remaining ms until MIN_DAY_DURATION_MS has elapsed', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    const startedAt = new Date(Date.now() - 1000);
+    prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog({ startedAt }));
+
+    await expect(endDay(prisma, 'user-uuid')).rejects.toMatchObject({
+      remainingMs: expect.any(Number) as number,
+    });
+    try {
+      await endDay(prisma, 'user-uuid');
+      throw new Error('expected endDay to throw DayNotElapsedError');
+    } catch (error) {
+      expect(error).toBeInstanceOf(DayNotElapsedError);
+      const remainingMs = (error as DayNotElapsedError).remainingMs;
+      expect(remainingMs).toBeGreaterThan(0);
+      expect(remainingMs).toBeLessThanOrEqual(MIN_DAY_DURATION_MS);
+    }
+  });
+
+  it('throws DayNotElapsedError when totalPausedMs brings effective elapsed time back under the floor', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    prisma.gameDayLog.findFirst.mockResolvedValue(
+      makeGameDayLog({
+        id: 'open-log-uuid',
+        startedAt: new Date(Date.now() - MIN_DAY_DURATION_MS - 1000),
+        totalPausedMs: MIN_DAY_DURATION_MS,
+      }),
+    );
+
+    await expect(endDay(prisma, 'user-uuid')).rejects.toThrow(DayNotElapsedError);
+    expect(prisma.gameDayLog.update).not.toHaveBeenCalled();
+  });
+
+  it('succeeds when extraElapsedMs alone pushes effective elapsed time over the floor', async () => {
+    const prisma = createMockPrisma();
+    const session = makeSession();
+    prisma.gameSession.findFirst.mockResolvedValue(session);
+    prisma.gameDayLog.findFirst.mockResolvedValue(
+      makeGameDayLog({
+        id: 'open-log-uuid',
+        startedAt: new Date(),
+        extraElapsedMs: MIN_DAY_DURATION_MS + 1000,
+      }),
+    );
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([]);
+    prisma.gameSession.update.mockResolvedValue(session);
+    prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+
+    await expect(endDay(prisma, 'user-uuid')).resolves.toBeDefined();
+  });
+
+  it('succeeds once at least MIN_DAY_DURATION_MS has passed since startedAt', async () => {
+    const prisma = createMockPrisma();
+    const session = makeSession();
+    prisma.gameSession.findFirst.mockResolvedValue(session);
+    prisma.gameDayLog.findFirst.mockResolvedValue(
+      makeGameDayLog({
+        id: 'open-log-uuid',
+        startedAt: new Date(Date.now() - MIN_DAY_DURATION_MS - 1000),
+      }),
+    );
+    prisma.diagnosisAttempt.findMany.mockResolvedValue([]);
+    prisma.gameSession.update.mockResolvedValue(session);
+    prisma.gameDayLog.update.mockResolvedValue(makeGameDayLog({ id: 'open-log-uuid' }));
+
+    await expect(endDay(prisma, 'user-uuid')).resolves.toBeDefined();
+  });
+
   it('counts DiagnosisAttempts from a single query and stamps casesAttempted/casesCorrect/endingMoney/endedAt', async () => {
     const prisma = createMockPrisma();
     const session = makeSession({ money: 75, status: 'ACTIVE', studentLoanThreshold: null });
@@ -343,7 +488,18 @@ describe('endDay', () => {
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.gameSession.update).toHaveBeenCalledTimes(1);
     expect(prisma.gameDayLog.update).toHaveBeenCalledTimes(1);
-    expect(result.dayLog).toEqual(endedLog);
+    expect(result.dayLog).toEqual({
+      id: endedLog.id,
+      dayNumber: endedLog.dayNumber,
+      startingMoney: endedLog.startingMoney,
+      endingMoney: endedLog.endingMoney,
+      casesAttempted: endedLog.casesAttempted,
+      casesCorrect: endedLog.casesCorrect,
+      thresholdMet: endedLog.thresholdMet,
+      penaltyApplied: endedLog.penaltyApplied,
+      startedAt: endedLog.startedAt,
+      endedAt: endedLog.endedAt,
+    });
   });
 
   it('sets thresholdMet true and penaltyApplied false when endingMoney meets studentLoanThreshold', async () => {

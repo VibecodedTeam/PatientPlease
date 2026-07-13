@@ -100,6 +100,12 @@ each document instead carries `attentionPointRegion`, the coarse body region it'
 `null`), and the frontend's `PatientScene` maps that region to a 3D hotspot position/zoom
 preset itself.
 
+A `documents` entry of `type: "EXAMINATION_RESULTS"` is only included once the player has
+successfully ordered the matching examination for this case — i.e. a `CaseExamination` row
+exists for `(this session, this case, content.shopItemId)` with `isSuccessful: true`. Until
+then it's omitted entirely, not returned with placeholder/redacted content. See
+`docs/api/examinations.md` for how examinations are ordered.
+
 ## Orchestration
 
 On each call, the backend:
@@ -108,7 +114,13 @@ On each call, the backend:
    back to `ACTIVE` if `PAUSED`, or creates a fresh one if none exists (or the latest is
    `GAME_OVER`/`COMPLETED`).
 2. Picks the lowest-`difficulty` active `Case` that has no `DiagnosisAttempt` yet in this
-   session. If none remain, marks the session `COMPLETED` and returns `409`.
+   session. If none remain, marks the session `COMPLETED` and returns `409`. Ties at that
+   lowest difficulty are broken by a uniform pick among the tied candidates — not insertion
+   or id order — so replays don't always serve the same case first. The pick is a
+   deterministic function of `gameSessionId` and the tied candidate set (see
+   `pickIndexForSeed` in `services/round.ts`), not `Math.random()`: this keeps repeat calls
+   idempotent (see below) while still varying across sessions and once a tied case is
+   diagnosed and drops out of the candidate set.
 3. Reuses the session's currently open `GameDayLog` (`endedAt: null`), or opens a new one.
 4. Returns the session's owned shop items plus the full `Diagnosis`/`Treatment` catalogs
    (unfiltered — every player sees the same menu).
