@@ -5,9 +5,11 @@ import {
   pickIndexForSeed,
   resolveGameSession,
   resolveOpenGameDayLog,
+  selectDiagnosisOptions,
   selectNextCase,
   startRound,
   type CaseRecord,
+  type DiagnosisRecord,
   type GameDayLogRecord,
   type GameSessionRecord,
   type RoundPrismaClient,
@@ -350,6 +352,79 @@ describe('selectNextCase', () => {
   });
 });
 
+describe('selectDiagnosisOptions', () => {
+  const catalog: DiagnosisRecord[] = [
+    { id: 'd1', code: 'melanoma', name: 'Melanoma', category: 'MALIGNANT' },
+    { id: 'd2', code: 'bcc', name: 'Basal Cell Carcinoma', category: 'MALIGNANT' },
+    { id: 'd3', code: 'nevus', name: 'Nevus', category: 'BENIGN' },
+    { id: 'd4', code: 'psoriasis', name: 'Psoriasis', category: 'INFLAMMATORY' },
+    { id: 'd5', code: 'eczema', name: 'Eczema', category: 'INFLAMMATORY' },
+    { id: 'd6', code: 'wart', name: 'Wart', category: 'INFECTIOUS' },
+  ];
+
+  it('returns exactly 4 diagnoses when the catalog has at least 4', () => {
+    const result = selectDiagnosisOptions(catalog, 'd1');
+
+    expect(result).toHaveLength(4);
+  });
+
+  it('always includes the correct diagnosis', () => {
+    const result = selectDiagnosisOptions(catalog, 'd3');
+
+    expect(result.some((diagnosis) => diagnosis.id === 'd3')).toBe(true);
+  });
+
+  it('never returns duplicate diagnoses', () => {
+    const result = selectDiagnosisOptions(catalog, 'd1');
+    const ids = result.map((diagnosis) => diagnosis.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('falls back to the full catalog when fewer than 4 diagnoses exist', () => {
+    const smallCatalog = catalog.slice(0, 2);
+
+    const result = selectDiagnosisOptions(smallCatalog, 'd1');
+
+    expect(result).toHaveLength(2);
+    expect(result.map((diagnosis) => diagnosis.id).sort()).toEqual(['d1', 'd2']);
+  });
+
+  it('sorts the returned options by name', () => {
+    const result = selectDiagnosisOptions(catalog, 'd1', () => 0);
+    const names = result.map((diagnosis) => diagnosis.name);
+
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('picks different decoys when given a different random sequence, so repeat calls can reshuffle', () => {
+    const alwaysFirst = () => 0;
+    const alwaysLast = () => 0.999;
+
+    const resultA = selectDiagnosisOptions(catalog, 'd1', alwaysFirst);
+    const resultB = selectDiagnosisOptions(catalog, 'd1', alwaysLast);
+
+    expect(resultA.map((diagnosis) => diagnosis.id).sort()).not.toEqual(
+      resultB.map((diagnosis) => diagnosis.id).sort(),
+    );
+  });
+
+  it('throws a clear error when correctDiagnosisId is not present in the diagnoses catalog', () => {
+    expect(() => selectDiagnosisOptions(catalog, 'not-a-real-id')).toThrow(/not-a-real-id/);
+  });
+
+  it('never produces an undefined decoy when the injected random returns the upper boundary value 1', () => {
+    const alwaysOne = () => 1;
+
+    const result = selectDiagnosisOptions(catalog, 'd1', alwaysOne);
+
+    expect(result).toHaveLength(4);
+    expect(result.every((diagnosis) => diagnosis !== undefined)).toBe(true);
+    const ids = result.map((diagnosis) => diagnosis.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
 describe('resolveOpenGameDayLog', () => {
   it('reuses an open (endedAt: null) GameDayLog', async () => {
     const prisma = createMockPrisma();
@@ -650,6 +725,28 @@ describe('startRound', () => {
       'document-uuid',
       'exam-doc-uuid',
     ]);
+  });
+
+  it('narrows diagnosisOptions to 4 entries (correct + 3 decoys) when the catalog has more', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.diagnosis.findMany.mockResolvedValue([
+      { id: 'diagnosis-uuid', code: 'MELANOMA', name: 'Melanoma', category: 'MALIGNANT' },
+      { id: 'd2', code: 'bcc', name: 'Basal Cell Carcinoma', category: 'MALIGNANT' },
+      { id: 'd3', code: 'nevus', name: 'Nevus', category: 'BENIGN' },
+      { id: 'd4', code: 'psoriasis', name: 'Psoriasis', category: 'INFLAMMATORY' },
+      { id: 'd5', code: 'eczema', name: 'Eczema', category: 'INFLAMMATORY' },
+      { id: 'd6', code: 'wart', name: 'Wart', category: 'INFECTIOUS' },
+    ]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(result.diagnosisOptions).toHaveLength(4);
+    expect(result.diagnosisOptions.some((diagnosis) => diagnosis.id === 'diagnosis-uuid')).toBe(
+      true,
+    );
+    const ids = result.diagnosisOptions.map((diagnosis) => diagnosis.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('never filters non-EXAMINATION_RESULTS document types', async () => {
