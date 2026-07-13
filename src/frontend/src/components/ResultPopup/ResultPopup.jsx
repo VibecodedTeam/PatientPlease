@@ -4,11 +4,30 @@ import { OverlayPortal } from '../OverlayPortal';
 import styles from './ResultPopup.module.css';
 
 /**
- * Shown after the player submits a diagnosis: whether it was correct, and how
- * much money they earned or lost.
- * @param {{ isCorrect: boolean, moneyDelta: number, onClose: () => void }} props
+ * Formats a whole-second duration as m:ss (e.g. 42 -> "0:42", 90 -> "1:30").
+ * @param {number} totalSeconds
+ * @returns {string}
  */
-export function ResultPopup({ isCorrect, moneyDelta, onClose }) {
+function formatMMSS(totalSeconds) {
+  const safeSeconds = Math.max(0, Math.trunc(totalSeconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+/**
+ * Shown after the player submits a diagnosis: whether it was correct, how
+ * much money they earned or lost, how long they spent examining this case,
+ * and (once submitted) the full account balance.
+ * @param {{
+ *   isCorrect: boolean,
+ *   moneyDelta: number,
+ *   examineSeconds?: number,
+ *   balance?: number,
+ *   onClose: () => void,
+ * }} props
+ */
+export function ResultPopup({ isCorrect, moneyDelta, examineSeconds, balance, onClose }) {
   const verdictClassName = isCorrect
     ? `${styles.verdict} ${styles.verdictCorrect}`
     : `${styles.verdict} ${styles.verdictIncorrect}`;
@@ -27,6 +46,10 @@ export function ResultPopup({ isCorrect, moneyDelta, onClose }) {
         <h2 className={styles.title}>Diagnosis Result</h2>
         <p className={verdictClassName}>{isCorrect ? 'Correct!' : 'Incorrect'}</p>
         <div className={moneyClassName}>{formattedMoney}</div>
+        {typeof examineSeconds === 'number' && (
+          <p className={styles.meta}>Examine time: {formatMMSS(examineSeconds)}</p>
+        )}
+        {typeof balance === 'number' && <p className={styles.meta}>Balance: ${balance}</p>}
         <button type="button" className={`${styles.button} ${styles.primary}`} onClick={onClose}>
           Continue
         </button>
@@ -38,5 +61,7 @@ export function ResultPopup({ isCorrect, moneyDelta, onClose }) {
 ResultPopup.propTypes = {
   isCorrect: PropTypes.bool.isRequired,
   moneyDelta: PropTypes.number.isRequired,
+  examineSeconds: PropTypes.number,
+  balance: PropTypes.number,
   onClose: PropTypes.func.isRequired,
 };

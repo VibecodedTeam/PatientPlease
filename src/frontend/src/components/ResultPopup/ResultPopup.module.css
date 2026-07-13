@@ -74,6 +74,13 @@
   color: var(--color-danger);
 }
 
+.meta {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted, var(--color-text));
+  text-align: center;
+}
+
 .button {
   padding: 0.6rem 1rem;
   border-radius: 0.5rem;

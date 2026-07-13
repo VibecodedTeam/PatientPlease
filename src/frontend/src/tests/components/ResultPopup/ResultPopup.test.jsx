@@ -35,4 +35,20 @@ describe('ResultPopup', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('shows the examine time and full balance when provided', () => {
+    render(
+      <ResultPopup
+        isCorrect
+        moneyDelta={75}
+        examineSeconds={42}
+        balance={275}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByText('+$75')).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element.textContent === 'Examine time: 0:42')).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element.textContent === 'Balance: $275')).toBeInTheDocument();
+  });
 });
