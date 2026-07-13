@@ -73,6 +73,9 @@ export interface GameDayLogResponse {
   penaltyApplied: boolean | null;
   startedAt: Date;
   endedAt: Date | null;
+  /** Effective elapsed time (wall-clock minus paused time, plus examination time costs) that the
+   * day reached — only endDay's response populates this (see services/game.ts). */
+  elapsedMs: number;
 }
 
 export interface ShopItemRecord {
