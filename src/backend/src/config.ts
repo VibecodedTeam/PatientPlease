@@ -58,6 +58,8 @@ export function resolveRateLimitMax(value: string | undefined, fallback: number)
 export function resolveRateLimitWindowMs(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export function resolveGeminiApiKey(value: string | undefined): string {
   if (!value) {
     throw new Error('GEMINI_API_KEY environment variable is not set');

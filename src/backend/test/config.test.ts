@@ -170,6 +170,9 @@ describe('resolveRateLimitWindowMs', () => {
 
   it('falls back to the default when RATE_LIMIT_WINDOW_MS is non-numeric', () => {
     expect(resolveRateLimitWindowMs('abc', 60000)).toBe(60000);
+  });
+});
+
 describe('resolveGeminiApiKey', () => {
   it('returns the value when GEMINI_API_KEY is set', () => {
     expect(resolveGeminiApiKey('test-key')).toBe('test-key');
