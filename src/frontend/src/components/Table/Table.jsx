@@ -7,7 +7,7 @@ import { useResults } from '../../views/MainView/providers/Results';
 import { useDocumentTable } from './providers/DocumentTable';
 
 export function Table({ children, className = '', ...rest }) {
-  const { showResult } = useResults();
+  const { showResult, isSubmitting } = useResults();
   const { diagnosisOptions } = useDocumentTable();
   const rootClassName = className ? `${styles.table} ${className}` : styles.table;
   // undefined (not []) while the catalog isn't loaded yet, so Diagnose falls back to
@@ -20,7 +20,7 @@ export function Table({ children, className = '', ...rest }) {
   return (
     <div className={rootClassName} {...rest}>
       <TabElem />
-      <Diagnose options={options} onSubmit={showResult} />
+      <Diagnose options={options} onSubmit={showResult} isSubmitting={isSubmitting} />
       {children}
     </div>
   );

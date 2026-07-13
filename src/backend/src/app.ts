@@ -10,6 +10,7 @@ import cookiePlugin from './plugins/cookie.js';
 import currentUserPlugin from './plugins/current-user.js';
 import authRoutes from './routes/auth.js';
 import dayRoutes from './routes/day.js';
+import diagnosesRoutes from './routes/diagnoses.js';
 import examinationRoutes from './routes/examinations.js';
 import gameRoutes from './routes/game.js';
 import healthRoutes from './routes/health.js';
@@ -43,6 +44,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   app.register(roundRoutes);
   app.register(gameRoutes);
   app.register(dayRoutes);
+  app.register(diagnosesRoutes);
   app.register(shopRoutes);
   app.register(inventoryRoutes);
   app.register(examinationRoutes);

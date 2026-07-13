@@ -10,8 +10,10 @@ import styles from './StatisticsPopup.module.css';
  */
 export function StatisticsPopup({ statistics, onClose }) {
   return (
-    // overlay-portal: statistics must render above the day-phase screen
-    <OverlayPortal onDismiss={onClose}>
+    // overlay-portal: statistics must render above the day-phase screen; no onDismiss —
+    // ending the day is a real state transition (advances to night), so it must only
+    // happen via the explicit Continue button, never a backdrop click or Escape.
+    <OverlayPortal>
       <div className={styles.panel} onClick={(event) => event.stopPropagation()}>
         <h2 className={styles.title}>Daily Statistics</h2>
         <div className={styles.moneyRow}>

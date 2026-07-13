@@ -32,14 +32,23 @@ function renderWithProviders(ui) {
 
 describe('Table', () => {
   beforeEach(() => {
-    global.fetch = jest.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          case: { moneyReward: 50, moneyPenalty: 20, correctDiagnosisId: 'skin-cancer' },
-        }),
-        { status: 200 },
-      ),
-    );
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/diagnoses') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ case: { id: 'case-uuid', moneyReward: 50, moneyPenalty: 20 } }),
+          { status: 200 },
+        ),
+      );
+    });
   });
 
   it('renders its children', async () => {
@@ -75,6 +84,42 @@ describe('Table', () => {
         }),
       ),
     );
+  });
+
+  it('disables the submit button while the diagnosis submission is in flight', async () => {
+    let resolveDiagnoses;
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/diagnoses') {
+        return new Promise((resolve) => {
+          resolveDiagnoses = () =>
+            resolve(
+              new Response(
+                JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
+                { status: 200 },
+              ),
+            );
+        });
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ case: { id: 'case-uuid', moneyReward: 50, moneyPenalty: 20 } }),
+          { status: 200 },
+        ),
+      );
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<Table />);
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+    await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
+    await user.click(screen.getByText('Submit Diagnosis'));
+
+    await waitFor(() => expect(screen.getByText('Submit Diagnosis')).toBeDisabled());
+
+    resolveDiagnoses();
+    await waitFor(() => expect(screen.getByTestId('results-peek').textContent).not.toBe('none'));
   });
 
   it('passes the real diagnosisOptions catalog from DocumentTableProvider through to Diagnose', async () => {

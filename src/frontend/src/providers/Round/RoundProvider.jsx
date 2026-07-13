@@ -114,6 +114,19 @@ export function RoundProvider({ children }) {
     return data;
   }, [api]);
 
+  // Deliberately does NOT refetch the round: the result popup still needs to
+  // show the case that was just diagnosed. ResultsProvider's closeResult()
+  // refetches once the player dismisses that popup, so the next case only
+  // appears after they've acknowledged this one.
+  const submitDiagnosis = useCallback(
+    async (caseId, selectedDiagnosisId) => {
+      const data = await api.post(ENDPOINTS.diagnoses.submit, { caseId, selectedDiagnosisId });
+      setRound((current) => (current ? { ...current, gameSession: data.gameSession } : current));
+      return data;
+    },
+    [api],
+  );
+
   // Separate token from fetchTokenRef: loadShopCatalog and refreshRound are
   // independent operations and must not treat each other as superseding.
   const shopFetchTokenRef = useRef(0);
@@ -155,6 +168,7 @@ export function RoundProvider({ children }) {
     resetDay,
     resetGame,
     endDay,
+    submitDiagnosis,
     shopCatalog,
     isShopLoading,
     shopError,

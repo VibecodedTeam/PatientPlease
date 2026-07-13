@@ -37,4 +37,22 @@ describe('StatisticsPopup', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('does not call onClose when the backdrop is clicked — only Continue should advance to night', () => {
+    const onClose = jest.fn();
+    render(<StatisticsPopup statistics={STATISTICS} onClose={onClose} />);
+
+    fireEvent.click(document.getElementById('overlay-root').firstChild);
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('does not call onClose when Escape is pressed — only Continue should advance to night', () => {
+    const onClose = jest.fn();
+    render(<StatisticsPopup statistics={STATISTICS} onClose={onClose} />);
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });
