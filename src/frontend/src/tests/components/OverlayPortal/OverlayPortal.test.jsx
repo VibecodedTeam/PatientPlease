@@ -55,4 +55,44 @@ describe('OverlayPortal', () => {
 
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
+
+  it('does not call onDismiss on backdrop click when dismissOnBackdropClick is false', async () => {
+    const user = userEvent.setup();
+    const onDismiss = jest.fn();
+    render(
+      <OverlayPortal onDismiss={onDismiss} dismissOnBackdropClick={false}>
+        <div>Overlay content</div>
+      </OverlayPortal>
+    );
+
+    await user.click(screen.getByText('Overlay content').parentElement);
+
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it('still calls onDismiss on Escape when dismissOnBackdropClick is false', async () => {
+    const user = userEvent.setup();
+    const onDismiss = jest.fn();
+    render(
+      <OverlayPortal onDismiss={onDismiss} dismissOnBackdropClick={false}>
+        <div>Overlay content</div>
+      </OverlayPortal>
+    );
+
+    await user.keyboard('{Escape}');
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('appends overlayClassName to the default overlay layer class, without replacing it', () => {
+    render(
+      <OverlayPortal overlayClassName="floatingLayer">
+        <div>Overlay content</div>
+      </OverlayPortal>
+    );
+
+    const layer = screen.getByText('Overlay content').parentElement;
+    expect(layer.className).toContain('overlayLayer');
+    expect(layer.className).toContain('floatingLayer');
+  });
 });

@@ -6,9 +6,11 @@ import styles from './OverlayPortal.module.css';
 /**
  * @param {Object} props
  * @param {React.ReactNode} props.children
- * @param {() => void} [props.onDismiss] - called on backdrop click or Escape key
+ * @param {() => void} [props.onDismiss] - called on Escape key, and on backdrop click unless dismissOnBackdropClick is false
+ * @param {string} [props.overlayClassName] - extra class appended to the overlay layer, e.g. to make it transparent/non-blocking for a floating (non-modal) usage
+ * @param {boolean} [props.dismissOnBackdropClick] - set to false for a non-modal, floating usage where clicking outside the content must not close it
  */
-export function OverlayPortal({ children, onDismiss }) {
+export function OverlayPortal({ children, onDismiss, overlayClassName = '', dismissOnBackdropClick = true }) {
   useEffect(() => {
     const closeOnEscape = (event) => {
       if (event.key === 'Escape') onDismiss?.();
@@ -22,8 +24,9 @@ export function OverlayPortal({ children, onDismiss }) {
   if (!target) {
     return null;
   }
+  const layerClassName = overlayClassName ? `${styles.overlayLayer} ${overlayClassName}` : styles.overlayLayer;
   return createPortal(
-    <div className={styles.overlayLayer} onClick={onDismiss}>
+    <div className={layerClassName} onClick={dismissOnBackdropClick ? onDismiss : undefined}>
       {children}
     </div>,
     target
@@ -33,4 +36,6 @@ export function OverlayPortal({ children, onDismiss }) {
 OverlayPortal.propTypes = {
   children: PropTypes.node.isRequired,
   onDismiss: PropTypes.func,
+  overlayClassName: PropTypes.string,
+  dismissOnBackdropClick: PropTypes.bool,
 };
