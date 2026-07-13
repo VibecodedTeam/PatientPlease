@@ -73,14 +73,29 @@ const DEFAULT_ROUTES = {
     new Response(
       JSON.stringify({
         case: {
+          id: 'case-uuid',
           documents: ROUND_DOCUMENTS,
           moneyReward: 50,
           moneyPenalty: 20,
-          correctDiagnosisId: 'skin-cancer',
         },
       }),
       { status: 200 },
     ),
+  '/api/v1/diagnoses': async (request) => {
+    const body = await request.clone().json();
+    const isCorrect = body.selectedDiagnosisId === 'skin-cancer';
+    return new Response(
+      JSON.stringify({
+        gameSession: {},
+        result: {
+          isDiagnosisCorrect: isCorrect,
+          isTreatmentCorrect: null,
+          moneyDelta: isCorrect ? 50 : -20,
+        },
+      }),
+      { status: 200 },
+    );
+  },
   '/auth/me': () => new Response(JSON.stringify({ user: USER }), { status: 200 }),
 };
 
@@ -89,7 +104,7 @@ function mockFetchRoutes(overrides = {}) {
   global.fetch = jest.fn((request) => {
     const pathname = new URL(request.url).pathname;
     const handler = routes[pathname];
-    return Promise.resolve(handler ? handler() : new Response('{}', { status: 200 }));
+    return Promise.resolve(handler ? handler(request) : new Response('{}', { status: 200 }));
   });
 }
 

@@ -6,11 +6,8 @@ import { RoundProvider } from '../../../../../providers/Round';
 import { ResultsProvider, useResults } from '../../../../../views/MainView/providers/Results';
 
 const ROUND_RESPONSE = {
-  case: {
-    correctDiagnosisId: 'real-diagnosis-uuid',
-    moneyReward: 50,
-    moneyPenalty: 20,
-  },
+  gameSession: { money: 100 },
+  case: { id: 'case-uuid' },
 };
 
 function ResultsConsumer() {
@@ -33,6 +30,16 @@ function ResultsConsumer() {
   );
 }
 
+function mockFetch(diagnosesResponse) {
+  return jest.fn().mockImplementation((request) => {
+    const pathname = new URL(request.url).pathname;
+    if (pathname === '/api/v1/diagnoses') {
+      return Promise.resolve(new Response(JSON.stringify(diagnosesResponse), { status: 200 }));
+    }
+    return Promise.resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
+  });
+}
+
 async function renderWithProviders() {
   const result = render(
     <ApiProvider baseUrl="http://api.test">
@@ -48,56 +55,81 @@ async function renderWithProviders() {
 }
 
 describe('ResultsProvider', () => {
-  beforeEach(() => {
-    global.fetch = jest.fn().mockResolvedValue(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
-  });
-
   it('starts closed with no result', async () => {
+    global.fetch = mockFetch({});
     await renderWithProviders();
     expect(screen.getByTestId('is-open').textContent).toBe('false');
     expect(screen.getByTestId('is-correct').textContent).toBe('none');
   });
 
-  it('shows a correct result with the real money reward when the selection matches case.correctDiagnosisId', async () => {
+  it('shows a correct result from the /api/v1/diagnoses response', async () => {
+    global.fetch = mockFetch({
+      gameSession: { money: 150 },
+      result: { isDiagnosisCorrect: true, isTreatmentCorrect: null, moneyDelta: 50 },
+    });
     const user = userEvent.setup();
     await renderWithProviders();
 
     await user.click(screen.getByText('submit-correct'));
 
-    expect(screen.getByTestId('is-open').textContent).toBe('true');
+    await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
     expect(screen.getByTestId('is-correct').textContent).toBe('true');
     expect(screen.getByTestId('money-delta').textContent).toBe('50');
   });
 
-  it('shows an incorrect result with the real money penalty as a negative delta', async () => {
+  it('shows an incorrect result with a negative money delta', async () => {
+    global.fetch = mockFetch({
+      gameSession: { money: 80 },
+      result: { isDiagnosisCorrect: false, isTreatmentCorrect: null, moneyDelta: -20 },
+    });
     const user = userEvent.setup();
     await renderWithProviders();
 
     await user.click(screen.getByText('submit-incorrect'));
 
-    expect(screen.getByTestId('is-open').textContent).toBe('true');
+    await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
     expect(screen.getByTestId('is-correct').textContent).toBe('false');
     expect(screen.getByTestId('money-delta').textContent).toBe('-20');
   });
 
-  it('closeResult closes the popup', async () => {
+  it('closeResult closes the popup and refetches the round for the next case', async () => {
+    let roundCallCount = 0;
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/diagnoses') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              gameSession: { money: 150 },
+              result: { isDiagnosisCorrect: true, isTreatmentCorrect: null, moneyDelta: 50 },
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+      roundCallCount += 1;
+      return Promise.resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
+    });
+
     const user = userEvent.setup();
     await renderWithProviders();
+    expect(roundCallCount).toBe(1);
 
     await user.click(screen.getByText('submit-correct'));
-    expect(screen.getByTestId('is-open').textContent).toBe('true');
+    await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
 
     await user.click(screen.getByText('close'));
+
     expect(screen.getByTestId('is-open').textContent).toBe('false');
+    await waitFor(() => expect(roundCallCount).toBe(2));
   });
 
-  it('does not show a fake $0 result when submitted before the round finishes loading', async () => {
+  it('does not submit when round.case has not loaded yet', async () => {
     let resolveFetch;
     global.fetch = jest.fn(
       () =>
         new Promise((resolve) => {
-          resolveFetch = () =>
-            resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
+          resolveFetch = () => resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
         }),
     );
 
@@ -115,12 +147,9 @@ describe('ResultsProvider', () => {
     await user.click(screen.getByText('submit-correct'));
 
     expect(screen.getByTestId('is-open').textContent).toBe('false');
-    expect(screen.getByTestId('is-correct').textContent).toBe('none');
-    expect(screen.getByTestId('money-delta').textContent).toBe('none');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
 
     resolveFetch();
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
-    await user.click(screen.getByText('submit-correct'));
-    expect(screen.getByTestId('money-delta').textContent).toBe('50');
+    await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('false'));
   });
 });

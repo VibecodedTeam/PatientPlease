@@ -32,14 +32,28 @@ function renderWithProviders(ui) {
 
 describe('Table', () => {
   beforeEach(() => {
-    global.fetch = jest.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          case: { moneyReward: 50, moneyPenalty: 20, correctDiagnosisId: 'skin-cancer' },
-        }),
+    global.fetch = jest.fn(async (request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/diagnoses') {
+        const body = await request.clone().json();
+        const isCorrect = body.selectedDiagnosisId === 'skin-cancer';
+        return new Response(
+          JSON.stringify({
+            gameSession: {},
+            result: {
+              isDiagnosisCorrect: isCorrect,
+              isTreatmentCorrect: null,
+              moneyDelta: isCorrect ? 50 : -20,
+            },
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response(
+        JSON.stringify({ case: { id: 'case-uuid', moneyReward: 50, moneyPenalty: 20 } }),
         { status: 200 },
-      ),
-    );
+      );
+    });
   });
 
   it('renders its children', async () => {
