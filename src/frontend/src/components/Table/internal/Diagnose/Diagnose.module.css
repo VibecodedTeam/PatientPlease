@@ -76,3 +76,9 @@
   background-color: #a3a3a3;
   cursor: not-allowed;
 }
+
+.errorMessage {
+  margin: 0 20px 20px;
+  font-size: 0.85rem;
+  color: #8a1f1f;
+}

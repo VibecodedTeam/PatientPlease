@@ -56,6 +56,31 @@ describe('Table', () => {
     });
   });
 
+  it('shows an inline error message when the diagnosis submission fails', async () => {
+    global.fetch = jest.fn(async (request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/diagnoses') {
+        return new Response(JSON.stringify({ error: 'diagnosis_already_attempted' }), {
+          status: 409,
+        });
+      }
+      return new Response(
+        JSON.stringify({ case: { id: 'case-uuid', moneyReward: 50, moneyPenalty: 20 } }),
+        { status: 200 },
+      );
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<Table />);
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+    await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
+    await user.click(screen.getByText('Submit Diagnosis'));
+
+    await waitFor(() =>
+      expect(screen.getByText(/could not submit/i)).toBeInTheDocument(),
+    );
+  });
+
   it('renders its children', async () => {
     renderWithProviders(
       <Table>

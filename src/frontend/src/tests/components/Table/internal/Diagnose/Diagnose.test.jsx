@@ -53,4 +53,16 @@ describe('Diagnose', () => {
     await waitFor(() => expect(screen.getByText('Submit Diagnosis')).not.toBeDisabled());
     expect(handleSubmit).toHaveBeenCalledTimes(1);
   });
+
+  it('renders errorMessage when provided', () => {
+    render(<Diagnose errorMessage="Could not submit diagnosis. Please try again." />);
+    expect(
+      screen.getByText('Could not submit diagnosis. Please try again.'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders no error message by default', () => {
+    render(<Diagnose />);
+    expect(screen.queryByText(/could not submit/i)).not.toBeInTheDocument();
+  });
 });

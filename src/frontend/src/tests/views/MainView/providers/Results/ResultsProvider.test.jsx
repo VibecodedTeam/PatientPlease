@@ -11,12 +11,13 @@ const ROUND_RESPONSE = {
 };
 
 function ResultsConsumer() {
-  const { isOpen, result, showResult, closeResult } = useResults();
+  const { isOpen, result, error, showResult, closeResult } = useResults();
   return (
     <div>
       <span data-testid="is-open">{String(isOpen)}</span>
       <span data-testid="is-correct">{result ? String(result.isCorrect) : 'none'}</span>
       <span data-testid="money-delta">{result ? result.moneyDelta : 'none'}</span>
+      <span data-testid="has-error">{String(error !== null)}</span>
       <button onClick={() => showResult({ id: 'real-diagnosis-uuid', label: 'Melanoma' })}>
         submit-correct
       </button>
@@ -122,6 +123,26 @@ describe('ResultsProvider', () => {
 
     expect(screen.getByTestId('is-open').textContent).toBe('false');
     await waitFor(() => expect(roundCallCount).toBe(2));
+  });
+
+  it('sets an error and does not open the popup when submitDiagnosis rejects', async () => {
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/diagnoses') {
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: 'diagnosis_already_attempted' }), { status: 409 }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
+    });
+    const user = userEvent.setup();
+    await renderWithProviders();
+    expect(screen.getByTestId('has-error').textContent).toBe('false');
+
+    await user.click(screen.getByText('submit-correct'));
+
+    await waitFor(() => expect(screen.getByTestId('has-error').textContent).toBe('true'));
+    expect(screen.getByTestId('is-open').textContent).toBe('false');
   });
 
   it('does not submit when round.case has not loaded yet', async () => {
