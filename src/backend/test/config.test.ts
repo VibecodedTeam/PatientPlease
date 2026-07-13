@@ -1,10 +1,19 @@
 import {
+  resolveChatAudioMaxBytes,
+  resolveChatLlmProvider,
   resolveCookieSecret,
   resolveDevSessionEnabled,
   resolveFrontendOrigin,
+  resolveGeminiApiKey,
+  resolveGeminiModel,
   resolveGoogleClientId,
   resolvePort,
+  resolveRateLimitMax,
+  resolveRateLimitWindowMs,
   resolveSessionTtlMs,
+  resolveWhisperApiKey,
+  resolveWhisperBaseUrl,
+  resolveWhisperModel,
 } from '../src/config.js';
 
 describe('resolvePort', () => {
@@ -134,5 +143,150 @@ describe('resolveDevSessionEnabled', () => {
 
   it('returns true when ENABLE_DEV_SESSION is "true"', () => {
     expect(resolveDevSessionEnabled('true')).toBe(true);
+  });
+});
+
+describe('resolveRateLimitMax', () => {
+  it('returns the parsed value when RATE_LIMIT_MAX is set', () => {
+    expect(resolveRateLimitMax('50', 100)).toBe(50);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is unset', () => {
+    expect(resolveRateLimitMax(undefined, 100)).toBe(100);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is an empty string', () => {
+    expect(resolveRateLimitMax('', 100)).toBe(100);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is non-numeric', () => {
+    expect(resolveRateLimitMax('abc', 100)).toBe(100);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is "0"', () => {
+    expect(resolveRateLimitMax('0', 100)).toBe(100);
+  });
+
+  it('falls back to the default when RATE_LIMIT_MAX is negative', () => {
+    expect(resolveRateLimitMax('-1', 100)).toBe(100);
+  });
+});
+
+describe('resolveRateLimitWindowMs', () => {
+  it('returns the parsed value when RATE_LIMIT_WINDOW_MS is set', () => {
+    expect(resolveRateLimitWindowMs('30000', 60000)).toBe(30000);
+  });
+
+  it('falls back to the default when RATE_LIMIT_WINDOW_MS is unset', () => {
+    expect(resolveRateLimitWindowMs(undefined, 60000)).toBe(60000);
+  });
+
+  it('falls back to the default when RATE_LIMIT_WINDOW_MS is an empty string', () => {
+    expect(resolveRateLimitWindowMs('', 60000)).toBe(60000);
+  });
+
+  it('falls back to the default when RATE_LIMIT_WINDOW_MS is non-numeric', () => {
+    expect(resolveRateLimitWindowMs('abc', 60000)).toBe(60000);
+  });
+});
+
+describe('resolveGeminiApiKey', () => {
+  it('returns the value when GEMINI_API_KEY is set', () => {
+    expect(resolveGeminiApiKey('test-key')).toBe('test-key');
+  });
+
+  it('throws when GEMINI_API_KEY is unset', () => {
+    expect(() => resolveGeminiApiKey(undefined)).toThrow(
+      'GEMINI_API_KEY environment variable is not set',
+    );
+  });
+
+  it('throws when GEMINI_API_KEY is an empty string', () => {
+    expect(() => resolveGeminiApiKey('')).toThrow('GEMINI_API_KEY environment variable is not set');
+  });
+});
+
+describe('resolveWhisperBaseUrl', () => {
+  it('returns the value when set', () => {
+    expect(resolveWhisperBaseUrl('http://localhost:8000/v1')).toBe('http://localhost:8000/v1');
+  });
+  it('throws when unset', () => {
+    expect(() => resolveWhisperBaseUrl(undefined)).toThrow(/WHISPER_BASE_URL/);
+  });
+});
+
+describe('resolveWhisperModel', () => {
+  it('defaults to whisper-1 when unset', () => {
+    expect(resolveWhisperModel(undefined)).toBe('whisper-1');
+  });
+  it('returns the value when set', () => {
+    expect(resolveWhisperModel('Systran/faster-whisper-base')).toBe('Systran/faster-whisper-base');
+  });
+});
+
+describe('resolveWhisperApiKey', () => {
+  it('returns undefined when unset (local servers need no key)', () => {
+    expect(resolveWhisperApiKey(undefined)).toBeUndefined();
+  });
+  it('returns the value when set', () => {
+    expect(resolveWhisperApiKey('sk-test')).toBe('sk-test');
+  });
+});
+
+describe('resolveGeminiModel', () => {
+  it('returns the value when GEMINI_MODEL is set', () => {
+    expect(resolveGeminiModel('gemini-1.5-pro')).toBe('gemini-1.5-pro');
+  });
+
+  it('falls back to the default when GEMINI_MODEL is unset', () => {
+    expect(resolveGeminiModel(undefined)).toBe('gemini-2.0-flash');
+  });
+
+  it('falls back to the default when GEMINI_MODEL is an empty string', () => {
+    expect(resolveGeminiModel('')).toBe('gemini-2.0-flash');
+  });
+});
+
+describe('resolveChatAudioMaxBytes', () => {
+  it('returns the parsed value when CHAT_AUDIO_MAX_BYTES is set', () => {
+    expect(resolveChatAudioMaxBytes('1000')).toBe(1000);
+  });
+
+  it('falls back to 10MB when CHAT_AUDIO_MAX_BYTES is unset', () => {
+    expect(resolveChatAudioMaxBytes(undefined)).toBe(10 * 1024 * 1024);
+  });
+
+  it('falls back to 10MB when CHAT_AUDIO_MAX_BYTES is an empty string', () => {
+    expect(resolveChatAudioMaxBytes('')).toBe(10 * 1024 * 1024);
+  });
+
+  it('throws when CHAT_AUDIO_MAX_BYTES is not a number', () => {
+    expect(() => resolveChatAudioMaxBytes('lots')).toThrow(
+      'CHAT_AUDIO_MAX_BYTES environment variable must be a number',
+    );
+  });
+});
+
+describe('resolveChatLlmProvider', () => {
+  it('defaults to "gemini" when CHAT_LLM_PROVIDER is unset', () => {
+    expect(resolveChatLlmProvider(undefined)).toBe('gemini');
+  });
+
+  it('defaults to "gemini" when CHAT_LLM_PROVIDER is an empty string', () => {
+    expect(resolveChatLlmProvider('')).toBe('gemini');
+  });
+
+  it('returns "gemini" when CHAT_LLM_PROVIDER is explicitly set to "gemini"', () => {
+    expect(resolveChatLlmProvider('gemini')).toBe('gemini');
+  });
+
+  it('returns "mock" when CHAT_LLM_PROVIDER is set to "mock"', () => {
+    expect(resolveChatLlmProvider('mock')).toBe('mock');
+  });
+
+  it('throws when CHAT_LLM_PROVIDER is set to an unrecognized value', () => {
+    expect(() => resolveChatLlmProvider('chatgpt')).toThrow(
+      'CHAT_LLM_PROVIDER environment variable must be "gemini" or "mock"',
+    );
   });
 });
