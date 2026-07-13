@@ -41,6 +41,7 @@ model Case {
   chatMessages      ChatMessage[]
   gameplayLogs      GameplayLog[]
   examinations      CaseExamination[]
+  documentReveals   CaseDocumentReveal[]
 
   @@index([correctDiagnosisId])
   @@index([correctTreatmentId])
