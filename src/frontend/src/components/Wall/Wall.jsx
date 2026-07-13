@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from './Wall.module.css';
 import { OverlayPortal } from '../OverlayPortal';
+import { MoleCheckBoard } from '../MoleCheckBoard';
 import { Phone } from '../Phone';
 import { ExaminationsProvider } from '../Phone/providers/Examinations';
 import { WallInventoryProvider, useWallInventory } from './providers/WallInventory';
@@ -67,6 +68,13 @@ export function WallContent() {
               <path d="M6.62 10.79a15.09 15.09 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.36 11.36 0 0 0 3.57.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.4 21 3 13.6 3 4.5a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.24 1.02z" />
             </svg>
           </button>
+
+          {/* Hardcoded ABCDE mole-check reference, pinned to the wall like a card.
+              Collapsed it shows the five letters; clicking opens the draggable
+              ABCDE panel. No props — it renders from its own default CRITERIA. */}
+          <div className={styles.moleCheckBoardSlot}>
+            <MoleCheckBoard />
+          </div>
         </div>
 
         <div className={styles.shelf} aria-label="Medical handbooks shelf">
