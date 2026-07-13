@@ -319,6 +319,29 @@ describe('MainView', () => {
     );
   });
 
+  it('toggles the patient area between the 3D scene and the chat panel', async () => {
+    const user = userEvent.setup();
+    await renderMainView();
+
+    // Scene is shown by default; the chat panel is not mounted yet.
+    expect(screen.getByTestId('patient-scene-provider-stub')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('complementary', { name: /patient chat panel/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /^chat$/i }));
+    expect(
+      screen.getByRole('complementary', { name: /patient chat panel/i }),
+    ).toBeInTheDocument();
+    // Scene stays mounted underneath (kept alive to avoid re-running Three.js setup).
+    expect(screen.getByTestId('patient-scene-provider-stub')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /3d view/i }));
+    expect(
+      screen.queryByRole('complementary', { name: /patient chat panel/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('passes PatientScene a stable documents reference across re-renders while round is still loading', async () => {
     // MainView's own mount-effect refresh (in addition to RoundProvider's
     // own one-time mount fetch) means two /api/v1/round calls can be in

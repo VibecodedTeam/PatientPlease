@@ -93,10 +93,58 @@
   grid-column: 1;
   grid-row: 1 / span 2;
   display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
   background: #14100e;
   border-right: 1px solid #221b16;
+}
+
+.patientAreaToggle {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #221b16;
+}
+
+.toggleButton {
+  flex: 1 1 auto;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggleButton:hover {
+  border-color: var(--color-accent);
+}
+
+.toggleButton[aria-pressed='true'] {
+  background: var(--color-bg-elevated);
+  border-color: var(--color-accent);
+}
+
+.patientAreaContent {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.pane {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.paneHidden {
+  display: none;
 }
 
 .rightColumn {
