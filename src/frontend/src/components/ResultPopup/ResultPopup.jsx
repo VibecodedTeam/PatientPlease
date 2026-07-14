@@ -40,8 +40,10 @@ export function ResultPopup({ isCorrect, moneyDelta, examineSeconds, balance, on
   const formattedMoney = `${isCorrect ? '+' : '-'}$${Math.abs(moneyDelta)}`;
 
   return (
-    // overlay-portal: result must render above the day-phase screen
-    <OverlayPortal onDismiss={onClose}>
+    // overlay-portal: result must render above the day-phase screen; no onDismiss —
+    // closing this popup advances to the next case, so it must only happen via the
+    // explicit Continue button, never a backdrop click or Escape.
+    <OverlayPortal>
       <div className={styles.panel} onClick={(event) => event.stopPropagation()}>
         <h2 className={styles.title}>Diagnosis Result</h2>
         <p className={verdictClassName}>{isCorrect ? 'Correct!' : 'Incorrect'}</p>

@@ -40,4 +40,22 @@ describe('Information_2', () => {
     expect(container.textContent).toContain('Occupational Exposure: high');
     expect(screen.queryByText(/Lorem ipsum/)).not.toBeInTheDocument();
   });
+
+  it('renders single-field content as plain text, without a redundant key label', () => {
+    const { container } = renderWithDocumentTable(<Information_2 />, {
+      documents: [
+        {
+          id: 'd4',
+          type: 'UV_EXPOSURE_HISTORY',
+          title: 'Historia ekspozycji na promieniowanie UV',
+          content: { history: 'Przez lata korzystała z solarium.' },
+        },
+      ],
+    });
+
+    expect(container.textContent).toContain(
+      'Historia ekspozycji na promieniowanie UV: Przez lata korzystała z solarium.',
+    );
+    expect(container.textContent).not.toContain('History:');
+  });
 });
