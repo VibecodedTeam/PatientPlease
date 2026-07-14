@@ -3,7 +3,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../../../providers/Api';
 import { RoundProvider } from '../../../../../providers/Round';
-import { GameSessionProvider } from '../../../../../views/MainView/providers/GameSession';
+import {
+  GameSessionProvider,
+  useGameSession,
+  DAY_DURATION_SECONDS,
+} from '../../../../../views/MainView/providers/GameSession';
 import {
   ExaminationsProvider,
   useExaminations,
@@ -61,6 +65,7 @@ const ROUND = {
 
 function Probe() {
   const { examinations, isLoading, error, order, orderingId, orderError } = useExaminations();
+  const { addElapsedSeconds } = useGameSession();
   if (isLoading) return <span>loading</span>;
   if (error) return <span>error</span>;
   return (
@@ -76,6 +81,7 @@ function Probe() {
       <span data-testid="order-error">{orderError ? 'error' : 'none'}</span>
       <button onClick={() => order('exam-1')}>order-owned</button>
       <button onClick={() => order('exam-2')}>order-unowned</button>
+      <button onClick={() => addElapsedSeconds(DAY_DURATION_SECONDS)}>force-day-over</button>
     </div>
   );
 }
@@ -187,5 +193,42 @@ describe('ExaminationsProvider', () => {
 
     await waitFor(() => expect(screen.getByTestId('order-error').textContent).toBe('error'));
     expect(screen.getByTestId('ordering-id').textContent).toBe('none');
+  });
+
+  it('order() does not refetch the round once the day is already over, so a fresh next-day GameDayLog is not created before the player reaches the night shop', async () => {
+    const user = userEvent.setup();
+    let roundCallCount = 0;
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/shop') {
+        return Promise.resolve(new Response(JSON.stringify(CATALOG), { status: 200 }));
+      }
+      if (pathname === '/api/v1/examinations') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              gameSession: { money: 100 },
+              caseExamination: { id: 'ce1' },
+              timeCostMs: 90000,
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+      roundCallCount += 1;
+      return Promise.resolve(new Response(JSON.stringify(ROUND), { status: 200 }));
+    });
+    renderProvider();
+    await waitFor(() => screen.getByText('Punch Biopsy - 140 - 90000 - owned'));
+    expect(roundCallCount).toBe(1);
+
+    await user.click(screen.getByText('force-day-over'));
+    await user.click(screen.getByText('order-owned'));
+
+    await waitFor(() => expect(screen.getByTestId('ordering-id').textContent).toBe('none'));
+    // No additional /api/v1/round call: the day is already over, so order()
+    // defers to the day-end/night-shop flow instead of eagerly refetching
+    // (which would otherwise auto-start the next day's GameDayLog early).
+    expect(roundCallCount).toBe(1);
   });
 });

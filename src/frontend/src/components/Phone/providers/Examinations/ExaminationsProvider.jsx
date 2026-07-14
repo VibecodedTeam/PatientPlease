@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useRound } from '../../../../providers/Round';
 import { useGameSession } from '../../../../views/MainView/providers/GameSession';
@@ -22,9 +22,15 @@ export const ExaminationsContext = createContext(null);
 export function ExaminationsProvider({ children }) {
   const { round, shopCatalog, isShopLoading, shopError, loadShopCatalog, orderExamination, refreshRound } =
     useRound();
-  const { addElapsedSeconds } = useGameSession();
+  const { isDayOver, addElapsedSeconds } = useGameSession();
   const [orderingId, setOrderingId] = useState(null);
   const [orderError, setOrderError] = useState(null);
+
+  // Read via a ref (rather than as an order() dependency) so order's identity
+  // stays stable while still observing the latest value once its await
+  // resolves — mirrors ResultsProvider.closeResult()'s same guard (ee27d0f).
+  const isDayOverRef = useRef(isDayOver);
+  isDayOverRef.current = isDayOver;
 
   useEffect(() => {
     loadShopCatalog();
@@ -56,7 +62,19 @@ export function ExaminationsProvider({ children }) {
       try {
         const data = await orderExamination(caseId, shopItemId);
         addElapsedSeconds(Math.round(data.timeCostMs / 1000));
-        await refreshRound();
+        // Only refetch the round while the day is still running. If the
+        // natural 1-second tick ended the day (closing the GameDayLog) while
+        // this request was in flight, refetching here would hit
+        // POST /api/v1/round before the player ever reaches night phase,
+        // which auto-starts the NEXT day's GameDayLog early
+        // (resolveOpenGameDayLog creates one whenever none is open) —
+        // leaving the backend already past night-phase eligibility by the
+        // time the player navigates to the shop, so every purchase 409s
+        // with not_night_phase. Same race, same fix as ResultsProvider
+        // .closeResult() (ee27d0f).
+        if (!isDayOverRef.current) {
+          await refreshRound();
+        }
       } catch (err) {
         setOrderError(err);
       } finally {
