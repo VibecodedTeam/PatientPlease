@@ -167,6 +167,25 @@ export function RoundProvider({ children }) {
     [api],
   );
 
+  // Chat's revealedDocuments response is this-turn-only (see docs/api/chat.md),
+  // so merging (not replacing) round.case.documents is what keeps documents
+  // revealed on earlier turns visible. Dedupe by id since the backend can
+  // still resend one Chat already merged (e.g. a stale response arriving
+  // after a refreshRound()) without producing a duplicate page in the Book.
+  const revealDocuments = useCallback((newDocuments) => {
+    if (!newDocuments || newDocuments.length === 0) return;
+    setRound((current) => {
+      if (!current?.case) return current;
+      const existingIds = new Set(current.case.documents.map((document) => document.id));
+      const toAppend = newDocuments.filter((document) => !existingIds.has(document.id));
+      if (toAppend.length === 0) return current;
+      return {
+        ...current,
+        case: { ...current.case, documents: [...current.case.documents, ...toAppend] },
+      };
+    });
+  }, []);
+
   const value = {
     round,
     isLoading,
@@ -184,6 +203,7 @@ export function RoundProvider({ children }) {
     loadShopCatalog,
     purchaseShopItem,
     orderExamination,
+    revealDocuments,
   };
 
   return <RoundContext.Provider value={value}>{children}</RoundContext.Provider>;
