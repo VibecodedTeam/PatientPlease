@@ -141,7 +141,7 @@ async function renderMainView() {
                 Routes,
                 null,
                 React.createElement(Route, { path: '/', element: React.createElement(MainView) }),
-                React.createElement(Route, { path: '/night', element: React.createElement(NightMarker) }),
+                React.createElement(Route, { path: '/game/night', element: React.createElement(NightMarker) }),
               ),
             ),
           ),
@@ -413,7 +413,7 @@ describe('MainView', () => {
     expect(screen.getByText('-$20')).toBeInTheDocument();
   });
 
-  it('shows the Daily Statistics popup once the day timer elapses, and navigates to /night on close', async () => {
+  it('shows the Daily Statistics popup once the day timer elapses, and navigates to /game/night on close', async () => {
     mockFetchRoutes({
       '/api/v1/day/end': () =>
         new Response(
