@@ -12,9 +12,14 @@ export const ResultsContext = createContext(null);
  */
 export function ResultsProvider({ children }) {
   const { round, submitDiagnosis, refreshRound } = useRound();
-  const { elapsedSeconds } = useGameSession();
+  const { elapsedSeconds, isDayOver } = useGameSession();
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  // Read via a ref (rather than as a closeResult dependency) so closeResult's
+  // identity stays stable while still observing the latest value at call time.
+  const isDayOverRef = useRef(isDayOver);
+  isDayOverRef.current = isDayOver;
 
   // elapsedSeconds ticks every second, so a stale closure over it (captured
   // once when showResult was created) would report the wrong examine time.
@@ -61,8 +66,17 @@ export function ResultsProvider({ children }) {
   const closeResult = useCallback(() => {
     setResult(null);
     // The just-diagnosed case now has a DiagnosisAttempt, so refetching the round
-    // is what actually advances the desk to the next patient.
-    refreshRound();
+    // is what actually advances the desk to the next patient — but only while
+    // the day is still running. Once the day is over, refetching here would
+    // hit POST /api/v1/round before the player ever reaches night phase,
+    // which auto-starts the NEXT day's GameDayLog early (resolveOpenGameDayLog
+    // creates one whenever none is open) — leaving the backend already past
+    // night phase by the time the player actually navigates to the shop, so
+    // every purchase 409s. The day-end/Statistics flow owns the round refetch
+    // once night phase is properly entered (MainView's own mount effect).
+    if (!isDayOverRef.current) {
+      refreshRound();
+    }
   }, [refreshRound]);
 
   const value = { isOpen: result !== null, result, error, showResult, closeResult };
