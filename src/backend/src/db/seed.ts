@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { pathToFileURL } from 'node:url';
 import { Prisma } from '@prisma/client';
 import { prisma } from './prisma.js';
-import { REAL_CASES } from './data/realCases.js';
+import { REAL_CASES, type Sex } from './data/realCases.js';
 import { resolveCaseSeedRefs } from './caseSeedRefs.js';
 
 export const DIAGNOSES: Prisma.DiagnosisCreateManyInput[] = [
@@ -554,6 +554,16 @@ const BODY_MODEL_VARIANTS = [
   'female_slim_01',
 ] as const;
 
+function pickBodyModelVariant(sex: Sex, index: number): (typeof BODY_MODEL_VARIANTS)[number] {
+  if (sex === 'MALE') {
+    return index % 2 === 0 ? 'male_average_01' : 'male_slim_01';
+  }
+  if (sex === 'FEMALE') {
+    return index % 2 === 0 ? 'female_average_01' : 'female_slim_01';
+  }
+  return BODY_MODEL_VARIANTS[index % BODY_MODEL_VARIANTS.length]!;
+}
+
 export async function seed(options: { force?: boolean } = {}): Promise<void> {
   const alreadySeeded = (await prisma.diagnosis.count()) > 0;
   if (alreadySeeded && !options.force) {
@@ -597,7 +607,7 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
         sex: realCase.sex,
         occupation: realCase.occupation,
         portraitImageUrl: `https://cdn.example.test/patients/patient-${String(i + 1).padStart(2, '0')}.png`,
-        bodyModelVariant: BODY_MODEL_VARIANTS[i % BODY_MODEL_VARIANTS.length]!,
+        bodyModelVariant: pickBodyModelVariant(realCase.sex, i),
       },
     });
 

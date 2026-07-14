@@ -51,27 +51,27 @@ export const REAL_CASES: RealCaseSeed[] = [
     patientName: 'Irena Kwiat',
     age: 41,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Fryzjerka',
     bodyRegion: 'RIGHT_ARM',
-    imageFile: 'case-01.jpg',
+    imageFile: 'case-01.png',
     examinationSku: 'exam-dermoscopy',
     examinationFindings:
-      'Dermoscopy shows two small pigmented lesions with symmetric structure and a regular pigment network — features reassuring against malignancy.',
+      'Dermoskopia wykazuje dwie małe, pigmentowane zmiany o symetrycznej strukturze i regularnej sieci barwnikowej — cechy uspokajające, przemawiające przeciwko złośliwości.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
           history:
-            'Used tanning beds for years and rarely applied sunscreen, believing tanned skin looked healthier, more attractive, and gave more confidence.',
+            'Przez lata korzystała z solarium i rzadko stosowała krem z filtrem, wierząc, że opalona skóra wygląda zdrowiej, jest bardziej atrakcyjna i dodaje pewności siebie.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Two tiny dark moles on the arm, one no larger than a pinprick. Not dramatic-looking and not painful, but both are symmetric and multicolored.',
+            'Dwa maleńkie, ciemne znamiona na ramieniu, jedno nie większe niż ukłucie igłą. Nie wyglądają dramatycznie i nie bolą, ale oba są symetryczne i wielobarwne.',
         },
       },
     ],
@@ -79,31 +79,31 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'watchful-waiting',
     difficulty: 1,
     resultExplanationText:
-      'Symmetric, evenly pigmented moles with a benign dermoscopic pattern — a dysplastic nevus managed with observation and a 3-month follow-up rather than immediate excision.',
+      'Symetryczne, równomiernie pigmentowane znamiona o łagodnym obrazie dermoskopowym — znamię dysplastyczne, leczone obserwacją i kontrolą po 3 miesiącach zamiast natychmiastowego wycięcia.',
     sourceNote: null,
   },
   {
     patientName: 'Dariusz Wilk',
     age: 36,
     sex: 'MALE',
-    occupation: null,
+    occupation: 'Księgowy',
     bodyRegion: 'NECK',
-    imageFile: 'case-02.jpg',
+    imageFile: 'case-02.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy of the submandibular mass confirms primary melanoma, a very rare presentation arising from the submandibular gland region.',
+      'Biopsja masy podżuchwowej potwierdza pierwotnego czerniaka — bardzo rzadką postać wywodzącą się z okolicy gruczołu podżuchwowego.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
-        content: { history: 'No significant health problems in the past.' },
+        title: 'Historia choroby',
+        content: { history: 'Brak istotnych problemów zdrowotnych w przeszłości.' },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Progressive, painless, hard thickening on the lower left side of the face near the jaw, growing steadily over several weeks. No discomfort with eating or speaking, no prior trauma or infection in the area. The face has become visibly asymmetric because of the swelling.',
+            'Postępujące, niebolesne, twarde zgrubienie po lewej dolnej stronie twarzy w okolicy żuchwy, stopniowo powiększające się przez kilka tygodni. Brak dolegliwości podczas jedzenia czy mówienia, bez wcześniejszego urazu lub infekcji w tej okolicy. Twarz stała się widocznie asymetryczna z powodu obrzęku.',
         },
       },
     ],
@@ -111,26 +111,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 3,
     resultExplanationText:
-      'A rare primary melanoma of the submandibular gland region, requiring complete surgical resection and jaw reconstruction.',
+      'Rzadki pierwotny czerniak okolicy gruczołu podżuchwowego, wymagający całkowitej resekcji chirurgicznej i rekonstrukcji żuchwy.',
     sourceNote: null,
   },
   {
     patientName: 'Robert Sadowski',
     age: 39,
     sex: 'MALE',
-    occupation: null,
+    occupation: 'Pracownik magazynu',
     bodyRegion: 'BACK',
-    imageFile: 'case-03.jpg',
+    imageFile: 'case-03.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy confirms melanoma; excision performed with a safety margin and further staging tests ordered.',
+      'Biopsja potwierdza czerniaka; wykonano wycięcie z marginesem bezpieczeństwa i zlecono dalsze badania oceniające stopień zaawansowania.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'A mole on the back began bleeding after showering and toweling off. His partner examined it and found it covered with multiple small blisters, noticeably larger than his other moles, with dark patches. The mole has also been enlarging over time and has recently started to itch.',
+            'Znamię na plecach zaczęło krwawić po prysznicu i wycieraniu się ręcznikiem. Partnerka obejrzała je i stwierdziła, że jest pokryte licznymi małymi pęcherzykami, wyraźnie większe od pozostałych znamion pacjenta, z ciemnymi plamami. Znamię z czasem także się powiększało, a ostatnio zaczęło swędzieć.',
         },
       },
     ],
@@ -138,26 +138,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 2,
     resultExplanationText:
-      'Bleeding, itching, multicolored mole with recent growth — melanoma confirmed on biopsy, treated with margin excision and staging workup.',
+      'Krwawiące, swędzące, wielobarwne znamię z niedawnym wzrostem — czerniak potwierdzony biopsją, leczony wycięciem z marginesem i diagnostyką stopnia zaawansowania.',
     sourceNote: null,
   },
   {
     patientName: 'Kamil Zych',
     age: 34,
     sex: 'MALE',
-    occupation: null,
+    occupation: 'Tatuażysta',
     bodyRegion: 'LEFT_ARM',
-    imageFile: 'case-04.jpg',
+    imageFile: 'case-04.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy of the altered tattoo pigment confirms melanoma arising within the tattooed skin, a recognized rare phenomenon.',
+      'Biopsja zmienionego pigmentu tatuażu potwierdza czerniaka rozwijającego się w obrębie wytatuowanej skóry — rzadkie, ale znane zjawisko.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'A section of a long-standing tattoo on the left arm — previously uniform, dark, and well-defined — has developed an irregular, darker patch where the pigment appears to have spread. The area has gradually grown and become slightly raised, as if something were accumulating beneath the skin. No pain or itching, but the area is visually distinct from the rest of the tattoo and clearly enlarging.',
+            'Fragment starego tatuażu na lewym ramieniu — wcześniej jednolity, ciemny i wyraźnie odgraniczony — rozwinął nieregularną, ciemniejszą plamę, w miejscu której pigment wydaje się rozprzestrzeniać. Obszar stopniowo się powiększał i lekko uniósł, jakby coś gromadziło się pod skórą. Bez bólu i swędzenia, ale obszar wyraźnie różni się wyglądem od reszty tatuażu i wyraźnie się powiększa.',
         },
       },
     ],
@@ -165,34 +165,34 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: null,
     difficulty: 3,
     resultExplanationText:
-      'Melanoma arising within tattooed skin — a rare but documented presentation where the tumor can be mistaken for tattoo pigment changes.',
+      'Czerniak rozwijający się w obrębie wytatuowanej skóry — rzadka, lecz udokumentowana postać, w której guz można pomylić ze zmianami pigmentu tatuażu.',
     sourceNote: null,
   },
   {
     patientName: 'Bogumiła Nowicka',
     age: 45,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Krawcowa',
     bodyRegion: 'ABDOMEN',
-    imageFile: 'case-05.jpg',
+    imageFile: 'case-05.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy confirms melanoma; enlarged inguinal lymph nodes raise concern for regional spread.',
+      'Biopsja potwierdza czerniaka; powiększone węzły chłonne pachwinowe budzą obawy o rozprzestrzenienie regionalne.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
+        title: 'Historia choroby',
         content: {
           history:
-            'Has had numerous moles for as long as she can remember, but they never caused problems and she has otherwise been healthy.',
+            'Ma liczne znamiona odkąd pamięta, ale nigdy nie sprawiały problemów, a poza tym zawsze była zdrowa.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'A rough-surfaced mole on the right side of the abdomen, present since childhood, changed after a vacation into a translucent, blood- and fluid-filled nodule. Nothing had ever changed with her moles before this. Inguinal lymph nodes are enlarged.',
+            'Znamię o chropowatej powierzchni po prawej stronie brzucha, obecne od dzieciństwa, po urlopie zmieniło się w półprzezroczysty guzek wypełniony krwią i płynem. Wcześniej nigdy nie obserwowała żadnych zmian w swoich znamionach. Węzły chłonne pachwinowe są powiększone.',
         },
       },
     ],
@@ -200,26 +200,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 3,
     resultExplanationText:
-      'A childhood mole transformed into a blood-filled nodule with enlarged inguinal lymph nodes — melanoma confirmed, treated with resection.',
+      'Znamię obecne od dzieciństwa przekształciło się w guzek wypełniony krwią, z powiększonymi węzłami chłonnymi pachwinowymi — potwierdzony czerniak, leczony resekcją.',
     sourceNote: null,
   },
   {
     patientName: 'Wanda Kaczmarek',
     age: 79,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Emerytka',
     bodyRegion: 'HEAD',
-    imageFile: 'case-06.jpg',
+    imageFile: 'case-06.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy shows SOX-10 positive pigmented cells; findings confirm nasal mucosal desmoplastic melanoma, a very rare site for melanoma.',
+      'Biopsja wykazuje komórki barwnikowe SOX-10 dodatnie; wynik potwierdza desmoplastycznego czerniaka błony śluzowej nosa — bardzo rzadką lokalizację czerniaka.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Presented to an ENT specialist with chronic nasal discomfort and watery discharge, initially assumed to be simple irritation. The doctor noticed a small change in the nasal vestibule. A biopsy revealed pigment-positive cells marking positive for SOX-10. After referral to a specialist center, a bluish spot appeared at the earlier biopsy site. Despite no other symptoms, it was removed because of its gradual enlargement and the resulting nasal asymmetry.',
+            'Zgłosiła się do laryngologa z powodu przewlekłego dyskomfortu w nosie i wodnistej wydzieliny, początkowo uznawanych za zwykłe podrażnienie. Lekarz zauważył niewielką zmianę w przedsionku nosa. Biopsja ujawniła komórki barwnikowe dodatnie pod względem markera SOX-10. Po skierowaniu do ośrodka specjalistycznego w miejscu wcześniejszej biopsji pojawiła się niebieskawa plamka. Mimo braku innych objawów zmianę usunięto z powodu stopniowego powiększania się i wynikającej z tego asymetrii nosa.',
         },
       },
     ],
@@ -227,34 +227,34 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: null,
     difficulty: 3,
     resultExplanationText:
-      'A rare desmoplastic melanoma of the nasal mucosa, discovered incidentally during evaluation for chronic nasal symptoms.',
+      'Rzadki desmoplastyczny czerniak błony śluzowej nosa, wykryty przypadkowo podczas diagnostyki przewlekłych objawów nosowych.',
     sourceNote: null,
   },
   {
     patientName: 'Zenon Lis',
     age: 70,
     sex: 'MALE',
-    occupation: null,
+    occupation: 'Emeryt',
     bodyRegion: 'LEFT_ARM',
-    imageFile: 'case-07.jpg',
+    imageFile: 'case-07.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy of the darkening moles confirms melanoma; melanuria and axillary lymphadenopathy suggest disseminated disease.',
+      'Biopsja ciemniejących znamion potwierdza czerniaka; melanuria i limfadenopatia pachowa sugerują chorobę rozsianą.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
+        title: 'Historia choroby',
         content: {
           history:
-            'Extensive history of type II diabetes, hypertension, and atherosclerosis. Enlarged lymph nodes were noted in the left axillary region during an unrelated surgical procedure.',
+            'Długa historia cukrzycy typu II, nadciśnienia tętniczego i miażdżycy. Powiększone węzły chłonne stwierdzono w lewej okolicy pachowej podczas niezwiązanego z tym zabiegu chirurgicznego.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'After a cardiac procedure, noticed strong darkening of several moles, which over time changed shape and developed irregular borders. Also noticed his urine had become darker (melanuria), and blood work showed leukocytosis, elevated ESR, and elevated cholesterol.',
+            'Po zabiegu kardiologicznym zauważył silne ciemnienie kilku znamion, które z czasem zmieniły kształt i uzyskały nieregularne brzegi. Zauważył także, że jego mocz stał się ciemniejszy (melanuria), a badania krwi wykazały leukocytozę, podwyższone OB i podwyższony cholesterol.',
         },
       },
     ],
@@ -262,34 +262,33 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: null,
     difficulty: 3,
     resultExplanationText:
-      'Multiple darkening, changing moles with melanuria and axillary lymphadenopathy point to disseminated melanoma.',
+      'Liczne ciemniejące, zmieniające się znamiona wraz z melanurią i limfadenopatią pachową wskazują na czerniaka rozsianego.',
     sourceNote: null,
   },
   {
     patientName: 'Barbara Sikora',
     age: 45,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Kierowniczka ds. marketingu',
     bodyRegion: 'CHEST',
-    imageFile: 'case-08.jpg',
+    imageFile: 'case-08.png',
     examinationSku: 'exam-dermoscopy',
     examinationFindings:
-      'Dermoscopy raises suspicion for stage I melanoma with an estimated thickness of 1.2 mm; referred for biopsy to confirm.',
+      'Dermoskopia budzi podejrzenie czerniaka w I stopniu zaawansowania o szacowanej grubości 1,2 mm; skierowano na biopsję celem potwierdzenia.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
-          history:
-            'Recent sun-intensive vacation in Madeira preceded the appearance of the lesion.',
+          history: 'Niedawny, intensywnie słoneczny urlop na Maderze poprzedził pojawienie się zmiany.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'A few months after returning from a vacation in Madeira, noticed an unusual skin change above the left collarbone. Its borders were jagged, its color darker than her other moles, and its shape slightly raised. After a month of observation, the lesion was clearly evolving — enlarging and becoming more diffuse.',
+            'Kilka miesięcy po powrocie z urlopu na Maderze zauważyła nietypową zmianę skórną nad lewym obojczykiem. Jej brzegi były postrzępione, kolor ciemniejszy niż w przypadku pozostałych znamion, a kształt lekko uniesiony. Po miesiącu obserwacji zmiana wyraźnie ewoluowała — powiększała się i stawała bardziej rozlana.',
         },
       },
     ],
@@ -297,34 +296,34 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: null,
     difficulty: 2,
     resultExplanationText:
-      'A new, jagged, dark, evolving lesion above the collarbone following intense sun exposure — dermoscopy-suspected stage I melanoma.',
+      'Nowa, postrzępiona, ciemna, ewoluująca zmiana nad obojczykiem po intensywnej ekspozycji na słońce — czerniak w I stopniu zaawansowania podejrzewany w dermoskopii.',
     sourceNote: null,
   },
   {
     patientName: 'Józef Baran',
     age: 55,
     sex: 'MALE',
-    occupation: 'Construction Engineer',
+    occupation: 'Inżynier budownictwa',
     bodyRegion: 'NECK',
-    imageFile: 'case-09.jpg',
+    imageFile: 'case-09.png',
     examinationSku: 'exam-dermoscopy',
     examinationFindings:
-      'Dermoscopy and full ABCDE assessment strongly suggest melanoma given the asymmetry, border irregularity, color variation, size, and evolution.',
+      'Dermoskopia i pełna ocena ABCDE silnie sugerują czerniaka, biorąc pod uwagę asymetrię, nieregularne brzegi, zróżnicowanie koloru, rozmiar i ewolucję zmiany.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
           history:
-            'Rarely uses sunscreen, citing habit and the practical demands of outdoor construction work. History of extensive sunburns in childhood. Has many pigmented moles.',
+            'Rzadko stosuje krem z filtrem, tłumacząc to przyzwyczajeniem oraz praktycznymi wymogami pracy budowlanej na zewnątrz. W dzieciństwie miał liczne poważne oparzenia słoneczne. Ma wiele pigmentowanych znamion.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'A mole on the back of the neck changed shape, enlarged, and changed color over about 6 months. Skin examination found a 9mm x 7mm lesion meeting ABCDE criteria: asymmetric, jagged borders, heterogeneous color (brown mixed with red-pink), diameter over 9mm, and evolution over 6 months.',
+            'Znamię z tyłu szyi zmieniło kształt, powiększyło się i zmieniło kolor w ciągu około 6 miesięcy. Badanie skóry wykazało zmianę o wymiarach 9 mm x 7 mm spełniającą kryteria ABCDE: asymetryczna, postrzępione brzegi, niejednorodny kolor (brąz zmieszany z czerwono-różowym), średnica ponad 9 mm oraz ewolucja trwająca ponad 6 miesięcy.',
         },
       },
     ],
@@ -332,7 +331,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: null,
     difficulty: 2,
     resultExplanationText:
-      'A changing neck mole meeting all five ABCDE melanoma warning criteria in a long-term outdoor worker with a childhood sunburn history.',
+      'Zmieniające się znamię na szyi spełniające wszystkie pięć kryteriów ostrzegawczych ABCDE u długoletniego pracownika fizycznego pracującego na zewnątrz, z historią oparzeń słonecznych w dzieciństwie.',
     sourceNote:
       'Diagnosis reflects the ABCDE assessment described in the source; no explicit final diagnosis was stated.',
   },
@@ -340,26 +339,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     patientName: 'Marcin Krupa',
     age: 50,
     sex: 'MALE',
-    occupation: 'Construction Worker',
+    occupation: 'Robotnik budowlany',
     bodyRegion: 'HEAD',
-    imageFile: 'case-10.jpg',
+    imageFile: 'case-10.png',
     examinationSku: 'exam-dermoscopy',
     examinationFindings:
-      'Dermoscopy and clinical exam confirm a pearly, telangiectatic nodule typical of basal cell carcinoma, stage I.',
+      'Dermoskopia i badanie kliniczne potwierdzają perłowy, teleangiektatyczny guzek typowy dla raka podstawnokomórkowego w I stopniu zaawansowania.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
-          history: 'Well-built, physically active construction worker with skin phototype II.',
+          history: 'Dobrze zbudowany, aktywny fizycznie robotnik budowlany o fototypie skóry II.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'A translucent, pearly lesion over 6mm in diameter and oval in shape has been present on the right cheek for years. Shiny in appearance, occasionally bleeds, but never worried him. Recently began enlarging and itching, prompting a visit at his daughter’s urging.',
+            'Półprzezroczysta, perłowa zmiana o średnicy ponad 6 mm i owalnym kształcie od lat obecna na prawym policzku. Wygląda błyszcząco, czasem krwawi, ale nigdy go to nie niepokoiło. Ostatnio zaczęła się powiększać i swędzieć, co skłoniło go do wizyty za namową córki.',
         },
       },
     ],
@@ -367,31 +366,31 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'mohs-surgery',
     difficulty: 1,
     resultExplanationText:
-      'A classic pearly, shiny nodule on the cheek — basal cell carcinoma, stage I, treated with Mohs micrographic surgery given the facial location.',
+      'Klasyczny perłowy, błyszczący guzek na policzku — rak podstawnokomórkowy w I stopniu zaawansowania, leczony chirurgią mikrograficzną Mohsa ze względu na lokalizację na twarzy.',
     sourceNote: null,
   },
   {
     patientName: 'Zofia Wrona',
     age: 68,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Emerytka',
     bodyRegion: 'NECK',
-    imageFile: 'case-11.jpg',
+    imageFile: 'case-11.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy confirms squamous cell carcinoma, stage III, with spread to regional lymph nodes and deep invasion into adjacent muscle and nerve tissue; imaging also reveals a small pulmonary metastasis.',
+      'Biopsja potwierdza raka kolczystokomórkowego w III stopniu zaawansowania, z zajęciem regionalnych węzłów chłonnych i głębokim naciekaniem sąsiednich mięśni i tkanki nerwowej; badania obrazowe ujawniają także niewielki przerzut do płuc.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
-        content: { history: 'Widowed, living alone on an allotment plot, and a smoker.' },
+        title: 'Historia choroby',
+        content: { history: 'Wdowa, mieszka samotnie na działce ogrodniczej, pali papierosy.' },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Rough, scaling patches and hard nodules with central ulceration on the neck, present for years. Over time the lesions began hurting under pressure, the nodules enlarged, and nearby neck lymph nodes became enlarged. In recent months she experienced uncontrolled weight loss and developed a limp on her right leg.',
+            'Szorstkie, łuszczące się plamy oraz twarde guzki z owrzodzeniem centralnym na szyi, obecne od lat. Z czasem zmiany zaczęły boleć pod naciskiem, guzki się powiększyły, a pobliskie węzły chłonne szyi uległy powiększeniu. W ostatnich miesiącach doświadczyła niekontrolowanego spadku wagi i zaczęła utykać na prawą nogę.',
         },
       },
     ],
@@ -399,26 +398,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'referral-oncology',
     difficulty: 3,
     resultExplanationText:
-      'Long-standing ulcerated, scaling neck lesions progressed to stage III squamous cell carcinoma with nodal and pulmonary metastasis, requiring oncologic referral for resection, node clearance, and chemotherapy.',
+      'Długotrwałe owrzodziałe, łuszczące się zmiany na szyi przekształciły się w raka kolczystokomórkowego w III stopniu zaawansowania z przerzutami do węzłów chłonnych i płuc, wymagające skierowania onkologicznego celem resekcji, usunięcia węzłów chłonnych i chemioterapii.',
     sourceNote: null,
   },
   {
     patientName: 'Horacjusz Duda',
     age: 40,
     sex: 'MALE',
-    occupation: null,
+    occupation: 'Kierowca autobusu',
     bodyRegion: 'HEAD',
-    imageFile: 'case-12.jpg',
+    imageFile: 'case-12.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Histopathology confirms primary melanoma of the maxillary gingival mucosa, a rare site for melanoma.',
+      'Badanie histopatologiczne potwierdza pierwotnego czerniaka błony śluzowej dziąsła szczęki — rzadką lokalizację czerniaka.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Noticed a dark pigmented change on the upper gum. Initially painless and asymptomatic, so it was ignored for a long time. The lesion was well-demarcated, darker than the surrounding mucosa, and gradually enlarging.',
+            'Zauważył ciemną, pigmentowaną zmianę na górnej dziąśle. Początkowo niebolesna i bezobjawowa, więc długo była ignorowana. Zmiana była dobrze odgraniczona, ciemniejsza niż otaczająca błona śluzowa i stopniowo się powiększała.',
         },
       },
     ],
@@ -426,34 +425,34 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 3,
     resultExplanationText:
-      'A pigmented gum lesion, ignored for a long time due to lack of symptoms, proved to be a rare primary melanoma of the oral mucosa.',
+      'Pigmentowana zmiana na dziąśle, długo ignorowana z powodu braku objawów, okazała się rzadkim pierwotnym czerniakiem błony śluzowej jamy ustnej.',
     sourceNote: null,
   },
   {
     patientName: 'Hiacynta Górska',
     age: 69,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Emerytka',
     bodyRegion: 'CHEST',
-    imageFile: 'case-13.jpg',
+    imageFile: 'case-13.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Histopathology confirms melanoma, most likely a late metastasis from the melanoma resected over 30 years earlier.',
+      'Badanie histopatologiczne potwierdza czerniaka, najprawdopodobniej późny przerzut czerniaka wyciętego ponad 30 lat wcześniej.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
+        title: 'Historia choroby',
         content: {
           history:
-            'Melanoma was surgically removed from the area of the left pectoral muscle more than 30 years earlier.',
+            'Ponad 30 lat wcześniej chirurgicznie usunięto czerniaka z okolicy lewego mięśnia piersiowego.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'For several months, increasing epigastric pain, developing anemia, and unintentional weight loss. Imaging revealed a large gastric infiltration; during surgery, a dark, infiltrating tumor was found involving the gastric fundus.',
+            'Od kilku miesięcy narastający ból w nadbrzuszu, rozwijająca się niedokrwistość i niezamierzona utrata masy ciała. Badania obrazowe ujawniły duży naciek w żołądku; podczas operacji stwierdzono ciemny, naciekający guz obejmujący dno żołądka.',
         },
       },
     ],
@@ -461,42 +460,42 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'referral-oncology',
     difficulty: 3,
     resultExplanationText:
-      'A gastric tumor decades after an earlier melanoma excision proved to be a late metastatic recurrence of that original melanoma.',
+      'Guz żołądka pojawiający się dekady po wcześniejszym wycięciu czerniaka okazał się późnym przerzutowym nawrotem tego pierwotnego czerniaka.',
     sourceNote: null,
   },
   {
     patientName: 'Krystyna Sroka',
     age: 57,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Agentka turystyczna',
     bodyRegion: 'RIGHT_ARM',
-    imageFile: 'case-14.jpg',
+    imageFile: 'case-14.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Dermoscopy and biopsy, prompted by significant risk factors, confirm melanoma.',
+      'Dermoskopia i biopsja, wykonane z powodu istotnych czynników ryzyka, potwierdzają czerniaka.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
           history:
-            'Lived for many years in Bermuda with strong UV exposure, unaware at the time of the importance of sun protection. Since age 20 has been more careful, using SPF sunscreen and avoiding sun on hot, bright days.',
+            'Przez wiele lat mieszkała na Bermudach, gdzie była silnie eksponowana na promieniowanie UV, nie zdając sobie wówczas sprawy z wagi ochrony przeciwsłonecznej. Od 20. roku życia jest bardziej ostrożna — stosuje kremy z filtrem SPF i unika słońca w gorące, słoneczne dni.',
         },
       },
       {
         type: 'FAMILY_HISTORY',
-        title: 'Family history',
+        title: 'Historia rodzinna',
         content: {
           history:
-            'Father had skin cancer, which is why she has been checking her moles periodically for several years.',
+            'Jej ojciec chorował na raka skóry, dlatego od kilku lat okresowo kontroluje swoje znamiona.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Noticed a tiny but dark mole on the right arm. Has not observed strong changes in its shape, but knows her own moles well and this one looks atypical to her.',
+            'Zauważyła maleńkie, ale ciemne znamię na prawym ramieniu. Nie zaobserwowała wyraźnych zmian jego kształtu, ale dobrze zna swoje znamiona i to jedno wygląda dla niej nietypowo.',
         },
       },
     ],
@@ -504,34 +503,34 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: null,
     difficulty: 2,
     resultExplanationText:
-      'A tiny but atypical-looking mole, in a patient with major UV and family-history risk factors, proved to be melanoma.',
+      'Maleńkie, lecz nietypowo wyglądające znamię u pacjentki z istotnymi czynnikami ryzyka związanymi z ekspozycją na UV oraz historią rodzinną okazało się czerniakiem.',
     sourceNote: null,
   },
   {
     patientName: 'Tomasz Ryba',
     age: 38,
     sex: 'MALE',
-    occupation: 'Programmer',
+    occupation: 'Programista',
     bodyRegion: 'BACK',
-    imageFile: 'case-15.jpg',
+    imageFile: 'case-15.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Histopathology confirms nodular melanoma, clinical stage II, with Breslow thickness over 2mm; sentinel lymph node biopsy was performed alongside wide excision.',
+      'Badanie histopatologiczne potwierdza czerniaka guzkowego w II stopniu klinicznego zaawansowania, o grubości Breslowa powyżej 2 mm; wykonano biopsję węzła wartowniczego wraz z szerokim wycięciem.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
           history:
-            'An avid mountaineer who spends vacations at high altitude without adequate UV protection.',
+            'Zapalony wspinacz górski, spędzający urlopy na dużych wysokościach bez odpowiedniej ochrony przed promieniowaniem UV.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Noticed a new, rapidly growing lesion on the back. Unlike his typical moles, it presented as a dark blue, hard, clearly raised nodule. Within just two months it doubled in size, began itching, and occasionally bled when toweled off.',
+            'Zauważył nową, szybko rosnącą zmianę na plecach. W przeciwieństwie do swoich typowych znamion, prezentowała się jako ciemnoniebieski, twardy, wyraźnie uniesiony guzek. W ciągu zaledwie dwóch miesięcy podwoiła rozmiar, zaczęła swędzieć i czasami krwawiła podczas wycierania się ręcznikiem.',
         },
       },
     ],
@@ -539,26 +538,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 3,
     resultExplanationText:
-      'A rapidly growing dark blue nodule on the back — nodular melanoma, stage II, treated with wide excision and sentinel node biopsy.',
+      'Szybko rosnący, ciemnoniebieski guzek na plecach — czerniak guzkowy w II stopniu zaawansowania, leczony szerokim wycięciem i biopsją węzła wartowniczego.',
     sourceNote: null,
   },
   {
     patientName: 'Kacper Sobczak',
     age: 17,
     sex: 'MALE',
-    occupation: 'Student',
+    occupation: 'Uczeń',
     bodyRegion: 'HEAD',
-    imageFile: 'case-16.jpg',
+    imageFile: 'case-16.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Surgical excision and histopathological analysis confirm melanoma of the scalp.',
+      'Wycięcie chirurgiczne i analiza histopatologiczna potwierdzają czerniaka skóry owłosionej głowy.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'While at a sports camp, a friend noticed an atypical lesion on his head. The next morning he noticed an irregular mole that was dark and resembled a blood blister. He does not recall any recent head injury, which is what drew his attention to it.',
+            'Podczas obozu sportowego kolega zauważył nietypową zmianę na jego głowie. Następnego ranka zauważył nieregularne znamię, ciemne i przypominające krwiaka podnaskórkowego. Nie pamięta żadnego niedawnego urazu głowy, co właśnie zwróciło jego uwagę na tę zmianę.',
         },
       },
     ],
@@ -566,7 +565,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 2,
     resultExplanationText:
-      'An irregular, dark, blood-blister-like scalp lesion with no history of trauma proved to be melanoma on histopathology.',
+      'Nieregularna, ciemna zmiana na skórze głowy, przypominająca krwiaka podnaskórkowego, bez historii urazu, okazała się w badaniu histopatologicznym czerniakiem.',
     sourceNote:
       'Final diagnosis was not stated in the source text and was generated to complete this case, per user instruction — the presentation (irregular, dark, blood-blister-like lesion, no trauma history) is consistent with melanoma.',
   },
@@ -574,27 +573,27 @@ export const REAL_CASES: RealCaseSeed[] = [
     patientName: 'Halina Wilczek',
     age: 65,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Emerytka',
     bodyRegion: 'LEFT_LEG',
-    imageFile: 'case-17.jpg',
+    imageFile: 'case-17.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Surgical excision with adequate margins and histopathology confirm a moderately differentiated squamous cell carcinoma, stage T2. Clinical exam and CT/PET imaging show no lymph node involvement or metastasis.',
+      'Wycięcie chirurgiczne z odpowiednimi marginesami oraz badanie histopatologiczne potwierdzają średnio zróżnicowanego raka kolczystokomórkowego w stopniu T2. Badanie kliniczne oraz obrazowanie CT/PET nie wykazują zajęcia węzłów chłonnych ani przerzutów.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
           history:
-            'Fair-skinned, sunburns easily, tans poorly. Used a tanning bed at least once a week for 40 years, but stopped 7 years ago and has avoided sun exposure since.',
+            'Jasna karnacja, łatwo ulega oparzeniom słonecznym, słabo się opala. Przez 40 lat korzystała z solarium co najmniej raz w tygodniu, ale zaprzestała 7 lat temu i od tego czasu unika ekspozycji na słońce.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Presented to an oncologic surgery clinic with a painful, rapidly enlarging, ulcerated lesion on the left ankle, now 3cm in diameter with irregular, raised edges that bleed with minor trauma.',
+            'Zgłosiła się do kliniki chirurgii onkologicznej z bolesną, szybko powiększającą się, owrzodziałą zmianą na lewej kostce, obecnie o średnicy 3 cm, z nieregularnymi, uniesionymi brzegami krwawiącymi przy niewielkim urazie.',
         },
       },
     ],
@@ -602,41 +601,41 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 2,
     resultExplanationText:
-      'A painful, rapidly growing, ulcerated ankle lesion in a longtime tanning-bed user — squamous cell carcinoma, stage T2, with no nodal spread.',
+      'Bolesna, szybko rosnąca, owrzodziała zmiana na kostce u wieloletniej użytkowniczki solarium — rak kolczystokomórkowy w stopniu T2, bez zajęcia węzłów chłonnych.',
     sourceNote: null,
   },
   {
     patientName: 'Grażyna Sowa',
     age: 65,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Emerytka',
     bodyRegion: 'LEFT_ARM',
-    imageFile: 'case-18.jpg',
+    imageFile: 'case-18.png',
     examinationSku: 'exam-dermoscopy',
     examinationFindings:
-      'Dermoscopy, biopsy, and histopathology confirm actinic keratosis — a precancerous change, not cancer.',
+      'Dermoskopia, biopsja i badanie histopatologiczne potwierdzają rogowacenie słoneczne — zmianę przednowotworową, nie nowotwór.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
+        title: 'Historia choroby',
         content: {
           history:
-            'Previously treated for melanoma of the facial skin. No family history of skin cancer.',
+            'Wcześniej leczona z powodu czerniaka skóry twarzy. Brak rodzinnej historii raka skóry.',
         },
       },
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
-          history: 'Fair complexion; used a tanning bed at least once a week for 40 years.',
+          history: 'Jasna karnacja; przez 40 lat korzystała z solarium co najmniej raz w tygodniu.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Presented for a full-body skin check because of countless small pink papules and scaling plaques on the arms, legs, and back. The lesions are flat-topped and slightly raised, with a dry, rough, sandpaper-like surface and a light pink to reddish color. They have not ulcerated, but some have a tendency to merge together.',
+            'Zgłosiła się na pełne badanie skóry z powodu niezliczonych małych, różowych grudek i łuszczących się blaszek na ramionach, nogach i plecach. Zmiany mają płaski wierzchołek i są lekko uniesione, o suchej, szorstkiej powierzchni przypominającej papier ścierny, w kolorze od jasnoróżowego do czerwonawego. Nie uległy owrzodzeniu, ale niektóre mają tendencję do zlewania się.',
         },
       },
     ],
@@ -644,26 +643,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'cryotherapy',
     difficulty: 1,
     resultExplanationText:
-      'Numerous rough, scaly pink papules from decades of tanning-bed use — actinic keratosis, a precancerous (not cancerous) condition.',
+      'Liczne szorstkie, łuszczące się, różowe grudki będące skutkiem wieloletniego korzystania z solarium — rogowacenie słoneczne, stan przednowotworowy (nie nowotworowy).',
     sourceNote: null,
   },
   {
     patientName: 'Honorata Wysocka',
     age: 53,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Bibliotekarka',
     bodyRegion: 'OTHER',
-    imageFile: 'case-19.jpg',
+    imageFile: 'case-19.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy confirms malignant melanoma of the vagina. Excision was performed, followed by radiotherapy and chemotherapy given the biologically poor prognosis regardless of surgical extent; the patient later transitioned to palliative care due to metastatic spread.',
+      'Biopsja potwierdza złośliwego czerniaka pochwy. Wykonano wycięcie, a następnie radioterapię i chemioterapię ze względu na biologicznie niekorzystne rokowanie niezależnie od zakresu zabiegu; pacjentka później została objęta opieką paliatywną z powodu rozsiewu przerzutowego.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Presented with vaginal bleeding and a sensation of discomfort. Gynecological examination revealed a dark, irregular lesion on the vaginal wall.',
+            'Zgłosiła się z krwawieniem z pochwy i uczuciem dyskomfortu. Badanie ginekologiczne ujawniło ciemną, nieregularną zmianę na ścianie pochwy.',
         },
       },
     ],
@@ -671,34 +670,34 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'referral-oncology',
     difficulty: 3,
     resultExplanationText:
-      'A rare and aggressive primary melanoma of the vagina, carrying a poor prognosis despite treatment.',
+      'Rzadki i agresywny pierwotny czerniak pochwy, o niekorzystnym rokowaniu mimo leczenia.',
     sourceNote: null,
   },
   {
     patientName: 'Danuta Frąckowiak',
     age: 71,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Emerytka',
     bodyRegion: 'RIGHT_FOOT',
-    imageFile: 'case-20.jpg',
+    imageFile: 'case-20.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Surgical biopsy, prompted by a persistent enlarging pigmented lesion unrelated to trauma, confirms subungual melanoma.',
+      'Biopsja chirurgiczna, wykonana z powodu utrzymującej się, powiększającej się zmiany pigmentowej niezwiązanej z urazem, potwierdza czerniaka podpaznokciowego.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
+        title: 'Historia choroby',
         content: {
           history:
-            'Chronic hypertension and ischemic heart disease. No family history of skin cancer.',
+            'Przewlekłe nadciśnienie tętnicze i choroba niedokrwienna serca. Brak rodzinnej historii raka skóry.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'About 3 months earlier, noticed a small black spot under the nail of the right big toe with no history of trauma to the area. The spot gradually enlarged but did not move with nail growth, and is completely painless. The nail plate itself is deformed by longstanding chronic toenail fungus, but directly beneath the diseased nail plate is a distinct, dark black spot about 5mm across. Inguinal lymph nodes are not enlarged on palpation or ultrasound.',
+            'Około 3 miesiące wcześniej zauważyła małą czarną plamkę pod paznokciem prawego dużego palca u nogi, bez historii urazu tej okolicy. Plamka stopniowo się powiększała, ale nie przesuwała się wraz ze wzrostem paznokcia, i jest całkowicie niebolesna. Sama płytka paznokcia jest zdeformowana przez długotrwałą przewlekłą grzybicę, ale bezpośrednio pod chorą płytką znajduje się wyraźna, ciemnoczarna plamka o średnicy około 5 mm. Węzły chłonne pachwinowe nie są powiększone w badaniu palpacyjnym ani w USG.',
         },
       },
     ],
@@ -706,7 +705,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 2,
     resultExplanationText:
-      'A persistent, enlarging dark spot beneath a fungus-affected toenail, unrelated to trauma, proved to be subungual melanoma.',
+      'Utrzymująca się, powiększająca się ciemna plamka pod zaatakowanym grzybicą paznokciem, niezwiązana z urazem, okazała się czerniakiem podpaznokciowym.',
     sourceNote: null,
   },
   {
@@ -715,17 +714,17 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'FEMALE',
     occupation: null,
     bodyRegion: 'HEAD',
-    imageFile: 'case-21.jpg',
+    imageFile: 'case-21.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'After excision, histopathology showed cellular atypia with positive HMB-45 staining, confirming conjunctival melanoma.',
+      'Po wycięciu badanie histopatologiczne wykazało atypię komórkową z dodatnim barwieniem HMB-45, potwierdzając czerniaka spojówki.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Referred to an ophthalmologist for a gradually enlarging dark lesion on the conjunctiva of the right eye, located temporally, with characteristic feeder vessels that concerned the physicians. Imaging confirmed the lesion was limited to the superficial conjunctival layers.',
+            'Skierowana do okulisty z powodu stopniowo powiększającej się ciemnej zmiany na spojówce prawego oka, zlokalizowanej skroniowo, z charakterystycznymi naczyniami odżywiającymi, które zaniepokoiły lekarzy. Badania obrazowe potwierdziły, że zmiana ogranicza się do powierzchownych warstw spojówki.',
         },
       },
     ],
@@ -733,26 +732,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 3,
     resultExplanationText:
-      'A rare pediatric conjunctival melanoma, identified by its feeder vessels and confirmed with HMB-45-positive histopathology.',
+      'Rzadki dziecięcy czerniak spojówki, rozpoznany dzięki charakterystycznym naczyniom odżywiającym i potwierdzony badaniem histopatologicznym dodatnim pod względem HMB-45.',
     sourceNote: null,
   },
   {
     patientName: 'Adrian Michalak',
     age: 17,
     sex: 'MALE',
-    occupation: 'Student',
+    occupation: 'Uczeń',
     bodyRegion: 'RIGHT_HAND',
-    imageFile: 'case-22.jpg',
+    imageFile: 'case-22.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      "The clinical picture, including pigment spread beyond the nail plate (Hutchinson's sign), prompted a nail matrix biopsy, which confirmed subungual melanoma.",
+      'Obraz kliniczny, w tym rozprzestrzenienie pigmentu poza płytkę paznokcia (objaw Hutchinsona), skłonił do wykonania biopsji macierzy paznokcia, która potwierdziła czerniaka podpaznokciowego.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            "Presented for evaluation of a dark stripe on the nail of the right hand's fifth finger, present since age 7 and entirely asymptomatic. The physician noted an unusually wide dark band, taking up about half the width of the entire nail plate, with two smaller, narrower brownish stripes beside it. The dark pigment clearly spreads beyond the nail itself onto the adjacent and proximal nail folds.",
+            'Zgłosił się w celu oceny ciemnego prążka na paznokciu piątego palca prawej dłoni, obecnego od 7. roku życia i całkowicie bezobjawowego. Lekarz zauważył niezwykle szerokie, ciemne pasmo zajmujące około połowy szerokości całej płytki paznokcia, obok którego widoczne były dwa mniejsze, węższe, brązowawe prążki. Ciemny pigment wyraźnie rozprzestrzenia się poza sam paznokieć na sąsiednie i bliższe wały paznokciowe.',
         },
       },
     ],
@@ -760,39 +759,39 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 2,
     resultExplanationText:
-      'A wide, long-standing dark nail stripe with pigment spreading onto the nail fold — subungual melanoma.',
+      'Szeroki, długotrwały ciemny prążek na paznokciu z pigmentem rozprzestrzeniającym się na wał paznokciowy — czerniak podpaznokciowy.',
     sourceNote: null,
   },
   {
     patientName: 'Alicja Cisek',
     age: 73,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Emerytka',
     bodyRegion: 'RIGHT_HAND',
-    imageFile: 'case-23.jpg',
+    imageFile: 'case-23.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Dermoscopy followed by excisional biopsy with histopathology confirms keratoacanthoma, a rapidly growing squamous-lineage lesion.',
+      'Dermoskopia, a następnie biopsja wycinająca z badaniem histopatologicznym potwierdzają rogowiaka kolczystokomórkowego — szybko rosnącą zmianę z linii kolczystokomórkowej.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
+        title: 'Historia choroby',
         content: {
           history:
-            'Long-standing Lyme disease for over 10 years, treated with numerous naturopathic remedies prescribed by a naturopath. No prior burns, trauma, or skin cancer.',
+            'Długotrwała borelioza od ponad 10 lat, leczona licznymi naturopatycznymi środkami zaleconymi przez naturopatę. Brak wcześniejszych oparzeń, urazów lub raka skóry.',
         },
       },
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
-        content: { history: 'Occasional tanning bed use over the past six months.' },
+        title: 'Historia ekspozycji na promieniowanie UV',
+        content: { history: 'Sporadyczne korzystanie z solarium w ciągu ostatnich sześciu miesięcy.' },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Sudden appearance of a large, hard, red nodule on the inner surface of the right palm. The lesion caused both aesthetic discomfort and significant itching.',
+            'Nagłe pojawienie się dużego, twardego, czerwonego guzka na wewnętrznej powierzchni prawej dłoni. Zmiana powodowała zarówno dyskomfort estetyczny, jak i znaczne swędzenie.',
         },
       },
     ],
@@ -800,7 +799,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 2,
     resultExplanationText:
-      'A sudden, rapidly growing, hard nodule on the palm proved to be a keratoacanthoma.',
+      'Nagły, szybko rosnący, twardy guzek na dłoni okazał się rogowiakiem kolczystokomórkowym.',
     sourceNote:
       'Final diagnosis was not stated in the source text and was generated to complete this case, per user instruction — the sudden, rapid, dome-shaped hard nodule is consistent with keratoacanthoma.',
   },
@@ -810,17 +809,17 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'FEMALE',
     occupation: null,
     bodyRegion: 'LEFT_LEG',
-    imageFile: 'case-24.jpg',
+    imageFile: 'case-24.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Histopathology confirmed Spitzoid-type melanoma, classified as pT2a. After specialist review, a wide re-excision and sentinel lymph node biopsy were performed, showing no residual tumor and no nodal involvement. Further workup excluded systemic disease. Genetic testing revealed a pathogenic CHEK2 mutation (c.444+1G>A), leading to a genetic counseling referral for the family and close ongoing oncologic and dermatologic surveillance.',
+      'Badanie histopatologiczne potwierdziło czerniaka typu Spitzoidalnego, sklasyfikowanego jako pT2a. Po konsultacji specjalistycznej wykonano szerokie doszczętne wycięcie oraz biopsję węzła wartowniczego, nie stwierdzając resztkowego guza ani zajęcia węzłów chłonnych. Dalsza diagnostyka wykluczyła chorobę układową. Badanie genetyczne ujawniło patogenną mutację CHEK2 (c.444+1G>A), co skutkowało skierowaniem rodziny na poradnictwo genetyczne oraz ścisłym, ciągłym nadzorem onkologicznym i dermatologicznym.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Presented with a rapidly growing, nodular lesion on the thigh, which was excised.',
+            'Zgłosiła się ze szybko rosnącą, guzkowatą zmianą na udzie, którą wycięto.',
         },
       },
     ],
@@ -828,26 +827,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 3,
     resultExplanationText:
-      'A pediatric Spitzoid melanoma with a pathogenic CHEK2 mutation, requiring family genetic counseling and lifelong surveillance.',
+      'Dziecięcy czerniak typu Spitzoidalnego z patogenną mutacją CHEK2, wymagający poradnictwa genetycznego dla rodziny oraz dożywotniego nadzoru.',
     sourceNote: null,
   },
   {
     patientName: 'Stanisława Krzemień',
     age: 67,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Emerytka',
     bodyRegion: 'RIGHT_FOOT',
-    imageFile: 'case-25.jpg',
+    imageFile: 'case-25.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'X-ray of the toe showed no bone damage or infiltration. A shave biopsy confirmed basal cell carcinoma of the nail unit.',
+      'Zdjęcie rentgenowskie palca nie wykazało uszkodzenia kości ani nacieku. Biopsja golona potwierdziła raka podstawnokomórkowego aparatu paznokciowego.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Otherwise healthy, presenting with a lesion at the base of the right big toenail present for 18 months, with no history of mechanical trauma. Completely painless and very slow-growing, periodically ulcerating and bleeding lightly (for example when rubbed by a sock). The lesion measures 1.5cm x 2cm around the nail apparatus, with pearly-white raised borders and an indurated, ulcerated center. Inguinal lymph nodes are not palpable and pedal pulses are well felt (4/4).',
+            'Poza tym zdrowa, zgłasza się ze zmianą u podstawy paznokcia prawego dużego palca u nogi, obecną od 18 miesięcy, bez historii urazu mechanicznego. Całkowicie niebolesna i bardzo wolno rosnąca, okresowo owrzodziała i lekko krwawiąca (na przykład przy tarciu skarpetką). Zmiana mierzy 1,5 cm x 2 cm wokół aparatu paznokciowego, z perłowo-białymi, uniesionymi brzegami i stwardniałym, owrzodziałym środkiem. Węzły chłonne pachwinowe nie są wyczuwalne palpacyjnie, a tętno na stopach jest dobrze wyczuwalne (4/4).',
         },
       },
     ],
@@ -855,33 +854,33 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 2,
     resultExplanationText:
-      'A slow-growing, pearly-bordered, periodically bleeding lesion around the toenail — basal cell carcinoma of the nail unit, with no bony invasion.',
+      'Wolno rosnąca zmiana o perłowych brzegach, okresowo krwawiąca, wokół paznokcia — rak podstawnokomórkowy aparatu paznokciowego, bez naciekania kości.',
     sourceNote: null,
   },
   {
     patientName: 'Klementyna Wróbel',
     age: 58,
     sex: 'FEMALE',
-    occupation: 'Sailing Instructor',
+    occupation: 'Instruktorka żeglarstwa',
     bodyRegion: 'HEAD',
-    imageFile: 'case-26.jpg',
+    imageFile: 'case-26.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy confirms basal cell carcinoma of the ear; Mohs micrographic surgery was chosen given the cosmetically sensitive location.',
+      'Biopsja potwierdza raka podstawnokomórkowego ucha; ze względu na wrażliwą kosmetycznie lokalizację wybrano chirurgię mikrograficzną Mohsa.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
-          history: 'A longtime sailing instructor who spends nearly every season in full sun.',
+          history: 'Wieloletnia instruktorka żeglarstwa, spędzająca niemal każdy sezon w pełnym słońcu.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            "For several months, a small change on the upper edge of the ear that initially looked like a minor scrape but gradually turned into a hard, pink nodule covered with thick, keratotic skin. The nodule is painless, doesn't itch, and doesn't bother her even while sleeping, though it is visible to others.",
+            'Od kilku miesięcy niewielka zmiana na górnym brzegu ucha, która początkowo wyglądała jak drobne otarcie, ale stopniowo przekształciła się w twardy, różowy guzek pokryty grubą, zrogowaciałą skórą. Guzek jest niebolesny, nie swędzi i nie przeszkadza jej nawet podczas snu, chociaż jest widoczny dla innych.',
         },
       },
     ],
@@ -889,7 +888,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'mohs-surgery',
     difficulty: 2,
     resultExplanationText:
-      "A pink, keratotic ear nodule in a lifelong sun-exposed sailing instructor — basal cell carcinoma, treated with Mohs surgery to preserve the ear's structure.",
+      'Różowy, zrogowaciały guzek ucha u instruktorki żeglarstwa przez całe życie eksponowanej na słońce — rak podstawnokomórkowy, leczony chirurgią Mohsa w celu zachowania struktury ucha.',
     sourceNote:
       'The source text was cut off before stating a final diagnosis. This conclusion was generated to complete the case, per user instruction — a pearly/keratotic nodule on a chronically sun-exposed ear is a textbook basal cell carcinoma presentation.',
   },
@@ -897,27 +896,27 @@ export const REAL_CASES: RealCaseSeed[] = [
     patientName: 'Elwira Nowak',
     age: 42,
     sex: 'FEMALE',
-    occupation: 'Construction Worker',
+    occupation: 'Robotnica budowlana',
     bodyRegion: 'LEFT_FOOT',
-    imageFile: 'case-27.jpg',
+    imageFile: 'case-27.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy confirmed a neoplastic origin: basal cell carcinoma of the sole (acral BCC), previously mistaken for treatment-resistant athlete’s foot.',
+      'Biopsja potwierdziła nowotworowe pochodzenie zmiany: rak podstawnokomórkowy podeszwy (akralny BCC), wcześniej mylnie rozpoznawany jako oporna na leczenie grzybica stóp.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
+        title: 'Historia choroby',
         content: {
           history:
-            'No family history of skin cancer, and no history of radiation or arsenic exposure.',
+            'Brak rodzinnej historii raka skóry oraz brak historii ekspozycji na promieniowanie lub arsen.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            "Works physically on construction sites for 20 years, requiring heavy, tight work boots all day, causing chronic friction and moisture retention on the feet. First noticed the lesion on the sole of the left foot around age 20; over the years it slowly grew and became increasingly itchy. Repeatedly diagnosed by general practitioners as athlete's foot and treated with repeated antifungal ointments with no improvement. Examination found a well-demarcated, asymmetric, heavily keratotic plaque measuring 3.3cm x 2cm. Lymph nodes were unremarkable.",
+            'Od 20 lat pracuje fizycznie na budowach, nosząc przez cały dzień ciężkie, ciasne buty robocze, co powoduje przewlekłe tarcie i zatrzymywanie wilgoci na stopach. Po raz pierwszy zauważyła zmianę na podeszwie lewej stopy około 20. roku życia; z biegiem lat powoli się powiększała i stawała się coraz bardziej swędząca. Wielokrotnie rozpoznawana przez lekarzy pierwszego kontaktu jako grzybica stóp i leczona powtarzanymi maściami przeciwgrzybiczymi bez poprawy. Badanie wykazało dobrze odgraniczoną, asymetryczną, silnie zrogowaciałą blaszkę o wymiarach 3,3 cm x 2 cm. Węzły chłonne bez zmian.',
         },
       },
     ],
@@ -925,26 +924,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 2,
     resultExplanationText:
-      'A plaque on the sole misdiagnosed as fungal infection for years was actually acral basal cell carcinoma.',
+      'Blaszka na podeszwie, przez lata błędnie rozpoznawana jako infekcja grzybicza, w rzeczywistości okazała się akralnym rakiem podstawnokomórkowym.',
     sourceNote: null,
   },
   {
     patientName: 'Ryszard Wolski',
     age: 62,
     sex: 'MALE',
-    occupation: 'Office Worker',
+    occupation: 'Pracownik biurowy',
     bodyRegion: 'RIGHT_FOOT',
-    imageFile: 'case-28.jpg',
+    imageFile: 'case-28.png',
     examinationSku: 'exam-dermoscopy',
     examinationFindings:
-      'Dermoscopy reveals a parallel ridge pattern — a finding strongly specific for acral lentiginous melanoma. Referred for biopsy to confirm.',
+      'Dermoskopia ujawnia wzór równoległych grzbietów — objaw silnie specyficzny dla czerniaka akralnego z linii lentiginous. Skierowano na biopsję celem potwierdzenia.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'A non-healing lesion on the sole of the foot, first appearing about 1.5 years ago. Initially believed to be a corn, and treated with corn plasters and pumice stone, which caused bleeding and pain. The lesion began darkening, growing, and bleeding intermittently without clear cause. It has irregular borders.',
+            'Niegojąca się zmiana na podeszwie stopy, po raz pierwszy pojawiła się około 1,5 roku temu. Początkowo uznana za odcisk i leczona plastrami na odciski oraz pumeksem, co powodowało krwawienie i ból. Zmiana zaczęła ciemnieć, powiększać się i okresowo krwawić bez wyraźnej przyczyny. Ma nieregularne brzegi.',
         },
       },
     ],
@@ -952,7 +951,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: null,
     difficulty: 3,
     resultExplanationText:
-      'A darkening, bleeding sole lesion, mistaken for years as a corn, shows the parallel ridge pattern on dermoscopy that is a hallmark sign of acral lentiginous melanoma.',
+      'Ciemniejąca, krwawiąca zmiana na podeszwie, przez lata mylona z odciskiem, wykazuje w dermoskopii wzór równoległych grzbietów — charakterystyczny objaw czerniaka akralnego z linii lentiginous.',
     sourceNote:
       'The source text ends at the biopsy referral without stating a confirmed result. The parallel ridge pattern described is a well-established, highly specific dermoscopic sign of acral lentiginous melanoma, so this diagnosis is a high-confidence inference rather than a freely invented one.',
   },
@@ -960,24 +959,24 @@ export const REAL_CASES: RealCaseSeed[] = [
     patientName: 'Paulina Górecka',
     age: 28,
     sex: 'FEMALE',
-    occupation: null,
+    occupation: 'Projektantka graficzna',
     bodyRegion: 'LEFT_ARM',
-    imageFile: 'case-29.jpg',
+    imageFile: 'case-29.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Lymph node biopsy and brain imaging confirm metastatic melanoma with axillary nodal and brain involvement, explaining the new seizures; urgent multidisciplinary oncology referral was made given the pregnancy.',
+      'Biopsja węzła chłonnego oraz badania obrazowe mózgu potwierdzają czerniaka z przerzutami, z zajęciem węzłów pachowych i mózgu, co tłumaczy nowe napady drgawkowe; ze względu na ciążę pilnie skierowano pacjentkę do wielodyscyplinarnego zespołu onkologicznego.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Disease history',
-        content: { history: '26 weeks pregnant.' },
+        title: 'Historia choroby',
+        content: { history: '26. tydzień ciąży.' },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Recently developed new left-sided seizures. Around the same time, noticed significantly enlarged lymph nodes under the arm — hard but not painful. Has also had recent weight loss and episodes of fever, and is acutely worried given the risk to her unborn child.',
+            'Ostatnio wystąpiły u niej nowe napady drgawkowe po lewej stronie. Mniej więcej w tym samym czasie zauważyła znacznie powiększone węzły chłonne pod pachą — twarde, ale niebolesne. Miała także ostatnio utratę wagi i epizody gorączki, i jest bardzo zaniepokojona ryzykiem dla nienarodzonego dziecka.',
         },
       },
     ],
@@ -985,7 +984,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'referral-oncology',
     difficulty: 3,
     resultExplanationText:
-      'New seizures plus hard axillary lymphadenopathy, weight loss, and fever in a pregnant patient revealed metastatic melanoma with brain involvement — a rare and urgent presentation requiring careful management around the pregnancy.',
+      'Nowe napady drgawkowe wraz z twardą limfadenopatią pachową, utratą wagi i gorączką u ciężarnej pacjentki ujawniły czerniaka z przerzutami z zajęciem mózgu — rzadką i pilną postać wymagającą starannego postępowania w kontekście ciąży.',
     sourceNote:
       'No diagnosis or treatment was stated in the source text, which reads as an incomplete fragment. This conclusion was generated to complete the case, per user instruction — new seizures with hard lymphadenopathy, weight loss, and fever together point to metastatic disease with CNS involvement.',
   },
@@ -993,27 +992,27 @@ export const REAL_CASES: RealCaseSeed[] = [
     patientName: 'Roman Głowacki',
     age: 63,
     sex: 'MALE',
-    occupation: 'Farmer',
+    occupation: 'Rolnik',
     bodyRegion: 'HEAD',
-    imageFile: 'case-30.jpg',
+    imageFile: 'case-30.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Imaging shows a sharply demarcated, contrast-enhancing soft tissue mass; biopsy confirms basal cell carcinoma of the external auditory canal.',
+      'Badania obrazowe wykazują ostro odgraniczoną, wzmacniającą się po kontraście masę tkanek miękkich; biopsja potwierdza raka podstawnokomórkowego przewodu słuchowego zewnętrznego.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'UV exposure history',
+        title: 'Historia ekspozycji na promieniowanie UV',
         content: {
           history:
-            'Lifelong outdoor farm work with chronic sun exposure. No prior trauma or radiotherapy. Non-smoker, occasional alcohol use.',
+            'Całe życie pracował fizycznie na roli na zewnątrz, z przewlekłą ekspozycją na słońce. Brak wcześniejszego urazu lub radioterapii. Niepalący, sporadycznie spożywa alkohol.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Presented to an ENT clinic with 6 months of right ear problems: persistent discomfort, increasing itch, and intermittent bloody discharge, along with a sense of a small mass inside the ear canal and intermittent ear pain. Denies hearing loss, dizziness, or facial weakness. The external auditory canal shows an irregular, non-ulcerated lesion measuring 2.1cm x 1.3cm with raised, pearly borders, central crusting, and minimal bleeding on touch. The eardrum is intact and neck lymph nodes are not enlarged.',
+            'Zgłosił się do poradni laryngologicznej z powodu trwających 6 miesięcy dolegliwości w prawym uchu: uporczywego dyskomfortu, narastającego swędzenia i okresowej krwawej wydzieliny, wraz z uczuciem niewielkiej masy wewnątrz przewodu słuchowego oraz okresowym bólem ucha. Zaprzecza utracie słuchu, zawrotom głowy czy osłabieniu twarzy. Przewód słuchowy zewnętrzny wykazuje nieregularną, nieowrzodziałą zmianę o wymiarach 2,1 cm x 1,3 cm, z uniesionymi, perłowymi brzegami, centralnym strupem i minimalnym krwawieniem przy dotyku. Błona bębenkowa jest nienaruszona, a węzły chłonne szyi nie są powiększone.',
         },
       },
     ],
@@ -1021,26 +1020,26 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: 'surgical-excision',
     difficulty: 3,
     resultExplanationText:
-      'A raised, pearly-bordered lesion inside the ear canal in a lifelong outdoor farm worker — basal cell carcinoma of the external auditory canal, a rare site.',
+      'Uniesiona zmiana o perłowych brzegach wewnątrz przewodu słuchowego u rolnika pracującego całe życie na zewnątrz — rak podstawnokomórkowy przewodu słuchowego zewnętrznego, rzadka lokalizacja.',
     sourceNote: null,
   },
   {
     patientName: 'Sabrina Kowal',
     age: 45,
     sex: 'FEMALE',
-    occupation: 'Nurse',
+    occupation: 'Pielęgniarka',
     bodyRegion: 'HEAD',
-    imageFile: 'case-31.jpg',
+    imageFile: 'case-31.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsy rules out malignancy and shows actinic keratosis — a precancerous, sun-related change, not cancer.',
+      'Biopsja wyklucza złośliwość i wykazuje rogowacenie słoneczne — zmianę przednowotworową związaną ze słońcem, nie nowotwór.',
     documents: [
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Clinical symptoms',
+        title: 'Objawy kliniczne',
         content: {
           description:
-            'Lived for three and a half years with a scaling, dry sore above the lip. Her primary care doctor repeatedly treated it with creams for eczema and rash, without improvement. As a trained nurse, she grew suspicious and asked for a skin biopsy herself to rule out cancer.',
+            'Przez trzy i pół roku żyła z łuszczącą się, suchą raną nad wargą. Jej lekarz pierwszego kontaktu wielokrotnie leczył ją kremami na wyprysk i wysypkę, bez poprawy. Jako wykwalifikowana pielęgniarka nabrała podejrzeń i sama poprosiła o biopsję skóry, aby wykluczyć nowotwór.',
         },
       },
     ],
@@ -1048,7 +1047,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     treatmentCode: null,
     difficulty: 1,
     resultExplanationText:
-      'A persistent scaly sore above the lip, unresponsive to eczema treatment, turned out to be actinic keratosis rather than cancer.',
+      'Utrzymująca się, łuszcząca się rana nad wargą, niereagująca na leczenie wyprysku, okazała się rogowaceniem słonecznym, a nie nowotworem.',
     sourceNote: null,
   },
 ];

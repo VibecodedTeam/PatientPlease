@@ -134,6 +134,6 @@ describe('seed', () => {
 
     const skinImage = patient!.case!.documents.find((d) => d.type === 'SKIN_IMAGE')!;
     expect(skinImage.attentionPointRegion).toBe('CHEST');
-    expect(skinImage.imageUrl).toBe('/cases/case-08.jpg');
+    expect(skinImage.imageUrl).toBe('/cases/case-08.png');
   });
 });

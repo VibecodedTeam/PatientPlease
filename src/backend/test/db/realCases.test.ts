@@ -60,4 +60,20 @@ describe('REAL_CASES', () => {
     const hasNonMalignant = [...categories].some((category) => category !== 'MALIGNANT');
     expect(hasNonMalignant).toBe(true);
   });
+
+  it('carries a sourceNote only for the 6 cases with a generated/inferred diagnosis, null for every other case', () => {
+    const casesWithSourceNote = REAL_CASES.filter((c) => c.sourceNote !== null).map(
+      (c) => c.patientName,
+    );
+    expect(new Set(casesWithSourceNote)).toEqual(
+      new Set([
+        'Józef Baran',
+        'Kacper Sobczak',
+        'Alicja Cisek',
+        'Klementyna Wróbel',
+        'Ryszard Wolski',
+        'Paulina Górecka',
+      ]),
+    );
+  });
 });
