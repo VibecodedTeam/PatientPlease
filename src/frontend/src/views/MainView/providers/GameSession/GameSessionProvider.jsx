@@ -6,7 +6,7 @@ export const GameSessionContext = createContext(null);
 
 // How long a day runs before it auto-ends and the Daily Statistics popup
 // appears (see views/MainView/providers/Statistics).
-export const DAY_DURATION_SECONDS = 600;
+export const DAY_DURATION_SECONDS = 30;
 
 export function GameSessionProvider({ children }) {
   const { pauseGame, resetDay: roundResetDay, resetGame: roundResetGame, endDay: roundEndDay } =
