@@ -69,6 +69,32 @@ describe('Chat', () => {
     expect(screen.getByRole('log').textContent).not.toContain('Does it itch?');
   });
 
+  it('clears a stale send error from the previous patient once a new case loads', async () => {
+    const user = userEvent.setup();
+    global.fetch = jest.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'llm_failed' }), { status: 502 }));
+
+    const { rerender } = render(
+      <ApiProvider baseUrl="http://api.test">
+        <Chat gameSessionId="session-1" caseId="case-1" />
+      </ApiProvider>,
+    );
+
+    const input = screen.getByLabelText(/doctor reply/i);
+    await user.type(input, 'Does it itch?');
+    await user.click(screen.getByRole('button', { name: /send/i }));
+    await waitFor(() => expect(screen.getByText(/could not send/i)).toBeInTheDocument());
+
+    // Moving on to the next patient re-renders Chat with a new caseId — the
+    // error banner from the previous, unrelated patient must not linger.
+    rerender(
+      <ApiProvider baseUrl="http://api.test">
+        <Chat gameSessionId="session-1" caseId="case-2" />
+      </ApiProvider>,
+    );
+
+    expect(screen.queryByText(/could not send/i)).not.toBeInTheDocument();
+  });
+
   it('shows the doctor message immediately, before the patient reply arrives', async () => {
     const user = userEvent.setup();
     let resolveFetch;

@@ -34,9 +34,12 @@ export function Chat({ gameSessionId, caseId }) {
 
   // gameSessionId/caseId can arrive after Chat's first mount (the parent view
   // still awaiting round data) — the useState initializer above only runs
-  // once, so re-load explicitly whenever the real ids become available.
+  // once, so re-load explicitly whenever the real ids become available. Also
+  // clears any send error from the previous patient: it's specific to that
+  // conversation and must not linger once the desk moves on to a new case.
   useEffect(() => {
     setMessages(loadChatMessages(gameSessionId, caseId));
+    setError(null);
   }, [gameSessionId, caseId]);
 
   useEffect(() => {
