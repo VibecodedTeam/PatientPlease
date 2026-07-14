@@ -25,7 +25,7 @@ jobs:
           port: ${{ secrets.DEV_DEPLOY_PORT }}
           script: |
             set -euo pipefail
-            cd /var/www/patient-please-dev   # <-- PODAJ ŚCIEŻKĘ na serwerze dev
+            cd /var/www/patient-please-dev/   # <-- PODAJ ŚCIEŻKĘ na serwerze dev
             git pull origin dev
             docker compose -f docker/docker-compose.yml up -d --build
 
@@ -48,7 +48,7 @@ jobs:
           port: ${{ secrets.PROD_DEPLOY_PORT }}
           script: |
             set -euo pipefail
-            cd /var/www/patient-please   # <-- PODAJ ŚCIEŻKĘ na serwerze prod
+            cd /var/www/patient-please-master/   # <-- PODAJ ŚCIEŻKĘ na serwerze prod
             git pull origin main
             docker compose -f docker/docker-compose.yml up -d --build
 
