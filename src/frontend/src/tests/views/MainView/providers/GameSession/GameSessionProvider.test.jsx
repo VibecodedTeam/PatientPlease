@@ -32,7 +32,7 @@ function TestConsumer() {
       <button onClick={resetDay}>reset-day</button>
       <button onClick={resetGame}>reset-game</button>
       <button onClick={() => endDay().then((data) => setDayLog(data.dayLog))}>end-day</button>
-      <button onClick={() => addElapsedSeconds(9)}>add-9</button>
+      <button onClick={() => addElapsedSeconds(90)}>add-90</button>
       <button onClick={() => addElapsedSeconds(DAY_DURATION_SECONDS)}>add-full-day</button>
     </div>
   );
@@ -285,10 +285,10 @@ describe('GameSessionProvider / useGameSession', () => {
     });
 
     act(() => {
-      screen.getByText('add-9').click();
+      screen.getByText('add-90').click();
     });
 
-    expect(screen.getByTestId('elapsed').textContent).toBe('12');
+    expect(screen.getByTestId('elapsed').textContent).toBe('93');
     expect(screen.getByTestId('paused').textContent).toBe('false');
   });
 
