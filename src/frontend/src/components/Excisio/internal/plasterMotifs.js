@@ -1,4 +1,4 @@
-/** The 24 selectable plaster (adhesive bandage) designs shown on the closing tray. */
+/** Selectable plaster (adhesive bandage) designs shown on the closing tray. */
 export const PLASTER_DEFS = [
   { id: 'classic', name: 'Klasyczny', body: '#e3c19a', pad: '#f2e5d1', motif: null },
   { id: 'classic2', name: 'Klasyczny beż', body: '#d3a878', pad: '#ecd3b2', motif: null },
@@ -24,6 +24,19 @@ export const PLASTER_DEFS = [
   { id: 'house-gn', name: 'Domki zielone', body: '#79c98a', pad: '#dff3e4', motif: 'house', mc: '#2f7a44' },
   { id: 'house-bl', name: 'Domki niebieskie', body: '#7cb6e8', pad: '#e0eeff', motif: 'house', mc: '#2f5f9e' },
   { id: 'house-pk', name: 'Domki różowe', body: '#ff9ec0', pad: '#ffe3ee', motif: 'house', mc: '#c23d70' },
+  { id: 'sun-yl', name: 'Słoneczka', body: '#ffd34d', pad: '#fff6d1', motif: 'sun', mc: '#ff9d2e' },
+  { id: 'sun-or', name: 'Słoneczka pomarańczowe', body: '#ff9f45', pad: '#ffe3c2', motif: 'sun', mc: '#ffe14d' },
+  { id: 'dog-br', name: 'Pieski brązowe', body: '#c79f6b', pad: '#efe0c8', motif: 'dog', mc: '#8a5a2e' },
+  { id: 'dog-gr', name: 'Pieski szare', body: '#b7bcc4', pad: '#eceef1', motif: 'dog', mc: '#6b7178' },
+  { id: 'bunny-pk', name: 'Króliczki różowe', body: '#ffb6d0', pad: '#ffe3ee', motif: 'bunny', mc: '#ffffff' },
+  { id: 'bunny-gy', name: 'Króliczki szare', body: '#c9ccd1', pad: '#eef0f2', motif: 'bunny', mc: '#8a8f96' },
+  { id: 'frog-gn', name: 'Żabki zielone', body: '#6fcf7a', pad: '#dff3e2', motif: 'frog', mc: '#3fae5a' },
+  { id: 'frog-tl', name: 'Żabki morskie', body: '#57c9b0', pad: '#d8f5ee', motif: 'frog', mc: '#2f9d86' },
+  { id: 'person-bl', name: 'Ludziki niebieskie', body: '#5fa8f0', pad: '#dcecff', motif: 'person', mc: '#ffffff' },
+  { id: 'person-rd', name: 'Ludziki czerwone', body: '#ff6f6f', pad: '#ffdede', motif: 'person', mc: '#ffffff' },
+  { id: 'person-gn', name: 'Ludziki zielone', body: '#6fcf8a', pad: '#ddf3e4', motif: 'person', mc: '#ffffff' },
+  { id: 'person-pu', name: 'Ludziki fioletowe', body: '#a685f0', pad: '#e6dcff', motif: 'person', mc: '#ffffff' },
+  { id: 'person-yl', name: 'Ludziki żółte', body: '#ffcf5f', pad: '#fff3d1', motif: 'person', mc: '#a8571c' },
 ];
 
 /**
@@ -66,6 +79,26 @@ export function motifSvg(type, x, y, s, col) {
     case 'house':
       return wrap(
         `<path d="M0 -7.5 L7.2 -1 L-7.2 -1Z" fill="${col}"/><rect x="-5" y="-1" width="10" height="8" rx="1" fill="${col}"/><rect x="-1.7" y="2" width="3.4" height="5" fill="rgba(0,0,0,0.3)"/><rect x="1.8" y="0.4" width="2.6" height="2.6" fill="rgba(255,255,255,0.55)"/>`
+      );
+    case 'sun':
+      return wrap(
+        `<g stroke="${col}" stroke-width="1.4" stroke-linecap="round"><path d="M0 -7.6V-5.6M0 5.6V7.6M-7.6 0H-5.6M5.6 0H7.6M-5.4 -5.4L-3.9 -3.9M3.9 3.9L5.4 5.4M-5.4 5.4L-3.9 3.9M3.9 -3.9L5.4 -5.4"/></g><circle r="3.8" fill="${col}"/>`
+      );
+    case 'dog':
+      return wrap(
+        `<path d="M-5.6 -1 Q-9 3 -6 8 Q-4 4 -2.6 1.4Z M5.6 -1 Q9 3 6 8 Q4 4 2.6 1.4Z" fill="${col}"/><circle r="5.6" fill="${col}"/><ellipse cx="0" cy="3.2" rx="2.6" ry="2" fill="#fff8ee"/><circle cx="0" cy="3.4" r="1" fill="#3a2a18"/><circle cx="-2.1" cy="-0.6" r="0.95" fill="#3a2a18"/><circle cx="2.1" cy="-0.6" r="0.95" fill="#3a2a18"/>`
+      );
+    case 'bunny':
+      return wrap(
+        `<ellipse cx="-2.6" cy="-6.6" rx="1.7" ry="4.6" fill="${col}"/><ellipse cx="2.6" cy="-6.6" rx="1.7" ry="4.6" fill="${col}"/><ellipse cx="-2.6" cy="-6.4" rx="0.8" ry="3" fill="#ffd9e4"/><ellipse cx="2.6" cy="-6.4" rx="0.8" ry="3" fill="#ffd9e4"/><circle r="5.2" fill="${col}"/><circle cx="-1.9" cy="-0.6" r="0.9" fill="#3a2a18"/><circle cx="1.9" cy="-0.6" r="0.9" fill="#3a2a18"/><ellipse cx="0" cy="1.6" rx="1" ry="0.8" fill="#e88a9a"/>`
+      );
+    case 'frog':
+      return wrap(
+        `<circle cx="-3.6" cy="-4.2" r="2.2" fill="${col}"/><circle cx="3.6" cy="-4.2" r="2.2" fill="${col}"/><circle cx="-3.6" cy="-4.2" r="1" fill="#204020"/><circle cx="3.6" cy="-4.2" r="1" fill="#204020"/><ellipse cx="0" cy="1.6" rx="6.4" ry="4.6" fill="${col}"/><path d="M-3 3 Q0 5.2 3 3" stroke="#204020" stroke-width="0.8" fill="none" stroke-linecap="round"/>`
+      );
+    case 'person':
+      return wrap(
+        `<circle cx="0" cy="-4.8" r="2.5" fill="${col}"/><path d="M0 -2.2V3.4M-3.6 0.2L0 -1.2L3.6 0.2M-2.8 7.6L0 3.4L2.8 7.6" stroke="${col}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`
       );
     default:
       return '';
