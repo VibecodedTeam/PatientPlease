@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Table } from '../../../components/Table/Table';
 import styles from '../../../components/Table/Table.module.css';
 import { DocumentTableContext } from '../../../components/Table/providers/DocumentTable/DocumentTableProvider';
+import { DocumentTableProvider } from '../../../components/Table/providers/DocumentTable';
 import { ApiProvider } from '../../../providers/Api';
 import { RoundProvider } from '../../../providers/Round';
 import { GameSessionProvider } from '../../../views/MainView/providers/GameSession';
@@ -11,8 +12,15 @@ import { StatisticsProvider } from '../../../views/MainView/providers/Statistics
 import { ResultsProvider, useResults } from '../../../views/MainView/providers/Results';
 
 function ResultsPeek() {
-  const { result } = useResults();
-  return <span data-testid="results-peek">{result ? JSON.stringify(result) : 'none'}</span>;
+  const { result, closeResult } = useResults();
+  return (
+    <>
+      <span data-testid="results-peek">{result ? JSON.stringify(result) : 'none'}</span>
+      <button type="button" onClick={closeResult}>
+        Continue
+      </button>
+    </>
+  );
 }
 
 function renderWithProviders(ui) {
@@ -22,11 +30,7 @@ function renderWithProviders(ui) {
         <GameSessionProvider>
           <StatisticsProvider>
             <ResultsProvider>
-              <DocumentTableContext.Provider
-                value={{ documents: [], patient: null, isLoading: false, error: null }}
-              >
-                {ui}
-              </DocumentTableContext.Provider>
+              <DocumentTableProvider>{ui}</DocumentTableProvider>
               <ResultsPeek />
             </ResultsProvider>
           </StatisticsProvider>
@@ -77,9 +81,13 @@ describe('Table', () => {
     });
     const user = userEvent.setup();
     renderWithProviders(<Table />);
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
-
-    await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
+    // The round load and this click race: retry the click until it lands
+    // after the round has loaded (selecting before then gets reset, since
+    // Diagnose remounts once a real case id replaces the initial null one).
+    await waitFor(async () => {
+      await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
+      expect(screen.getByText('Submit Diagnosis')).not.toBeDisabled();
+    });
     await user.click(screen.getByText('Submit Diagnosis'));
 
     await waitFor(() =>
@@ -106,9 +114,10 @@ describe('Table', () => {
   it('wires Diagnose submissions to useResults().showResult', async () => {
     const user = userEvent.setup();
     renderWithProviders(<Table />);
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
-
-    await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
+    await waitFor(async () => {
+      await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
+      expect(screen.getByText('Submit Diagnosis')).not.toBeDisabled();
+    });
     await user.click(screen.getByText('Submit Diagnosis'));
 
     await waitFor(() =>
@@ -120,6 +129,50 @@ describe('Table', () => {
           examineSeconds: 0,
         }),
       ),
+    );
+  });
+
+  it('clears the selected diagnosis option once the next case loads, even if that case offers the same option id', async () => {
+    let roundCallCount = 0;
+    global.fetch = jest.fn(async (request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/diagnoses') {
+        return new Response(
+          JSON.stringify({
+            gameSession: {},
+            result: { isDiagnosisCorrect: true, isTreatmentCorrect: null, moneyDelta: 50 },
+          }),
+          { status: 200 },
+        );
+      }
+      roundCallCount += 1;
+      return new Response(
+        JSON.stringify({
+          case: { id: `case-uuid-${roundCallCount}`, moneyReward: 50, moneyPenalty: 20 },
+        }),
+        { status: 200 },
+      );
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<Table />);
+    await waitFor(async () => {
+      await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
+      expect(screen.getByText('Submit Diagnosis')).not.toBeDisabled();
+    });
+    await user.click(screen.getByText('Submit Diagnosis'));
+    await waitFor(() =>
+      expect(screen.getByRole('radio', { name: 'Skin Cancer' })).toHaveAttribute(
+        'aria-checked',
+        'true',
+      ),
+    );
+
+    await user.click(screen.getByText('Continue'));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
+
+    expect(screen.getByRole('radio', { name: 'Skin Cancer' })).toHaveAttribute(
+      'aria-checked',
+      'false',
     );
   });
 

@@ -8,7 +8,7 @@ import { useDocumentTable } from './providers/DocumentTable';
 
 export function Table({ children, className = '', ...rest }) {
   const { showResult, error } = useResults();
-  const { diagnosisOptions, isLoading } = useDocumentTable();
+  const { diagnosisOptions, isLoading, caseId } = useDocumentTable();
   const rootClassName = className ? `${styles.table} ${className}` : styles.table;
   // undefined (not []) while the catalog isn't loaded yet, so Diagnose falls back to
   // its own DEFAULT_OPTIONS instead of rendering an empty radiogroup. Those fallback
@@ -25,7 +25,10 @@ export function Table({ children, className = '', ...rest }) {
   return (
     <div className={rootClassName} {...rest}>
       <TabElem />
+      {/* key={caseId}: remounts Diagnose on every new case so its selected-option
+          state doesn't carry over from the previous case. */}
       <Diagnose
+        key={caseId}
         options={options}
         onSubmit={showResult}
         errorMessage={errorMessage}
