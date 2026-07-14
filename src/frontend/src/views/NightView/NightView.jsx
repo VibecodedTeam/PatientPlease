@@ -28,7 +28,6 @@ export function NightViewContent() {
   const {
     items,
     money,
-    error,
     selectedIds,
     selectedTotal,
     remaining,
@@ -37,7 +36,7 @@ export function NightViewContent() {
     toggleItem,
     buySelected,
     isBuying,
-    buyError,
+    errorMessage,
   } = useNightShop();
 
   const anySelected = selectedIds.size > 0;
@@ -80,7 +79,6 @@ export function NightViewContent() {
     actionHint = `$${remaining} will remain`;
   }
 
-  const combinedError = buyError ?? error;
 
   return (
     <div className={styles.page}>
@@ -171,7 +169,7 @@ export function NightViewContent() {
           {actionLabel}
         </button>
         <span className={styles.actionHint}>
-          {combinedError ? `Something went wrong: ${combinedError.message ?? 'please try again'}` : actionHint}
+          {errorMessage ? `Something went wrong: ${errorMessage}` : actionHint}
         </span>
       </div>
     </div>

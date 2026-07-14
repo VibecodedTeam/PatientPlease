@@ -4,6 +4,28 @@ import { useRound } from '../../../../providers/Round';
 
 export const NightShopContext = createContext(null);
 
+/** Human-readable copy for the backend's known /api/v1/shop* error codes (see
+ * docs/api — purchaseItem/getShopCatalog). Axios's own err.message is just
+ * "Request failed with status code 409", which tells the player nothing
+ * about what actually went wrong or how to fix it. */
+const SHOP_ERROR_MESSAGES = {
+  not_night_phase: "It's not night yet — come back once the day ends.",
+  insufficient_funds: "You don't have enough money for this purchase.",
+  item_locked: "This item isn't unlocked yet.",
+  item_already_owned: 'You already own this item.',
+  item_not_found: 'This item is no longer available.',
+  no_active_game: 'No active game session — try restarting.',
+};
+
+/**
+ * @param {*} err - The rejected value from the API client (an axios error), or null.
+ * @returns {string | null} A human-readable message, or null if there's no error.
+ */
+function describeShopError(err) {
+  if (!err) return null;
+  return SHOP_ERROR_MESSAGES[err.response?.data?.error] ?? err.message ?? 'please try again';
+}
+
 /**
  * Owns the night-shop domain's UI-selection state: a budget-aware cart built
  * on top of RoundProvider's shopCatalog/loadShopCatalog/purchaseShopItem
@@ -94,6 +116,13 @@ export function NightShopProvider({ children }) {
     }
   }, [selectedIds, purchaseShopItem, loadShopCatalog]);
 
+  // buyError takes priority: it's the most recent thing the player did
+  // (clicking Buy), so it's more relevant than a stale catalog-load error.
+  const errorMessage = useMemo(
+    () => describeShopError(buyError ?? shopError),
+    [buyError, shopError],
+  );
+
   const value = useMemo(
     () => ({
       items,
@@ -109,6 +138,7 @@ export function NightShopProvider({ children }) {
       buySelected,
       isBuying,
       buyError,
+      errorMessage,
     }),
     [
       items,
@@ -124,6 +154,7 @@ export function NightShopProvider({ children }) {
       buySelected,
       isBuying,
       buyError,
+      errorMessage,
     ],
   );
 

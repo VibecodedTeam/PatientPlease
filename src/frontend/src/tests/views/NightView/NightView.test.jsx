@@ -175,6 +175,42 @@ describe('NightView', () => {
     expect(screen.queryByText('Main View Stub')).not.toBeInTheDocument();
   });
 
+  it.each([
+    ['not_night_phase', "It's not night yet — come back once the day ends."],
+    ['insufficient_funds', "You don't have enough money for this purchase."],
+    ['item_locked', "This item isn't unlocked yet."],
+    ['item_already_owned', 'You already own this item.'],
+    ['item_not_found', 'This item is no longer available.'],
+    ['no_active_game', 'No active game session — try restarting.'],
+  ])(
+    'shows a human-readable message for the %s purchase error instead of the raw HTTP status line',
+    async (errorCode, expectedMessage) => {
+      global.fetch = jest.fn().mockImplementation((request) => {
+        const pathname = new URL(request.url).pathname;
+        if (pathname === '/api/v1/round') {
+          return jsonResponse({ gameSession: { id: 'g1', money: SHOP_BEFORE_BUY.money, status: 'ACTIVE' } });
+        }
+        if (pathname === '/api/v1/shop' && request.method === 'GET') {
+          return jsonResponse(SHOP_BEFORE_BUY);
+        }
+        if (pathname === '/api/v1/shop/purchase' && request.method === 'POST') {
+          return jsonResponse({ error: errorCode }, errorCode === 'item_not_found' ? 404 : 409);
+        }
+        return jsonResponse({}, 404);
+      });
+      const user = userEvent.setup();
+      renderNightView();
+
+      await waitFor(() => expect(screen.getByText('Atlas of Dermatology')).toBeInTheDocument());
+      await user.click(screen.getByRole('button', { name: /select atlas of dermatology/i }));
+      await user.click(screen.getByRole('button', { name: 'Buy · $45' }));
+
+      await waitFor(() =>
+        expect(screen.getByText(`Something went wrong: ${expectedMessage}`)).toBeInTheDocument(),
+      );
+    },
+  );
+
   it('skipping (nothing selected) redirects to /game/main', async () => {
     mockFetch();
     const user = userEvent.setup();
