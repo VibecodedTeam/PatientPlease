@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { ApiProvider } from '../../../providers/Api';
@@ -80,6 +80,20 @@ function renderSettings({ onClose = jest.fn(), autoPaused = false } = {}) {
 describe('Settings', () => {
   beforeEach(() => {
     document.body.innerHTML = '<div id="root"></div><div id="overlay-root"></div>';
+  });
+
+  // Every test here mounts Settings directly (it's never conditionally
+  // unmounted mid-test the way MainView renders it), so its cleanup effect —
+  // which now fires a real resumeGame() POST /api/v1/game/resume call, not
+  // just a local state flip — only runs once the tree unmounts. Unmounting
+  // explicitly here (rather than leaving it to RTL's own automatic
+  // post-test cleanup) gives that call a chance to resolve against this
+  // test's still-current fetch mock before Jest tears down the environment.
+  afterEach(async () => {
+    await act(async () => {
+      cleanup();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
   });
 
   it('pauses the game session on mount and shows the logged-in user', async () => {

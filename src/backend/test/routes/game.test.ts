@@ -157,6 +157,113 @@ describe('POST /api/v1/game/pause', () => {
   });
 });
 
+describe('POST /api/v1/game/resume', () => {
+  let app: FastifyInstance;
+
+  afterEach(async () => {
+    await prisma.diagnosisAttempt.deleteMany({});
+    await prisma.gameDayLog.deleteMany({});
+    await prisma.gameSession.deleteMany({});
+    await prisma.userSession.deleteMany({});
+    await prisma.user.deleteMany({});
+    await app.close();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  it('returns 401 with no session cookie', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+
+    const response = await app.inject({ method: 'POST', url: '/api/v1/game/resume' });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toEqual({ error: 'unauthenticated' });
+  });
+
+  it('returns 409 not_paused when the user has no GameSession', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie } = await signIn(app);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/game/resume',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'not_paused' });
+  });
+
+  it('returns 409 not_paused when the latest session is ACTIVE', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    await createActiveSessionWithOpenDay(userId);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/game/resume',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'not_paused' });
+  });
+
+  it('returns 409 no_open_day when the PAUSED session has no open GameDayLog', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    await prisma.gameSession.create({ data: { userId, money: 0, status: 'PAUSED' } });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/game/resume',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'no_open_day' });
+  });
+
+  it('clears pausedAt, accumulates totalPausedMs, and flips the session to ACTIVE, without leaking userId', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const { gameSession, gameDayLog } = await createActiveSessionWithOpenDay(userId);
+
+    await app.inject({ method: 'POST', url: '/api/v1/game/pause', headers: { cookie } });
+    await prisma.gameDayLog.update({
+      where: { id: gameDayLog.id },
+      data: { pausedAt: new Date(Date.now() - 5000) },
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/game/resume',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const rawBody = response.body;
+    const body = response.json<{ gameSession: { id: string; status: string } }>();
+    expect(body.gameSession.id).toBe(gameSession.id);
+    expect(body.gameSession.status).toBe('ACTIVE');
+    expect(rawBody).not.toContain('userId');
+
+    const updatedDayLog = await prisma.gameDayLog.findUniqueOrThrow({
+      where: { id: gameDayLog.id },
+    });
+    expect(updatedDayLog.pausedAt).toBeNull();
+    expect(updatedDayLog.totalPausedMs).toBeGreaterThanOrEqual(5000);
+    expect(updatedDayLog.totalPausedMs).toBeLessThan(6000);
+  });
+});
+
 describe('POST /api/v1/game/reset', () => {
   let app: FastifyInstance;
 

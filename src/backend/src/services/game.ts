@@ -69,6 +69,13 @@ export class NoOpenDayError extends Error {
   }
 }
 
+export class NotPausedError extends Error {
+  constructor(message = 'GameSession is not PAUSED') {
+    super(message);
+    this.name = 'NotPausedError';
+  }
+}
+
 export class DayNotElapsedError extends Error {
   constructor(public readonly remainingMs: number) {
     super('Minimum day duration has not elapsed yet');
@@ -91,6 +98,19 @@ async function requireActiveGameSession(
 
   if (!session || session.status !== 'ACTIVE') {
     throw new NoActiveGameError();
+  }
+
+  return session;
+}
+
+async function requirePausedGameSession(
+  prisma: GamePrismaClient,
+  userId: string,
+): Promise<GameSessionRecord> {
+  const session = await findLatestGameSession(prisma, userId);
+
+  if (!session || session.status !== 'PAUSED') {
+    throw new NotPausedError();
   }
 
   return session;
@@ -166,6 +186,30 @@ export async function pauseGame(
   const updated = await prisma.gameSession.update({
     where: { id: session.id },
     data: { status: 'PAUSED' },
+  });
+  return toGameSessionResponse(updated);
+}
+
+export async function resumeGame(
+  prisma: GamePrismaClient,
+  userId: string,
+): Promise<GameSessionRecord> {
+  const session = await requirePausedGameSession(prisma, userId);
+  const openDayLog = await requireOpenGameDayLog(prisma, session.id);
+
+  if (openDayLog.pausedAt) {
+    await prisma.gameDayLog.update({
+      where: { id: openDayLog.id },
+      data: {
+        pausedAt: null,
+        totalPausedMs: openDayLog.totalPausedMs + (Date.now() - openDayLog.pausedAt.getTime()),
+      },
+    });
+  }
+
+  const updated = await prisma.gameSession.update({
+    where: { id: session.id },
+    data: { status: 'ACTIVE' },
   });
   return toGameSessionResponse(updated);
 }
