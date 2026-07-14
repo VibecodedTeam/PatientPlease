@@ -2,12 +2,15 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../providers/Api';
+import { RoundProvider, useRound } from '../../../providers/Round';
 import { Chat } from '../../../components/Chat';
 
 function renderChat(props = {}) {
   return render(
     <ApiProvider baseUrl="http://api.test">
-      <Chat gameSessionId="session-1" caseId="case-1" {...props} />
+      <RoundProvider>
+        <Chat gameSessionId="session-1" caseId="case-1" {...props} />
+      </RoundProvider>
     </ApiProvider>,
   );
 }
@@ -15,6 +18,12 @@ function renderChat(props = {}) {
 describe('Chat', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    // RoundProvider mounts alongside Chat and fires its own POST /api/v1/round
+    // on mount — give every test a harmless default response for that call so
+    // tests that only care about the chat POST don't need to special-case it.
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify({ case: { documents: [] } }), { status: 200 }),
+    );
   });
 
   it('renders a patient portrait chosen from the known portrait set', () => {
@@ -108,16 +117,21 @@ describe('Chat', () => {
 
   it('restores the conversation from localStorage after a remount', async () => {
     const user = userEvent.setup();
-    global.fetch = jest.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          chatMessages: [
-            { id: 'm1', sender: 'PLAYER', content: 'Does it itch?', sentAt: '2026-07-13T00:00:00.000Z', sortOrder: 1 },
-            { id: 'm2', sender: 'PATIENT', content: 'Yes, especially at night.', sentAt: '2026-07-13T00:00:01.000Z', sortOrder: 2 },
-          ],
-          revealedDocuments: [],
-        }),
-        { status: 200 },
+    // mockImplementation (not mockResolvedValue) so each call — RoundProvider's
+    // mount fetch and Chat's send — gets its own Response, since a Response
+    // body can only be read once.
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            chatMessages: [
+              { id: 'm1', sender: 'PLAYER', content: 'Does it itch?', sentAt: '2026-07-13T00:00:00.000Z', sortOrder: 1 },
+              { id: 'm2', sender: 'PATIENT', content: 'Yes, especially at night.', sentAt: '2026-07-13T00:00:01.000Z', sortOrder: 2 },
+            ],
+            revealedDocuments: [],
+          }),
+          { status: 200 },
+        ),
       ),
     );
 
@@ -136,16 +150,18 @@ describe('Chat', () => {
 
   it('clears the persisted history for every session/case when "Clear history" is clicked', async () => {
     const user = userEvent.setup();
-    global.fetch = jest.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          chatMessages: [
-            { id: 'm1', sender: 'PLAYER', content: 'Does it itch?', sentAt: '2026-07-13T00:00:00.000Z', sortOrder: 1 },
-            { id: 'm2', sender: 'PATIENT', content: 'Yes, especially at night.', sentAt: '2026-07-13T00:00:01.000Z', sortOrder: 2 },
-          ],
-          revealedDocuments: [],
-        }),
-        { status: 200 },
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            chatMessages: [
+              { id: 'm1', sender: 'PLAYER', content: 'Does it itch?', sentAt: '2026-07-13T00:00:00.000Z', sortOrder: 1 },
+              { id: 'm2', sender: 'PATIENT', content: 'Yes, especially at night.', sentAt: '2026-07-13T00:00:01.000Z', sortOrder: 2 },
+            ],
+            revealedDocuments: [],
+          }),
+          { status: 200 },
+        ),
       ),
     );
 
@@ -174,7 +190,9 @@ describe('Chat', () => {
 
     const { rerender } = render(
       <ApiProvider baseUrl="http://api.test">
-        <Chat gameSessionId={undefined} caseId={undefined} />
+        <RoundProvider>
+          <Chat gameSessionId={undefined} caseId={undefined} />
+        </RoundProvider>
       </ApiProvider>,
     );
 
@@ -182,10 +200,60 @@ describe('Chat', () => {
 
     rerender(
       <ApiProvider baseUrl="http://api.test">
-        <Chat gameSessionId="session-1" caseId="case-1" />
+        <RoundProvider>
+          <Chat gameSessionId="session-1" caseId="case-1" />
+        </RoundProvider>
       </ApiProvider>,
     );
 
     await waitFor(() => expect(screen.getByText('Already in the log.')).toBeInTheDocument());
+  });
+
+  it('merges revealedDocuments from a successful chat reply into RoundProvider case.documents', async () => {
+    const user = userEvent.setup();
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        return Promise.resolve(
+          new Response(JSON.stringify({ case: { id: 'case-1', documents: [] } }), { status: 200 }),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            chatMessages: [
+              { id: 'm1', sender: 'PLAYER', content: 'Does it itch?', sentAt: '2026-07-13T00:00:00.000Z', sortOrder: 1 },
+              { id: 'm2', sender: 'PATIENT', content: 'Yes, especially at night.', sentAt: '2026-07-13T00:00:01.000Z', sortOrder: 2 },
+            ],
+            revealedDocuments: [{ id: 'doc-1', title: 'Left shoulder — day 1', type: 'SKIN_IMAGE' }],
+          }),
+          { status: 200 },
+        ),
+      );
+    });
+
+    function DocumentsProbe() {
+      const { round } = useRound();
+      const titles = (round?.case?.documents ?? []).map((document) => document.title).join(',');
+      return <span data-testid="doc-titles">{titles}</span>;
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Chat gameSessionId="session-1" caseId="case-1" />
+          <DocumentsProbe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('doc-titles').textContent).toBe(''));
+
+    const input = screen.getByLabelText(/doctor reply/i);
+    await user.type(input, 'Does it itch?');
+    await user.click(screen.getByRole('button', { name: /send/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('doc-titles').textContent).toBe('Left shoulder — day 1'),
+    );
   });
 });
