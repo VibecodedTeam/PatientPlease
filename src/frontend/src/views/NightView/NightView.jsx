@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NightShopProvider, useNightShop } from './providers/NightShop';
 import styles from './NightView.module.css';
@@ -28,6 +28,7 @@ export function NightViewContent() {
   const {
     items,
     money,
+    isNightPhase,
     selectedIds,
     selectedTotal,
     remaining,
@@ -38,6 +39,19 @@ export function NightViewContent() {
     isBuying,
     errorMessage,
   } = useNightShop();
+
+  // A stale arrival: something (e.g. a page refresh while sitting on this
+  // screen) re-ran RoundProvider's mount effect, whose resolveOpenGameDayLog
+  // auto-opens the next day whenever none is open — silently ending night
+  // phase before the player bought anything. Without this, every purchase
+  // would 409 with not_night_phase and look like buying silently does
+  // nothing. isNightPhase is null until the catalog's first load resolves,
+  // so this only fires once it's a definite false, not on initial mount.
+  useEffect(() => {
+    if (isNightPhase === false) {
+      navigate('/game/main', { replace: true });
+    }
+  }, [isNightPhase, navigate]);
 
   const anySelected = selectedIds.size > 0;
   const nSelected = selectedIds.size;

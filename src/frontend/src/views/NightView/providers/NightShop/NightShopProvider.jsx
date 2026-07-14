@@ -47,6 +47,9 @@ export function NightShopProvider({ children }) {
 
   const items = useMemo(() => shopCatalog?.items ?? [], [shopCatalog]);
   const money = shopCatalog?.money ?? 0;
+  // null while the catalog hasn't loaded yet, so callers can tell "unknown"
+  // apart from a definite "no" (see NightView's redirect-if-false effect).
+  const isNightPhase = shopCatalog?.isNightPhase ?? null;
 
   const selectedTotal = useMemo(
     () =>
@@ -127,6 +130,7 @@ export function NightShopProvider({ children }) {
     () => ({
       items,
       money,
+      isNightPhase,
       isLoading: isShopLoading,
       error: shopError,
       selectedIds,
@@ -143,6 +147,7 @@ export function NightShopProvider({ children }) {
     [
       items,
       money,
+      isNightPhase,
       isShopLoading,
       shopError,
       selectedIds,

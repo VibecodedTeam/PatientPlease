@@ -211,6 +211,28 @@ describe('NightView', () => {
     },
   );
 
+  it('redirects to /game/main on its own when arriving here but the day is no longer in night phase', async () => {
+    // Reproduces a real desync: RoundProvider's mount effect (e.g. a page
+    // refresh while sitting on /game/night) calls POST /api/v1/round, whose
+    // resolveOpenGameDayLog auto-opens the next day whenever none is open —
+    // silently flipping isNightPhase back to false. Without this redirect,
+    // the player would see a normal-looking shop and get a 409
+    // not_night_phase on the very first purchase, with nothing bought.
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        return jsonResponse({ gameSession: { id: 'g1', money: 120, status: 'ACTIVE' } });
+      }
+      if (pathname === '/api/v1/shop' && request.method === 'GET') {
+        return jsonResponse({ ...SHOP_BEFORE_BUY, isNightPhase: false });
+      }
+      return jsonResponse({}, 404);
+    });
+    renderNightView();
+
+    await waitFor(() => expect(screen.getByText('Main View Stub')).toBeInTheDocument());
+  });
+
   it('skipping (nothing selected) redirects to /game/main', async () => {
     mockFetch();
     const user = userEvent.setup();
