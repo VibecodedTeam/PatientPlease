@@ -23,6 +23,7 @@ describe('TabElem', () => {
     expect(screen.getByText('Patient Information')).toBeInTheDocument();
     expect(screen.getByText('General Patient Story')).toBeInTheDocument();
     expect(screen.getByText('Clinical Symptoms')).toBeInTheDocument();
+    expect(screen.getByText('Itching')).toBeInTheDocument();
     expect(screen.getByText('Extra content')).toBeInTheDocument();
   });
 
