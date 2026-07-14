@@ -65,4 +65,24 @@ describe('Diagnose', () => {
     render(<Diagnose />);
     expect(screen.queryByText(/could not submit/i)).not.toBeInTheDocument();
   });
+
+  it('disables the submit button when disabled is true, even with an option selected', async () => {
+    const user = userEvent.setup();
+    render(<Diagnose disabled />);
+
+    await user.click(screen.getByText('Skin Cancer'));
+
+    expect(screen.getByText('Submit Diagnosis')).toBeDisabled();
+  });
+
+  it('does not call onSubmit when disabled is true', async () => {
+    const user = userEvent.setup();
+    const handleSubmit = jest.fn();
+    render(<Diagnose onSubmit={handleSubmit} disabled />);
+
+    await user.click(screen.getByText('Skin Cancer'));
+    await user.click(screen.getByText('Submit Diagnosis'));
+
+    expect(handleSubmit).not.toHaveBeenCalled();
+  });
 });

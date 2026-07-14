@@ -6,6 +6,7 @@ import styles from '../../../components/Table/Table.module.css';
 import { DocumentTableContext } from '../../../components/Table/providers/DocumentTable/DocumentTableProvider';
 import { ApiProvider } from '../../../providers/Api';
 import { RoundProvider } from '../../../providers/Round';
+import { GameSessionProvider } from '../../../views/MainView/providers/GameSession';
 import { ResultsProvider, useResults } from '../../../views/MainView/providers/Results';
 
 function ResultsPeek() {
@@ -17,14 +18,16 @@ function renderWithProviders(ui) {
   return render(
     <ApiProvider baseUrl="http://api.test">
       <RoundProvider>
-        <ResultsProvider>
-          <DocumentTableContext.Provider
-            value={{ documents: [], patient: null, isLoading: false, error: null }}
-          >
-            {ui}
-          </DocumentTableContext.Provider>
-          <ResultsPeek />
-        </ResultsProvider>
+        <GameSessionProvider>
+          <ResultsProvider>
+            <DocumentTableContext.Provider
+              value={{ documents: [], patient: null, isLoading: false, error: null }}
+            >
+              {ui}
+            </DocumentTableContext.Provider>
+            <ResultsPeek />
+          </ResultsProvider>
+        </GameSessionProvider>
       </RoundProvider>
     </ApiProvider>,
   );
@@ -111,6 +114,7 @@ describe('Table', () => {
           selection: { id: 'skin-cancer', label: 'Skin Cancer' },
           isCorrect: true,
           moneyDelta: 50,
+          examineSeconds: 0,
         }),
       ),
     );
@@ -120,22 +124,24 @@ describe('Table', () => {
     render(
       <ApiProvider baseUrl="http://api.test">
         <RoundProvider>
-          <ResultsProvider>
-            <DocumentTableContext.Provider
-              value={{
-                documents: [],
-                patient: null,
-                diagnosisOptions: [
-                  { id: 'dx-1', code: 'MELANOMA', name: 'Melanoma', category: 'MALIGNANT' },
-                  { id: 'dx-2', code: 'SEB_KER', name: 'Seborrheic Keratosis', category: 'BENIGN' },
-                ],
-                isLoading: false,
-                error: null,
-              }}
-            >
-              <Table />
-            </DocumentTableContext.Provider>
-          </ResultsProvider>
+          <GameSessionProvider>
+            <ResultsProvider>
+              <DocumentTableContext.Provider
+                value={{
+                  documents: [],
+                  patient: null,
+                  diagnosisOptions: [
+                    { id: 'dx-1', code: 'MELANOMA', name: 'Melanoma', category: 'MALIGNANT' },
+                    { id: 'dx-2', code: 'SEB_KER', name: 'Seborrheic Keratosis', category: 'BENIGN' },
+                  ],
+                  isLoading: false,
+                  error: null,
+                }}
+              >
+                <Table />
+              </DocumentTableContext.Provider>
+            </ResultsProvider>
+          </GameSessionProvider>
         </RoundProvider>
       </ApiProvider>,
     );
@@ -144,5 +150,28 @@ describe('Table', () => {
     expect(screen.getByRole('radio', { name: 'Melanoma' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Seborrheic Keratosis' })).toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: 'Skin Cancer' })).not.toBeInTheDocument();
+  });
+
+  it('disables diagnosis submission while the round is still loading, so the fake DEFAULT_OPTIONS ids can never reach the backend', async () => {
+    const user = userEvent.setup();
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <GameSessionProvider>
+            <ResultsProvider>
+              <DocumentTableContext.Provider
+                value={{ documents: [], patient: null, diagnosisOptions: [], isLoading: true, error: null }}
+              >
+                <Table />
+              </DocumentTableContext.Provider>
+            </ResultsProvider>
+          </GameSessionProvider>
+        </RoundProvider>
+      </ApiProvider>,
+    );
+
+    await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
+
+    expect(screen.getByText('Submit Diagnosis')).toBeDisabled();
   });
 });
