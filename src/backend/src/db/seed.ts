@@ -580,7 +580,6 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
   const diagnoses = await prisma.diagnosis.findMany({ orderBy: { code: 'asc' } });
   const treatments = await prisma.treatment.findMany({ orderBy: { code: 'asc' } });
   const shopItems = await prisma.shopItem.findMany({ orderBy: { sku: 'asc' } });
-  const examinationItems = shopItems.filter((item) => item.itemType === 'EXAMINATION');
 
   for (let i = 0; i < REAL_CASES.length; i++) {
     const realCase = REAL_CASES[i]!;
