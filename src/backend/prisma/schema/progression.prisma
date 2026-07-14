@@ -21,8 +21,8 @@ model GameSession {
   chatMessages     ChatMessage[]
   gameplayLogs     GameplayLog[]
   dayLogs          GameDayLog[]
-  caseExaminations CaseExamination[]
   documentReveals  CaseDocumentReveal[]
+  caseExaminations CaseExamination[]
 
   @@index([userId, status])
 }
