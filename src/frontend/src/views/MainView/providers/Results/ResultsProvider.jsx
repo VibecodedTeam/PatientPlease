@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useEffect, useRef, useState } from '
 import PropTypes from 'prop-types';
 import { useRound } from '../../../../providers/Round';
 import { useGameSession } from '../GameSession';
+import { useStatistics } from '../Statistics';
 
 export const ResultsContext = createContext(null);
 
@@ -13,11 +14,14 @@ export const ResultsContext = createContext(null);
 export function ResultsProvider({ children }) {
   const { round, submitDiagnosis, refreshRound } = useRound();
   const { elapsedSeconds, isDayOver } = useGameSession();
+  const { finishDay } = useStatistics();
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
-  // Read via a ref (rather than as a closeResult dependency) so closeResult's
-  // identity stays stable while still observing the latest value at call time.
+  // isDayOver can flip true at any moment (the day timer is a wall clock),
+  // including while the current case is still being examined — closeResult
+  // reads it via a ref so that decision uses the latest value rather than a
+  // stale one captured when this callback was created.
   const isDayOverRef = useRef(isDayOver);
   isDayOverRef.current = isDayOver;
 
@@ -63,21 +67,22 @@ export function ResultsProvider({ children }) {
     [round, submitDiagnosis],
   );
 
+  // This is the one point that decides whether the player moves on to a new
+  // patient or the day ends instead — so a day timer that ran out while the
+  // current patient was still being examined never cuts that examination
+  // short: the player always finishes (submits + acknowledges) the patient
+  // they're on first, and only then, if the day is over, does it actually
+  // end rather than loading another case into an already-elapsed day.
   const closeResult = useCallback(() => {
     setResult(null);
-    // The just-diagnosed case now has a DiagnosisAttempt, so refetching the round
-    // is what actually advances the desk to the next patient — but only while
-    // the day is still running. Once the day is over, refetching here would
-    // hit POST /api/v1/round before the player ever reaches night phase,
-    // which auto-starts the NEXT day's GameDayLog early (resolveOpenGameDayLog
-    // creates one whenever none is open) — leaving the backend already past
-    // night phase by the time the player actually navigates to the shop, so
-    // every purchase 409s. The day-end/Statistics flow owns the round refetch
-    // once night phase is properly entered (MainView's own mount effect).
-    if (!isDayOverRef.current) {
-      refreshRound();
+    if (isDayOverRef.current) {
+      finishDay();
+      return;
     }
-  }, [refreshRound]);
+    // The just-diagnosed case now has a DiagnosisAttempt, so refetching the round
+    // is what actually advances the desk to the next patient.
+    refreshRound();
+  }, [refreshRound, finishDay]);
 
   const value = { isOpen: result !== null, result, error, showResult, closeResult };
 

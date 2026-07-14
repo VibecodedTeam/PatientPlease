@@ -19,6 +19,9 @@ export const ENDPOINTS = {
   round: {
     start: '/api/v1/round',
   },
+  diagnoses: {
+    submit: '/api/v1/diagnoses',
+  },
   game: {
     pause: '/api/v1/game/pause',
     reset: '/api/v1/game/reset',
@@ -26,9 +29,6 @@ export const ENDPOINTS = {
   day: {
     reset: '/api/v1/day/reset',
     end: '/api/v1/day/end',
-  },
-  diagnoses: {
-    submit: '/api/v1/diagnoses',
   },
   examinations: {
     order: '/api/v1/examinations',

@@ -16,9 +16,9 @@ const DEFAULT_SYMPTOMS = [
 export function Information_3({ title = 'Clinical Symptoms', className = '', ...rest }) {
   const { documents } = useDocumentTable();
   const symptomsDocument = documents.find((doc) => doc.type === 'CLINICAL_SYMPTOMS');
-  // seed.ts stores every supporting document type (including CLINICAL_SYMPTOMS) as
-  // free-text `content: { note }` — there is no structured symptom list in the schema.
-  const note = symptomsDocument?.content?.note;
+  // realCases.ts stores CLINICAL_SYMPTOMS as free-text `content: { description }` —
+  // there is no structured symptom list in the schema.
+  const note = symptomsDocument?.content?.description;
 
   const cardClassName = className ? `${styles.card} ${className}` : styles.card;
 

@@ -1,3 +1,5 @@
+import { computeEffectiveElapsedMs } from './dayElapsed.js';
+
 export type GameSessionStatusValue = 'ACTIVE' | 'PAUSED' | 'GAME_OVER' | 'COMPLETED';
 
 export interface GameSessionRecord {
@@ -196,6 +198,10 @@ export interface RoundResponse {
   };
   diagnosisOptions: DiagnosisRecord[];
   treatmentOptions: TreatmentRecord[];
+  /** Lets the frontend's day timer resume from the true server-side elapsed
+   * time (see services/dayElapsed.ts) instead of restarting from zero on
+   * every page refresh / remount. */
+  dayLog: { elapsedMs: number };
 }
 
 export class NoCasesRemainingError extends Error {
@@ -477,7 +483,12 @@ export async function startRound(
     throw new NoCasesRemainingError();
   }
 
-  await resolveOpenGameDayLog(prisma, session.id, session.money);
+  const openDayLog = await resolveOpenGameDayLog(prisma, session.id, session.money);
+  const elapsedMs = computeEffectiveElapsedMs({
+    startedAt: openDayLog.startedAt,
+    totalPausedMs: openDayLog.totalPausedMs,
+    extraElapsedMs: openDayLog.extraElapsedMs,
+  });
 
   const [ownedItems, diagnoses, treatments, successfulExaminations] = await Promise.all([
     prisma.ownedItem.findMany({
@@ -504,5 +515,6 @@ export async function startRound(
       toDiagnosisResponse,
     ),
     treatmentOptions: treatments.map(toTreatmentResponse),
+    dayLog: { elapsedMs },
   };
 }

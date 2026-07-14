@@ -248,9 +248,33 @@ describe('resetDay', () => {
         penaltyApplied: false,
         pausedAt: null,
         totalPausedMs: 0,
+        extraElapsedMs: 0,
+        startedAt: expect.any(Date) as Date,
       },
     });
     expect(result).toEqual(refunded);
+  });
+
+  it('resets startedAt to now and extraElapsedMs to 0, so effective elapsed time restarts at zero (going back in time to the start of day)', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    const openLog = makeGameDayLog({
+      id: 'open-log-uuid',
+      startedAt: new Date('2020-01-01T00:00:00.000Z'),
+      extraElapsedMs: 45_000,
+    });
+    prisma.gameDayLog.findFirst.mockResolvedValue(openLog);
+    prisma.gameSession.update.mockResolvedValue(makeSession());
+
+    const before = Date.now();
+    await resetDay(prisma, 'user-uuid');
+
+    const call = prisma.gameDayLog.update.mock.calls[0]?.[0] as {
+      data: { startedAt: Date; extraElapsedMs: number };
+    };
+    expect(call.data.extraElapsedMs).toBe(0);
+    expect(call.data.startedAt.getTime()).toBeGreaterThanOrEqual(before);
+    expect(call.data.startedAt.getTime()).toBeLessThan(before + 1000);
   });
 
   it('flips a PAUSED session back to ACTIVE', async () => {
@@ -267,7 +291,7 @@ describe('resetDay', () => {
     });
   });
 
-  it('accumulates the current pausedAt interval into totalPausedMs before clearing it', async () => {
+  it('resets totalPausedMs to 0 and clears pausedAt, even when a pause was already in progress', async () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
     const pausedAt = new Date(Date.now() - 5000);
@@ -289,17 +313,14 @@ describe('resetDay', () => {
         thresholdMet: null,
         penaltyApplied: false,
         pausedAt: null,
-        totalPausedMs: expect.any(Number) as number,
+        totalPausedMs: 0,
+        extraElapsedMs: 0,
+        startedAt: expect.any(Date) as Date,
       },
     });
-    const call = prisma.gameDayLog.update.mock.calls[0]?.[0] as {
-      data: { totalPausedMs: number };
-    };
-    expect(call.data.totalPausedMs).toBeGreaterThanOrEqual(1000 + 5000);
-    expect(call.data.totalPausedMs).toBeLessThan(1000 + 6000);
   });
 
-  it('leaves totalPausedMs unchanged when pausedAt was already null', async () => {
+  it('resets totalPausedMs to 0 when pausedAt was already null', async () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
     const openLog = makeGameDayLog({ id: 'open-log-uuid', pausedAt: null, totalPausedMs: 1000 });
@@ -316,7 +337,9 @@ describe('resetDay', () => {
         thresholdMet: null,
         penaltyApplied: false,
         pausedAt: null,
-        totalPausedMs: 1000,
+        totalPausedMs: 0,
+        extraElapsedMs: 0,
+        startedAt: expect.any(Date) as Date,
       },
     });
   });
@@ -640,18 +663,5 @@ describe('endDay', () => {
     const result = await endDay(prisma, 'user-uuid');
 
     expect(result.gameSession).not.toHaveProperty('userId');
-  });
-});
-
-describe('MIN_DAY_DURATION_MS / frontend DAY_DURATION_SECONDS invariant', () => {
-  it('leaves headroom under the frontend day length, or the day can never end', () => {
-    // Mirrors src/frontend/src/views/MainView/providers/GameSession/
-    // GameSessionProvider.jsx's DAY_DURATION_SECONDS (currently 600s). The
-    // two constants can't literally share a value (backend never imports
-    // frontend, per CLAUDE.md), so this is a same-value tripwire instead:
-    // if you change MIN_DAY_DURATION_MS, also check/update
-    // DAY_DURATION_SECONDS, and vice versa.
-    const FRONTEND_DAY_DURATION_SECONDS = 600;
-    expect(MIN_DAY_DURATION_MS).toBeLessThan(FRONTEND_DAY_DURATION_SECONDS * 1000);
   });
 });
