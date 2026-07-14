@@ -58,8 +58,12 @@ export function NightShopProvider({ children }) {
     [canToggle],
   );
 
+  // Returns whether every selected item was actually purchased — callers
+  // (NightView's Buy button) must only leave the shop once this is true, or a
+  // failed/partial purchase would silently strand the player back on the day
+  // view with nothing actually bought and no visible error.
   const buySelected = useCallback(async () => {
-    if (selectedIds.size === 0) return;
+    if (selectedIds.size === 0) return true;
     setIsBuying(true);
     setBuyError(null);
     try {
@@ -70,6 +74,7 @@ export function NightShopProvider({ children }) {
       }
       setSelectedIds(new Set());
       await loadShopCatalog();
+      return true;
     } catch (err) {
       setBuyError(err);
       // Resync from the server so money/owned reflect any partial success, then
@@ -83,6 +88,7 @@ export function NightShopProvider({ children }) {
         );
         setSelectedIds((previous) => new Set([...previous].filter((id) => selectable.has(id))));
       }
+      return false;
     } finally {
       setIsBuying(false);
     }

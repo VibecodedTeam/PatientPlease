@@ -47,7 +47,13 @@ export function NightViewContent() {
 
   function handleAction() {
     if (anySelected) {
-      buySelected().then(() => navigate('/game/main'));
+      // Only leave the shop once every selected item was actually purchased —
+      // a failed/partial buy (e.g. a stale not_night_phase 409) must leave the
+      // player on this screen, where buyError is rendered, instead of silently
+      // stranding them back on the day view with nothing bought.
+      buySelected().then((succeeded) => {
+        if (succeeded) navigate('/game/main');
+      });
     } else {
       navigate('/game/main');
     }

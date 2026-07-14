@@ -144,6 +144,37 @@ describe('NightView', () => {
     expect(purchaseRequest.method).toBe('POST');
   });
 
+  it('stays on the night shop and shows an error when the purchase fails, instead of redirecting to /game/main', async () => {
+    let shopCallCount = 0;
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        return jsonResponse({ gameSession: { id: 'g1', money: SHOP_BEFORE_BUY.money, status: 'ACTIVE' } });
+      }
+      if (pathname === '/api/v1/shop' && request.method === 'GET') {
+        const body = shopCallCount === 0 ? SHOP_BEFORE_BUY : SHOP_BEFORE_BUY;
+        shopCallCount += 1;
+        return jsonResponse(body);
+      }
+      if (pathname === '/api/v1/shop/purchase' && request.method === 'POST') {
+        return jsonResponse({ error: 'not_night_phase' }, 409);
+      }
+      return jsonResponse({}, 404);
+    });
+    const user = userEvent.setup();
+    renderNightView();
+
+    await waitFor(() => expect(screen.getByText('Atlas of Dermatology')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /select atlas of dermatology/i }));
+    await user.click(screen.getByRole('button', { name: 'Buy · $45' }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/something went wrong/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByRole('heading', { name: 'Shop for Items' })).toBeInTheDocument();
+    expect(screen.queryByText('Main View Stub')).not.toBeInTheDocument();
+  });
+
   it('skipping (nothing selected) redirects to /game/main', async () => {
     mockFetch();
     const user = userEvent.setup();
