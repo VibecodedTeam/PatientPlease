@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import styles from './Chat.module.css';
 import { useApi } from '../../providers/Api';
+import { useRound } from '../../providers/Round';
 import { loadChatMessages, saveChatMessages, clearAllChatMessages } from './internal/chatStorage';
 
 const PORTRAIT_FILES = [
@@ -26,6 +27,7 @@ function pickRandomPortrait() {
  */
 export function Chat({ gameSessionId, caseId }) {
   const api = useApi();
+  const { revealDocuments } = useRound();
   const [portrait] = useState(pickRandomPortrait);
   const [messages, setMessages] = useState(() => loadChatMessages(gameSessionId, caseId));
   const [draft, setDraft] = useState('');
@@ -69,6 +71,7 @@ export function Chat({ gameSessionId, caseId }) {
         headers: { 'Content-Type': undefined },
       });
       setMessages((prev) => [...prev.filter((message) => message.id !== pendingId), ...data.chatMessages]);
+      revealDocuments(data.revealedDocuments);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Chat: POST /api/v1/chat failed', {
