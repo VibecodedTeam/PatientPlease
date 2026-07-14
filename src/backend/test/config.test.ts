@@ -2,6 +2,7 @@ import {
   resolveChatAudioMaxBytes,
   resolveChatLlmProvider,
   resolveCookieSecret,
+  resolveDayDurationSeconds,
   resolveDevSessionEnabled,
   resolveFrontendOrigin,
   resolveGeminiApiKey,
@@ -143,6 +144,32 @@ describe('resolveDevSessionEnabled', () => {
 
   it('returns true when ENABLE_DEV_SESSION is "true"', () => {
     expect(resolveDevSessionEnabled('true')).toBe(true);
+  });
+});
+
+describe('resolveDayDurationSeconds', () => {
+  it('returns the parsed value when DAY_DURATION_SECONDS is set', () => {
+    expect(resolveDayDurationSeconds('30', 60)).toBe(30);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is unset', () => {
+    expect(resolveDayDurationSeconds(undefined, 60)).toBe(60);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is an empty string', () => {
+    expect(resolveDayDurationSeconds('', 60)).toBe(60);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is non-numeric', () => {
+    expect(resolveDayDurationSeconds('abc', 60)).toBe(60);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is "0"', () => {
+    expect(resolveDayDurationSeconds('0', 60)).toBe(60);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is negative', () => {
+    expect(resolveDayDurationSeconds('-1', 60)).toBe(60);
   });
 });
 

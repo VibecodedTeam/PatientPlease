@@ -4,13 +4,31 @@ import { useRound } from '../../../../providers/Round';
 
 export const GameSessionContext = createContext(null);
 
+/** Mirrors the backend's resolveDayDurationSeconds (src/backend/src/config.ts) so both sides
+ * fall back to the same default when the shared env var is unset/invalid. */
+export function resolveDayDurationSeconds(value, fallback) {
+  const parsed = Number(value);
+  return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 // How long a day runs before it auto-ends and the Daily Statistics popup
-// appears (see views/MainView/providers/Statistics).
-export const DAY_DURATION_SECONDS = 600;
+// appears (see views/MainView/providers/Statistics). Shared with the
+// backend's DAY_DURATION_SECONDS via docker/.env's DAY_DURATION_SECONDS /
+// VITE_DAY_DURATION_SECONDS (see src/backend/src/constants.ts), so one
+// setting controls both instead of two constants that can drift apart.
+export const DAY_DURATION_SECONDS = resolveDayDurationSeconds(
+  import.meta.env && import.meta.env.VITE_DAY_DURATION_SECONDS,
+  60,
+);
 
 export function GameSessionProvider({ children }) {
-  const { pauseGame, resetDay: roundResetDay, resetGame: roundResetGame, endDay: roundEndDay } =
-    useRound();
+  const {
+    round,
+    pauseGame,
+    resetDay: roundResetDay,
+    resetGame: roundResetGame,
+    endDay: roundEndDay,
+  } = useRound();
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(isPaused);
@@ -18,6 +36,38 @@ export function GameSessionProvider({ children }) {
   const isDayOver = elapsedSeconds >= DAY_DURATION_SECONDS;
   const isDayOverRef = useRef(isDayOver);
   isDayOverRef.current = isDayOver;
+
+  // Seeds the timer from the backend's true elapsed time (see
+  // docs/api/round.md's dayLog.elapsedMs, backed by services/dayElapsed.ts)
+  // exactly once, the first time round data arrives after mount — this is
+  // what makes a page refresh resume the timer instead of restarting it at
+  // 0. Only fires once: later round updates (e.g. after pauseGame merges a
+  // fresh gameSession into round) must not re-seed and clobber ticking that
+  // has since happened locally, or the explicit 0 that resetDay/resetGame/
+  // endDay already set.
+  //
+  // Clamped to DAY_DURATION_SECONDS: once the day is over, the frontend
+  // freezes locally without ever calling the backend's pause endpoint (that
+  // would flip GameSession to PAUSED and block submitting the last
+  // diagnosis/examination — see services/diagnosis.ts and
+  // services/examination.ts), so the server's real clock keeps running
+  // while the player finishes the last case. Without the clamp, a refresh
+  // during that window would seed an ever-growing raw value instead of the
+  // frozen display the local ticker already shows everyone else.
+  const hasSeededElapsedRef = useRef(false);
+  useEffect(() => {
+    if (hasSeededElapsedRef.current) return;
+    if (typeof round?.dayLog?.elapsedMs !== 'number') return;
+    hasSeededElapsedRef.current = true;
+    const seededSeconds = Math.min(
+      Math.floor(round.dayLog.elapsedMs / 1000),
+      DAY_DURATION_SECONDS,
+    );
+    setElapsedSeconds(seededSeconds);
+    if (seededSeconds >= DAY_DURATION_SECONDS) {
+      setIsPaused(true);
+    }
+  }, [round]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {

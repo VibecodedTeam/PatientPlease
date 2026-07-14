@@ -91,9 +91,19 @@ existing open round looks identical to a client as starting a new one.
   ],
   "treatmentOptions": [
     { "id": "uuid", "code": "REFER_ONCO", "name": "Refer to oncology", "kind": "REFERRAL" }
-  ]
+  ],
+  "dayLog": {
+    "elapsedMs": 12345
+  }
 }
 ```
+
+`dayLog.elapsedMs` is the effective elapsed time (wall-clock time since the open `GameDayLog`'s
+`startedAt`, minus accumulated paused time, plus any time added by actions like ordering an
+examination — see `computeEffectiveElapsedMs` in `src/backend/src/services/dayElapsed.ts`) already
+spent on the still-open day. The frontend's day timer (`GameSessionProvider`) seeds its local
+clock from this value once, the first time round data loads after mount, so refreshing the page
+resumes the timer instead of restarting it at zero.
 
 `diagnosisOptions` is **not** the full `Diagnosis` catalog — it's `case.correctDiagnosisId`'s
 diagnosis plus up to 3 randomly-selected decoys from the rest of the catalog (fewer than 4 total

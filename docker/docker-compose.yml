@@ -31,6 +31,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-docker-dev-not-a-real-gemini-key}
       WHISPER_BASE_URL: ${WHISPER_BASE_URL:-http://localhost:8000/v1}
       WHISPER_MODEL: ${WHISPER_MODEL:-whisper-1}
+      DAY_DURATION_SECONDS: ${DAY_DURATION_SECONDS:-60}
     ports:
       - "4000:4000"
     depends_on:
@@ -50,6 +51,7 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-test-client-id.apps.googleusercontent.com}
+        VITE_DAY_DURATION_SECONDS: ${DAY_DURATION_SECONDS:-60}
     ports:
       - "4173:4173"
     healthcheck:

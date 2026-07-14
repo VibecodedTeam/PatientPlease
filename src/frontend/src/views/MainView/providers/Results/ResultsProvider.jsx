@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useEffect, useRef, useState } from '
 import PropTypes from 'prop-types';
 import { useRound } from '../../../../providers/Round';
 import { useGameSession } from '../GameSession';
+import { useStatistics } from '../Statistics';
 
 export const ResultsContext = createContext(null);
 
@@ -12,9 +13,17 @@ export const ResultsContext = createContext(null);
  */
 export function ResultsProvider({ children }) {
   const { round, submitDiagnosis, refreshRound } = useRound();
-  const { elapsedSeconds } = useGameSession();
+  const { elapsedSeconds, isDayOver } = useGameSession();
+  const { finishDay } = useStatistics();
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  // isDayOver can flip true at any moment (the day timer is a wall clock),
+  // including while the current case is still being examined — closeResult
+  // reads it via a ref so that decision uses the latest value rather than a
+  // stale one captured when this callback was created.
+  const isDayOverRef = useRef(isDayOver);
+  isDayOverRef.current = isDayOver;
 
   // elapsedSeconds ticks every second, so a stale closure over it (captured
   // once when showResult was created) would report the wrong examine time.
@@ -58,12 +67,22 @@ export function ResultsProvider({ children }) {
     [round, submitDiagnosis],
   );
 
+  // This is the one point that decides whether the player moves on to a new
+  // patient or the day ends instead — so a day timer that ran out while the
+  // current patient was still being examined never cuts that examination
+  // short: the player always finishes (submits + acknowledges) the patient
+  // they're on first, and only then, if the day is over, does it actually
+  // end rather than loading another case into an already-elapsed day.
   const closeResult = useCallback(() => {
     setResult(null);
+    if (isDayOverRef.current) {
+      finishDay();
+      return;
+    }
     // The just-diagnosed case now has a DiagnosisAttempt, so refetching the round
     // is what actually advances the desk to the next patient.
     refreshRound();
-  }, [refreshRound]);
+  }, [refreshRound, finishDay]);
 
   const value = { isOpen: result !== null, result, error, showResult, closeResult };
 
