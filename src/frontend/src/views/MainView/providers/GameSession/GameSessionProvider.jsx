@@ -9,8 +9,13 @@ export const GameSessionContext = createContext(null);
 export const DAY_DURATION_SECONDS = 30;
 
 export function GameSessionProvider({ children }) {
-  const { pauseGame, resetDay: roundResetDay, resetGame: roundResetGame, endDay: roundEndDay } =
-    useRound();
+  const {
+    round,
+    pauseGame,
+    resetDay: roundResetDay,
+    resetGame: roundResetGame,
+    endDay: roundEndDay,
+  } = useRound();
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(isPaused);
@@ -18,6 +23,22 @@ export function GameSessionProvider({ children }) {
   const isDayOver = elapsedSeconds >= DAY_DURATION_SECONDS;
   const isDayOverRef = useRef(isDayOver);
   isDayOverRef.current = isDayOver;
+
+  // Seeds the timer from the backend's true elapsed time (see
+  // docs/api/round.md's dayLog.elapsedMs, backed by services/dayElapsed.ts)
+  // exactly once, the first time round data arrives after mount — this is
+  // what makes a page refresh resume the timer instead of restarting it at
+  // 0. Only fires once: later round updates (e.g. after pauseGame merges a
+  // fresh gameSession into round) must not re-seed and clobber ticking that
+  // has since happened locally, or the explicit 0 that resetDay/resetGame/
+  // endDay already set.
+  const hasSeededElapsedRef = useRef(false);
+  useEffect(() => {
+    if (hasSeededElapsedRef.current) return;
+    if (typeof round?.dayLog?.elapsedMs !== 'number') return;
+    hasSeededElapsedRef.current = true;
+    setElapsedSeconds(Math.floor(round.dayLog.elapsedMs / 1000));
+  }, [round]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
