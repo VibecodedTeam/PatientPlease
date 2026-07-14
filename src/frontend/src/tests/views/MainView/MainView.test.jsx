@@ -141,7 +141,10 @@ async function renderMainView() {
                 Routes,
                 null,
                 React.createElement(Route, { path: '/', element: React.createElement(MainView) }),
-                React.createElement(Route, { path: '/night', element: React.createElement(NightMarker) }),
+                React.createElement(Route, {
+                  path: '/game/night',
+                  element: React.createElement(NightMarker),
+                }),
               ),
             ),
           ),
@@ -543,6 +546,66 @@ describe('MainView', () => {
         expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument(),
       );
       expect(dayEndFetchCount()).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('surfaces a recoverable error (instead of a silent frozen desk) and retries when ending the day fails', async () => {
+    let dayEndShouldFail = true;
+    mockFetchRoutes({
+      '/api/v1/day/end': () => {
+        if (dayEndShouldFail) {
+          return new Response('Internal Server Error', { status: 500 });
+        }
+        return new Response(
+          JSON.stringify({
+            gameSession: { consecutiveBadDiagnosisCount: 0 },
+            dayLog: {
+              dayNumber: 1,
+              startingMoney: 100,
+              endingMoney: 130,
+              casesAttempted: 1,
+              casesCorrect: 1,
+              elapsedMs: 65000,
+            },
+          }),
+          { status: 200 },
+        );
+      },
+    });
+    jest.useFakeTimers({ doNotFake: ['queueMicrotask'] });
+    try {
+      await renderMainView();
+      await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+
+      await act(async () => {
+        jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
+      });
+      await act(async () => {
+        screen.getByRole('radio', { name: 'Skin Cancer' }).click();
+      });
+      await act(async () => {
+        screen.getByText('Submit Diagnosis').click();
+      });
+      await act(async () => {
+        screen.getByRole('button', { name: /continue/i }).click();
+      });
+
+      // endDay failed: the player must see a recoverable error, not a silent
+      // frozen desk, and the Daily Statistics popup must NOT have opened.
+      await waitFor(() => expect(screen.getByText(/couldn't end the day/i)).toBeInTheDocument());
+      expect(screen.queryByRole('heading', { name: 'Daily Statistics' })).not.toBeInTheDocument();
+
+      dayEndShouldFail = false;
+      await act(async () => {
+        screen.getByRole('button', { name: /try again/i }).click();
+      });
+
+      await waitFor(() =>
+        expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument(),
+      );
+      expect(screen.queryByText(/couldn't end the day/i)).not.toBeInTheDocument();
     } finally {
       jest.useRealTimers();
     }

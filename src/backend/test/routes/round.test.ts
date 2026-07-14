@@ -370,8 +370,12 @@ describe('POST /api/v1/round', () => {
     const second = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
 
     expect(second.statusCode).toBe(200);
-    const secondBody = second.json<{ dayLog: { elapsedMs: number } }>();
+    const secondBody = second.json<{ dayLog: { elapsedMs: number; dayNumber: number } }>();
     expect(secondBody.dayLog.elapsedMs).toBeGreaterThanOrEqual(9_800);
+    // dayNumber lets the frontend timer re-seed per day (not just once per
+    // mount), so returning for the next day starts the timer at 0 instead of
+    // latching the previous day's elapsed — see GameSessionProvider.
+    expect(secondBody.dayLog.dayNumber).toBe(openDayLog.dayNumber);
   });
 
   it('hides an EXAMINATION_RESULTS document until a successful CaseExamination exists for it', async () => {

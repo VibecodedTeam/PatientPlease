@@ -286,6 +286,65 @@ describe('RoundProvider', () => {
     expect(request.url).toBe('http://api.test/api/v1/day/end');
   });
 
+  it('endDay clears round.dayLog so the next day re-seeds the timer from a fresh value, not the finished day', async () => {
+    const dayEndResponse = {
+      gameSession: { money: 130 },
+      dayLog: { dayNumber: 1, elapsedMs: 60000, endingMoney: 130 },
+    };
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({ gameSession: { money: 100 }, dayLog: { dayNumber: 1, elapsedMs: 55000 } }),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify(dayEndResponse), { status: 200 }));
+    });
+
+    function Probe() {
+      const { round, endDay } = useRound();
+      const [returnedDayLog, setReturnedDayLog] = React.useState('unset');
+      return (
+        <div>
+          <span data-testid="round-day-log">
+            {round ? String(round.dayLog === null ? 'null' : JSON.stringify(round.dayLog)) : 'none'}
+          </span>
+          <span data-testid="returned-day-log">
+            {returnedDayLog === 'unset' ? 'unset' : JSON.stringify(returnedDayLog)}
+          </span>
+          <button onClick={() => endDay().then((data) => setReturnedDayLog(data.dayLog))}>end-day</button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('round-day-log').textContent).toBe(
+        JSON.stringify({ dayNumber: 1, elapsedMs: 55000 }),
+      ),
+    );
+
+    await userEvent.setup().click(screen.getByText('end-day'));
+
+    // round.dayLog is dropped so GameSession's seed can't latch the finished
+    // day's elapsed on the next remount...
+    await waitFor(() => expect(screen.getByTestId('round-day-log').textContent).toBe('null'));
+    // ...but endDay still returns the finished day's dayLog for the Daily
+    // Statistics popup.
+    expect(screen.getByTestId('returned-day-log').textContent).toBe(
+      JSON.stringify(dayEndResponse.dayLog),
+    );
+  });
+
   it('loadShopCatalog GETs /api/v1/shop and exposes the catalog via shopCatalog', async () => {
     const catalog = { money: 100, items: [{ id: 'a', name: 'Atlas', price: 40 }] };
     global.fetch = jest.fn().mockImplementation((request) => {

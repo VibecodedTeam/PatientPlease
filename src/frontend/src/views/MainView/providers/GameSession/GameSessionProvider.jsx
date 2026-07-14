@@ -4,6 +4,10 @@ import { useRound } from '../../../../providers/Round';
 
 export const GameSessionContext = createContext(null);
 
+// Sentinel distinct from every real dayNumber (including undefined, for a
+// round payload whose dayLog omits it) so the very first seed always runs.
+const UNSEEDED_DAY = Symbol('unseeded-day');
+
 /** Mirrors the backend's resolveDayDurationSeconds (src/backend/src/config.ts) so both sides
  * fall back to the same default when the shared env var is unset/invalid. */
 export function resolveDayDurationSeconds(value, fallback) {
@@ -39,13 +43,18 @@ export function GameSessionProvider({ children }) {
   isDayOverRef.current = isDayOver;
 
   // Seeds the timer from the backend's true elapsed time (see
-  // docs/api/round.md's dayLog.elapsedMs, backed by services/dayElapsed.ts)
-  // exactly once, the first time round data arrives after mount — this is
-  // what makes a page refresh resume the timer instead of restarting it at
-  // 0. Only fires once: later round updates (e.g. after pauseGame merges a
-  // fresh gameSession into round) must not re-seed and clobber ticking that
-  // has since happened locally, or the explicit 0 that resetDay/resetGame/
-  // endDay already set.
+  // docs/api/round.md's dayLog.elapsedMs, backed by services/dayElapsed.ts),
+  // keyed on dayLog.dayNumber so it seeds once *per day*, not once per mount:
+  //  - First round load after mount seeds the current day — this is what
+  //    makes a page refresh resume the timer instead of restarting it at 0.
+  //  - A new day (a different dayNumber, e.g. returning from night) re-seeds
+  //    from that day's fresh elapsed (~0), instead of the previous seed
+  //    latching the finished day's elapsed and freezing the new day at "day
+  //    over". (RoundProvider.endDay also drops the finished day's dayLog so
+  //    nothing stale is even seeded in the gap before the new round arrives.)
+  //  - An unrelated round update within the same day (e.g. pauseGame merging
+  //    a fresh gameSession) has an unchanged dayNumber, so it does NOT re-seed
+  //    and clobber ticking that has since happened locally.
   //
   // Clamped to DAY_DURATION_SECONDS: once the day is over, the frontend
   // freezes locally without ever calling the backend's pause endpoint (that
@@ -55,19 +64,18 @@ export function GameSessionProvider({ children }) {
   // while the player finishes the last case. Without the clamp, a refresh
   // during that window would seed an ever-growing raw value instead of the
   // frozen display the local ticker already shows everyone else.
-  const hasSeededElapsedRef = useRef(false);
+  const lastSeededDayRef = useRef(UNSEEDED_DAY);
   useEffect(() => {
-    if (hasSeededElapsedRef.current) return;
-    if (typeof round?.dayLog?.elapsedMs !== 'number') return;
-    hasSeededElapsedRef.current = true;
-    const seededSeconds = Math.min(
-      Math.floor(round.dayLog.elapsedMs / 1000),
-      DAY_DURATION_SECONDS,
-    );
-    setElapsedSeconds(seededSeconds);
-    if (seededSeconds >= DAY_DURATION_SECONDS) {
-      setIsPaused(true);
+    const dayLog = round?.dayLog;
+    if (typeof dayLog?.elapsedMs !== 'number') return;
+    const dayNumber = dayLog.dayNumber;
+    if (lastSeededDayRef.current !== UNSEEDED_DAY && lastSeededDayRef.current === dayNumber) {
+      return;
     }
+    lastSeededDayRef.current = dayNumber;
+    const seededSeconds = Math.min(Math.floor(dayLog.elapsedMs / 1000), DAY_DURATION_SECONDS);
+    setElapsedSeconds(seededSeconds);
+    setIsPaused(seededSeconds >= DAY_DURATION_SECONDS);
   }, [round]);
 
   useEffect(() => {
@@ -89,11 +97,22 @@ export function GameSessionProvider({ children }) {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Tracks whether a backend pause WE initiated (via pauseTimer) is still
+  // outstanding. resumeTimer uses this to release that pause even once the day
+  // is over — otherwise a pause taken just before the day ended (Settings, a
+  // tab switch) would strand the session PAUSED and block submitting the final
+  // diagnosis / ending the day (both require an ACTIVE session server-side —
+  // see services/diagnosis.ts and services/game.ts). A day-over freeze that
+  // came from the local tick (not a real pause) leaves this false, so
+  // resumeTimer correctly stays a pure no-op there.
+  const backendPausedRef = useRef(false);
+
   const pauseTimer = useCallback(() => {
     if (isPausedRef.current) {
       return;
     }
     setIsPaused(true);
+    backendPausedRef.current = true;
     // Fire-and-forget: a 401 (shouldn't happen behind AuthGate) or a 409
     // (no active session/open day yet — e.g. pausing before Round's own
     // POST /api/v1/round call resolves, or on an already-paused/completed
@@ -101,17 +120,24 @@ export function GameSessionProvider({ children }) {
     pauseGame().catch(() => {});
   }, [pauseGame]);
 
-  // Mirrors pauseTimer: POSTs /api/v1/game/resume (see docs/api/game.md) so the
-  // backend's GameSession flips back to ACTIVE as soon as the player actually
-  // resumes, instead of staying PAUSED until some unrelated later call to
-  // POST /api/v1/round happens to run. Without this, submitting a diagnosis or
-  // ending the day after any earlier pause (Settings, a tab switch) would 409
-  // no_active_game against a session the frontend already believes is running.
-  // No-ops once the day is over: that freeze is permanent until endDay()
-  // actually resets elapsedSeconds, not something an unrelated resume (e.g.
-  // closing Settings) should be able to undo. Also no-ops when not currently
-  // paused, so a redundant resumeTimer call never fires a needless request.
+  // POSTs /api/v1/game/resume (see docs/api/game.md) so the backend's
+  // GameSession flips back to ACTIVE as soon as the player resumes, instead of
+  // staying PAUSED until some unrelated later call to POST /api/v1/round
+  // happens to run. Without this, submitting a diagnosis or ending the day
+  // after any earlier pause would 409 no_active_game against a session the
+  // frontend already believes is running.
   const resumeTimer = useCallback(() => {
+    // Always release a backend pause we initiated — even once the day is over
+    // — so the final case stays submittable and the day can be ended.
+    if (backendPausedRef.current) {
+      backendPausedRef.current = false;
+      // Fire-and-forget, same reasoning as pauseTimer: a 401/409 (e.g. the
+      // session is no longer PAUSED) must not block anything.
+      resumeGame().catch(() => {});
+    }
+    // The local day-over freeze is permanent until endDay() actually resets
+    // elapsedSeconds — an unrelated resume (e.g. closing Settings) must not
+    // visually un-freeze it. Also no-ops when not currently paused.
     if (isDayOverRef.current) {
       return;
     }
@@ -119,9 +145,6 @@ export function GameSessionProvider({ children }) {
       return;
     }
     setIsPaused(false);
-    // Fire-and-forget, same reasoning as pauseTimer: a 401/409 here must not
-    // block the local resume from taking effect.
-    resumeGame().catch(() => {});
   }, [resumeGame]);
 
   const resetDay = useCallback(() => {

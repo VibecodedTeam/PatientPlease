@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { ApiProvider } from '../../../../../providers/Api';
-import { RoundProvider } from '../../../../../providers/Round';
+import { RoundProvider, useRound } from '../../../../../providers/Round';
 import {
   GameSessionProvider,
   useGameSession,
@@ -35,6 +35,22 @@ function TestConsumer() {
       <button onClick={() => endDay().then((data) => setDayLog(data.dayLog))}>end-day</button>
       <button onClick={() => addElapsedSeconds(5)}>add-5</button>
       <button onClick={() => addElapsedSeconds(DAY_DURATION_SECONDS)}>add-full-day</button>
+    </div>
+  );
+}
+
+// Consumer that also exposes RoundProvider's refreshRound(), so tests can
+// simulate a fresh round arriving (new day, or a same-day refetch) and assert
+// how the timer re-seeds.
+function DayKeyedConsumer() {
+  const { elapsedSeconds, isPaused, isDayOver } = useGameSession();
+  const { refreshRound } = useRound();
+  return (
+    <div>
+      <span data-testid="elapsed">{elapsedSeconds}</span>
+      <span data-testid="paused">{String(isPaused)}</span>
+      <span data-testid="day-over">{String(isDayOver)}</span>
+      <button onClick={() => refreshRound()}>refresh</button>
     </div>
   );
 }
@@ -412,6 +428,118 @@ describe('GameSessionProvider / useGameSession', () => {
     expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS));
     expect(screen.getByTestId('paused').textContent).toBe('true');
 
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS));
+  });
+
+  it('re-seeds the timer to 0 when a new day (higher dayNumber) arrives, so returning from night does not stay frozen at the previous day\'s full duration', async () => {
+    let roundCall = 0;
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const url = typeof request === 'string' ? request : request.url;
+      if (String(url).includes('/api/v1/round')) {
+        roundCall += 1;
+        const body =
+          roundCall === 1
+            ? { dayLog: { elapsedMs: 60000, dayNumber: 1 } }
+            : { dayLog: { elapsedMs: 0, dayNumber: 2 } };
+        return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
+      }
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    });
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <GameSessionProvider>
+            <DayKeyedConsumer />
+          </GameSessionProvider>
+        </RoundProvider>
+      </ApiProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS)),
+    );
+    expect(screen.getByTestId('day-over').textContent).toBe('true');
+
+    act(() => {
+      screen.getByText('refresh').click();
+    });
+
+    await waitFor(() => expect(screen.getByTestId('elapsed').textContent).toBe('0'));
+    expect(screen.getByTestId('day-over').textContent).toBe('false');
+    expect(screen.getByTestId('paused').textContent).toBe('false');
+  });
+
+  it('does not re-seed (clobber local ticking) when round updates with the same dayNumber', async () => {
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const url = typeof request === 'string' ? request : request.url;
+      if (String(url).includes('/api/v1/round')) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ dayLog: { elapsedMs: 10000, dayNumber: 1 } }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    });
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <GameSessionProvider>
+            <DayKeyedConsumer />
+          </GameSessionProvider>
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('elapsed').textContent).toBe('10'));
+
+    act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+    expect(screen.getByTestId('elapsed').textContent).toBe('13');
+
+    act(() => {
+      screen.getByText('refresh').click();
+    });
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+
+    // Same dayNumber => the fresh round must not reset the timer back to 10.
+    expect(screen.getByTestId('elapsed').textContent).toBe('13');
+  });
+
+  it('releases a backend pause it initiated even after the day is over, so the final case stays submittable', async () => {
+    renderWithProviders();
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      screen.getByText('pause').click();
+    });
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+    expect(lastRequest().url).toBe('http://api.test/api/v1/game/pause');
+
+    // Force the day over while a backend pause we initiated is still
+    // outstanding (a boundary the timer/examination flow can reach).
+    act(() => {
+      screen.getByText('add-full-day').click();
+    });
+    expect(screen.getByTestId('day-over').textContent).toBe('true');
+    expect(screen.getByTestId('paused').textContent).toBe('true');
+
+    act(() => {
+      screen.getByText('resume').click();
+    });
+
+    // Resume still fires so the backend session goes ACTIVE (submit/day-end work)...
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
+    const request = lastRequest();
+    expect(request.method).toBe('POST');
+    expect(request.url).toBe('http://api.test/api/v1/game/resume');
+    // ...but the local day-over freeze is preserved.
+    expect(screen.getByTestId('paused').textContent).toBe('true');
     act(() => {
       jest.advanceTimersByTime(5000);
     });
