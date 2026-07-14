@@ -93,6 +93,12 @@ export function RoundProvider({ children }) {
     return data;
   }, [api]);
 
+  const resumeGame = useCallback(async () => {
+    const data = await api.post(ENDPOINTS.game.resume);
+    setRound((current) => (current ? { ...current, gameSession: data.gameSession } : current));
+    return data;
+  }, [api]);
+
   // Unlike pauseGame/endDay/purchaseShopItem, a reset needs a whole new case,
   // not just an updated gameSession — refetching the round is what actually
   // makes the desk show the next case instead of the one that was just reset.
@@ -174,6 +180,7 @@ export function RoundProvider({ children }) {
     terminalState,
     refreshRound,
     pauseGame,
+    resumeGame,
     resetDay,
     resetGame,
     endDay,

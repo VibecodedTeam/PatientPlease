@@ -384,6 +384,18 @@ describe('MainView', () => {
         'doc-1,doc-2',
       ),
     );
+
+    // Closes the Settings opened above so its unmount-triggered resumeGame()
+    // call resolves within this test's own async flow, instead of firing
+    // unawaited into RTL's automatic cleanup after the test returns.
+    await user.click(screen.getByText('Resume'));
+    await waitFor(() =>
+      expect(
+        global.fetch.mock.calls.some(
+          ([request]) => new URL(request.url).pathname === '/api/v1/game/resume',
+        ),
+      ).toBe(true),
+    );
   });
 
   it('shows the ResultPopup with the real money reward after submitting a correct diagnosis', async () => {
@@ -565,6 +577,18 @@ describe('MainView', () => {
     expect(screen.getByText('Status: Paused')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('Settings')).toBeInTheDocument());
     expect(screen.getByText('Game paused because you left the tab.')).toBeInTheDocument();
+
+    // Closes the auto-opened Settings so its unmount-triggered resumeGame()
+    // call resolves within this test's own async flow, instead of firing
+    // unawaited into RTL's automatic cleanup after the test returns.
+    await userEvent.setup().click(screen.getByText('Resume'));
+    await waitFor(() =>
+      expect(
+        global.fetch.mock.calls.some(
+          ([request]) => new URL(request.url).pathname === '/api/v1/game/resume',
+        ),
+      ).toBe(true),
+    );
   });
 
   it('does not send a duplicate pause request if the tab is hidden repeatedly while already paused', async () => {
@@ -583,6 +607,18 @@ describe('MainView', () => {
       ([request]) => new URL(request.url).pathname === '/api/v1/game/pause',
     );
     expect(pauseCalls).toHaveLength(1);
+
+    // Closes the auto-opened Settings so its unmount-triggered resumeGame()
+    // call resolves within this test's own async flow, instead of firing
+    // unawaited into RTL's automatic cleanup after the test returns.
+    await userEvent.setup().click(screen.getByText('Resume'));
+    await waitFor(() =>
+      expect(
+        global.fetch.mock.calls.some(
+          ([request]) => new URL(request.url).pathname === '/api/v1/game/resume',
+        ),
+      ).toBe(true),
+    );
   });
 
   it('closes Settings and calls onClose when a reset is confirmed from the HUD path', async () => {
@@ -597,5 +633,15 @@ describe('MainView', () => {
 
     expect(screen.queryByText('Settings')).not.toBeInTheDocument();
     expect(screen.getByText('Status: Running')).toBeInTheDocument();
+
+    // Settings unmounting here fires resumeTimer's resumeGame() call; wait
+    // for it to resolve so it doesn't dangle into RTL's post-test cleanup.
+    await waitFor(() =>
+      expect(
+        global.fetch.mock.calls.some(
+          ([request]) => new URL(request.url).pathname === '/api/v1/game/resume',
+        ),
+      ).toBe(true),
+    );
   });
 });

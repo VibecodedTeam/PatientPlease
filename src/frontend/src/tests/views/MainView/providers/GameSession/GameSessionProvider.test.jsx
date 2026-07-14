@@ -209,7 +209,7 @@ describe('GameSessionProvider / useGameSession', () => {
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
   });
 
-  it('resumes counting locally after resumeTimer is called, without calling the API', async () => {
+  it('resumes counting locally and POSTs /api/v1/game/resume when resumeTimer is called', async () => {
     renderWithProviders();
     act(() => {
       screen.getByText('pause').click();
@@ -219,13 +219,28 @@ describe('GameSessionProvider / useGameSession', () => {
     act(() => {
       screen.getByText('resume').click();
     });
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
+    const request = lastRequest();
+    expect(request.method).toBe('POST');
+    expect(request.url).toBe('http://api.test/api/v1/game/resume');
+
     act(() => {
       jest.advanceTimersByTime(4000);
     });
 
     expect(screen.getByTestId('elapsed').textContent).toBe('4');
     expect(screen.getByTestId('paused').textContent).toBe('false');
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not call the resume endpoint when resumeTimer is called while not paused', () => {
+    renderWithProviders();
+
+    act(() => {
+      screen.getByText('resume').click();
+    });
+
+    // Just the RoundProvider's own mount-time POST /api/v1/round call.
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
   it('resetDay zeroes the elapsed timer and POSTs /api/v1/day/reset', async () => {
@@ -334,6 +349,9 @@ describe('GameSessionProvider / useGameSession', () => {
     });
 
     expect(screen.getByTestId('paused').textContent).toBe('true');
+    // The day-over freeze never called the pause endpoint (see the elapsedSeconds
+    // seeding test above), so resumeTimer's no-op here must not call resume either.
+    expect(global.fetch).toHaveBeenCalledTimes(1);
     act(() => {
       jest.advanceTimersByTime(5000);
     });

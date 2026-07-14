@@ -25,6 +25,7 @@ export function GameSessionProvider({ children }) {
   const {
     round,
     pauseGame,
+    resumeGame,
     resetDay: roundResetDay,
     resetGame: roundResetGame,
     endDay: roundEndDay,
@@ -100,18 +101,28 @@ export function GameSessionProvider({ children }) {
     pauseGame().catch(() => {});
   }, [pauseGame]);
 
-  // Real resume has no dedicated endpoint — per docs/api/game.md, a PAUSED
-  // session flips back to ACTIVE the next time POST /api/v1/round is called
-  // (e.g. on the next page load), not by resumeTimer itself, so this only
-  // updates local timer state. No-ops once the day is over: that freeze is
-  // permanent until endDay() actually resets elapsedSeconds, not something
-  // an unrelated resume (e.g. closing Settings) should be able to undo.
+  // Mirrors pauseTimer: POSTs /api/v1/game/resume (see docs/api/game.md) so the
+  // backend's GameSession flips back to ACTIVE as soon as the player actually
+  // resumes, instead of staying PAUSED until some unrelated later call to
+  // POST /api/v1/round happens to run. Without this, submitting a diagnosis or
+  // ending the day after any earlier pause (Settings, a tab switch) would 409
+  // no_active_game against a session the frontend already believes is running.
+  // No-ops once the day is over: that freeze is permanent until endDay()
+  // actually resets elapsedSeconds, not something an unrelated resume (e.g.
+  // closing Settings) should be able to undo. Also no-ops when not currently
+  // paused, so a redundant resumeTimer call never fires a needless request.
   const resumeTimer = useCallback(() => {
     if (isDayOverRef.current) {
       return;
     }
+    if (!isPausedRef.current) {
+      return;
+    }
     setIsPaused(false);
-  }, []);
+    // Fire-and-forget, same reasoning as pauseTimer: a 401/409 here must not
+    // block the local resume from taking effect.
+    resumeGame().catch(() => {});
+  }, [resumeGame]);
 
   const resetDay = useCallback(() => {
     setElapsedSeconds(0);

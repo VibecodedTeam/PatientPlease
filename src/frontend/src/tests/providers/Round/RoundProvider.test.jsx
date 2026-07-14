@@ -133,6 +133,50 @@ describe('RoundProvider', () => {
     expect(request.url).toBe('http://api.test/api/v1/game/pause');
   });
 
+  it('resumeGame POSTs /api/v1/game/resume and updates round.gameSession', async () => {
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/round') {
+        return Promise.resolve(
+          new Response(JSON.stringify({ gameSession: { money: 100, status: 'PAUSED' } }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify({ gameSession: { money: 100, status: 'ACTIVE' } }), {
+          status: 200,
+        }),
+      );
+    });
+
+    function Probe() {
+      const { round, resumeGame } = useRound();
+      return (
+        <div>
+          <span data-testid="status">{round?.gameSession?.status ?? 'none'}</span>
+          <button onClick={() => resumeGame()}>resume</button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('PAUSED'));
+
+    await userEvent.setup().click(screen.getByText('resume'));
+
+    await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('ACTIVE'));
+    const request = lastRequest();
+    expect(request.method).toBe('POST');
+    expect(request.url).toBe('http://api.test/api/v1/game/resume');
+  });
+
   it('resetDay POSTs /api/v1/day/reset and updates round.gameSession', async () => {
     global.fetch = jest.fn().mockImplementation(() =>
       Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 100 } }), { status: 200 })),
