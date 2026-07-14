@@ -4,9 +4,22 @@ import { useRound } from '../../../../providers/Round';
 
 export const GameSessionContext = createContext(null);
 
+/** Mirrors the backend's resolveDayDurationSeconds (src/backend/src/config.ts) so both sides
+ * fall back to the same default when the shared env var is unset/invalid. */
+export function resolveDayDurationSeconds(value, fallback) {
+  const parsed = Number(value);
+  return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 // How long a day runs before it auto-ends and the Daily Statistics popup
-// appears (see views/MainView/providers/Statistics).
-export const DAY_DURATION_SECONDS = 30;
+// appears (see views/MainView/providers/Statistics). Shared with the
+// backend's DAY_DURATION_SECONDS via docker/.env's DAY_DURATION_SECONDS /
+// VITE_DAY_DURATION_SECONDS (see src/backend/src/constants.ts), so one
+// setting controls both instead of two constants that can drift apart.
+export const DAY_DURATION_SECONDS = resolveDayDurationSeconds(
+  import.meta.env && import.meta.env.VITE_DAY_DURATION_SECONDS,
+  60,
+);
 
 export function GameSessionProvider({ children }) {
   const {
@@ -32,12 +45,28 @@ export function GameSessionProvider({ children }) {
   // fresh gameSession into round) must not re-seed and clobber ticking that
   // has since happened locally, or the explicit 0 that resetDay/resetGame/
   // endDay already set.
+  //
+  // Clamped to DAY_DURATION_SECONDS: once the day is over, the frontend
+  // freezes locally without ever calling the backend's pause endpoint (that
+  // would flip GameSession to PAUSED and block submitting the last
+  // diagnosis/examination — see services/diagnosis.ts and
+  // services/examination.ts), so the server's real clock keeps running
+  // while the player finishes the last case. Without the clamp, a refresh
+  // during that window would seed an ever-growing raw value instead of the
+  // frozen display the local ticker already shows everyone else.
   const hasSeededElapsedRef = useRef(false);
   useEffect(() => {
     if (hasSeededElapsedRef.current) return;
     if (typeof round?.dayLog?.elapsedMs !== 'number') return;
     hasSeededElapsedRef.current = true;
-    setElapsedSeconds(Math.floor(round.dayLog.elapsedMs / 1000));
+    const seededSeconds = Math.min(
+      Math.floor(round.dayLog.elapsedMs / 1000),
+      DAY_DURATION_SECONDS,
+    );
+    setElapsedSeconds(seededSeconds);
+    if (seededSeconds >= DAY_DURATION_SECONDS) {
+      setIsPaused(true);
+    }
   }, [round]);
 
   useEffect(() => {
