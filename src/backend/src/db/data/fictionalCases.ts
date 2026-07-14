@@ -21,6 +21,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       'Biopsja wycinkowa potwierdza chorobę Bowena (raka kolczystokomórkowego in situ).',
     documents: [
       {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Historia ekspozycji na promieniowanie UV',
+        content: {
+          history: 'Całe życie pracował na zewnątrz jako stolarz, rzadko używając ochrony przeciwsłonecznej na dłonie.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -48,6 +55,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Dermoskopia wykazuje typowy obraz "przyklejonej" narośli z czopami rogowymi — cechy jednoznacznie łagodne.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Ogólnie zdrowa, bez przewlekłych schorzeń ani wcześniejszych nowotworów skóry.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -77,6 +91,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       'Dermoskopia wykazuje symetryczną strukturę i regularną pigmentację — typowy obraz łagodnego znamienia melanocytowego.',
     documents: [
       {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history: 'Matka i babcia mają liczne, podobne znamiona; w rodzinie nie odnotowano przypadków czerniaka.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -104,6 +125,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Biopsja potwierdza włókniaka twardego (dermatofibroma) — łagodną zmianę tkanki łącznej.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Ogólnie zdrowy; pracuje jako elektryk, często ulega drobnym skaleczeniom w pracy.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -268,6 +296,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationFindings: 'Test płatkowy wykazuje wyraźnie dodatnią reakcję na nikiel.',
     documents: [
       {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history: 'Matka pacjenta ma alergię kontaktową na niklu podobnego pochodzenia.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -295,6 +330,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Badanie kliniczne wykazuje przewlekły rumień oraz liczne teleangiektazje na środkowej części twarzy, bez zaskórników — obraz typowy dla trądziku różowatego.',
     documents: [
+      {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history: 'Matka pacjentki miała podobne zaczerwienienie twarzy w tym samym wieku.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -324,6 +366,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       'Badanie kliniczne wykazuje liczne zaskórniki, grudki i krosty w obrębie twarzy i klatki piersiowej, bez cech nadkażenia.',
     documents: [
       {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history: 'Ojciec pacjenta miał w młodości nasilony trądzik leczony izotretynoiną.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -350,6 +399,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationSku: 'exam-punch-biopsy',
     examinationFindings: 'Badanie kliniczne oraz biopsja wycinkowa potwierdzają liszaj płaski.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Wirusowe zapalenie wątroby typu C rozpoznane pięć lat wcześniej, obecnie w trakcie leczenia.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -378,6 +434,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Badanie kliniczne w trakcie epizodu potwierdza obrzękowe, silnie swędzące bąble pokrzywkowe ustępujące bez pozostawiania śladu w ciągu 24 godzin.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Wcześniej zdrowy; nie zgłaszał alergii pokarmowych w przeszłości.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -439,6 +502,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationFindings: 'Preparat bezpośredni z zeskrobin naskórka w KOH potwierdza obecność strzępek grzyba.',
     documents: [
       {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Ogólnie zdrowy, aktywny sportowo, bez przewlekłych schorzeń skóry.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -465,6 +535,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationSku: 'exam-bacterial-culture',
     examinationFindings: 'Posiew bakteryjny z wymazu potwierdza zakażenie gronkowcem złocistym.',
     documents: [
+      {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history: 'Starszy brat miał podobne zmiany skórne w zeszłym miesiącu.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -527,6 +604,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       'Badanie kliniczne w powiększeniu dermoskopowym potwierdza perłowe grudki z centralnym zagłębieniem, typowe dla mięczaka zakaźnego.',
     documents: [
       {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Atopowe zapalenie skóry rozpoznane w niemowlęctwie, obecnie łagodnie kontrolowane.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -554,6 +638,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Dermoskopia wykazuje charakterystyczne czarne kropki (zakrzepłe naczynia) w obrębie szorstkiej, hiperkeratotycznej zmiany — obraz typowy dla brodawki zwykłej.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Ogólnie zdrowy; regularnie korzysta z basenu szkolnego.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -583,6 +674,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       'Dermoskopia potwierdza obraz "przyklejonej", woskowatej narośli z czopami rogowymi — łagodne rogowacenie łojotokowe.',
     documents: [
       {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Ogólnie zdrowy jak na swój wiek, bez wcześniejszych nowotworów skóry.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -610,6 +708,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Dermoskopia wykazuje regularną, jednorodną strukturę barwnikową bez cech niepokojących.',
     documents: [
+      {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history: 'Matka pacjentki ma liczne znamiona o podobnym wyglądzie.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -639,6 +744,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       'Badanie kliniczne potwierdza srebrzyste blaszki z objawem Auspitza (punktowe krwawienie po zdrapaniu łuski).',
     documents: [
       {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Przewlekłe bóle stawów kolanowych od kilku lat, dotąd wiązane wyłącznie z wiekiem.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -665,6 +777,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationSku: 'exam-patch-test',
     examinationFindings: 'Test płatkowy wykazuje dodatnią reakcję na składnik zawarty w nowym kremie do twarzy.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Wcześniej nie zgłaszała żadnych alergii kontaktowych ani skórnych.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -693,6 +812,13 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Badanie kliniczne wykazuje przetrwały rumień, teleangiektazje oraz przerost tkanki nosa.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Regularnie spożywa alkohol w towarzystwie zawodowym; poza tym ogólnie zdrowy.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -890,6 +1016,14 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     examinationSku: 'exam-skin-scraping-koh',
     examinationFindings: 'Preparat bezpośredni z zeskrobin naskórka w KOH potwierdza obecność strzępek grzybni.',
     documents: [
+      {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history:
+            'Starszy brat miał podobną zmianę skórną rok wcześniej, ustąpiła po leczeniu maścią przeciwgrzybiczą.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',

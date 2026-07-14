@@ -126,6 +126,14 @@ export const REAL_CASES: RealCaseSeed[] = [
       'Biopsja potwierdza czerniaka; wykonano wycięcie z marginesem bezpieczeństwa i zlecono dalsze badania oceniające stopień zaawansowania.',
     documents: [
       {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Historia ekspozycji na promieniowanie UV',
+        content: {
+          history:
+            'Rzadko stosuje krem z filtrem; przez lata pracował fizycznie na zewnątrz bez ochrony przeciwsłonecznej.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -152,6 +160,13 @@ export const REAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Biopsja zmienionego pigmentu tatuażu potwierdza czerniaka rozwijającego się w obrębie wytatuowanej skóry — rzadkie, ale znane zjawisko.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Ogólnie zdrowy, bez istotnych chorób przewlekłych ani wcześniejszych nowotworów skóry.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -214,6 +229,13 @@ export const REAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Biopsja wykazuje komórki barwnikowe SOX-10 dodatnie; wynik potwierdza desmoplastycznego czerniaka błony śluzowej nosa — bardzo rzadką lokalizację czerniaka.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Nadciśnienie tętnicze oraz przebyty udar mózgu pięć lat wcześniej.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -413,6 +435,13 @@ export const REAL_CASES: RealCaseSeed[] = [
       'Badanie histopatologiczne potwierdza pierwotnego czerniaka błony śluzowej dziąsła szczęki — rzadką lokalizację czerniaka.',
     documents: [
       {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Niepalący, bez istotnych chorób przewlekłych; regularnie odwiedza dentystę.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -553,6 +582,13 @@ export const REAL_CASES: RealCaseSeed[] = [
       'Wycięcie chirurgiczne i analiza histopatologiczna potwierdzają czerniaka skóry owłosionej głowy.',
     documents: [
       {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history: 'Babcia ze strony matki chorowała na czerniaka w wieku 60 lat.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -658,6 +694,13 @@ export const REAL_CASES: RealCaseSeed[] = [
       'Biopsja potwierdza złośliwego czerniaka pochwy. Wykonano wycięcie, a następnie radioterapię i chemioterapię ze względu na biologicznie niekorzystne rokowanie niezależnie od zakresu zabiegu; pacjentka później została objęta opieką paliatywną z powodu rozsiewu przerzutowego.',
     documents: [
       {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Bez wcześniejszych chorób ginekologicznych; regularnie zgłaszała się na badania cytologiczne.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -720,6 +763,13 @@ export const REAL_CASES: RealCaseSeed[] = [
       'Po wycięciu badanie histopatologiczne wykazało atypię komórkową z dodatnim barwieniem HMB-45, potwierdzając czerniaka spojówki.',
     documents: [
       {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history: 'Brak przypadków czerniaka lub innych nowotworów skóry w najbliższej rodzinie.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -746,6 +796,14 @@ export const REAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Obraz kliniczny, w tym rozprzestrzenienie pigmentu poza płytkę paznokcia (objaw Hutchinsona), skłonił do wykonania biopsji macierzy paznokcia, która potwierdziła czerniaka podpaznokciowego.',
     documents: [
+      {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history:
+            'Brak historii nowotworów skóry w rodzinie; rodzice zaniepokojeni, ponieważ zmiana utrzymuje się od dzieciństwa.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -815,6 +873,13 @@ export const REAL_CASES: RealCaseSeed[] = [
       'Badanie histopatologiczne potwierdziło czerniaka typu Spitzoidalnego, sklasyfikowanego jako pT2a. Po konsultacji specjalistycznej wykonano szerokie doszczętne wycięcie oraz biopsję węzła wartowniczego, nie stwierdzając resztkowego guza ani zajęcia węzłów chłonnych. Dalsza diagnostyka wykluczyła chorobę układową. Badanie genetyczne ujawniło patogenną mutację CHEK2 (c.444+1G>A), co skutkowało skierowaniem rodziny na poradnictwo genetyczne oraz ścisłym, ciągłym nadzorem onkologicznym i dermatologicznym.',
     documents: [
       {
+        type: 'FAMILY_HISTORY',
+        title: 'Historia rodzinna',
+        content: {
+          history: 'Wywiad rodzinny w kierunku nowotworów w trakcie ustalania po wykryciu mutacji CHEK2.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -841,6 +906,13 @@ export const REAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Zdjęcie rentgenowskie palca nie wykazało uszkodzenia kości ani nacieku. Biopsja golona potwierdziła raka podstawnokomórkowego aparatu paznokciowego.',
     documents: [
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Nadciśnienie tętnicze dobrze kontrolowane lekami; bez innych istotnych schorzeń.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
@@ -939,6 +1011,13 @@ export const REAL_CASES: RealCaseSeed[] = [
       'Dermoskopia ujawnia wzór równoległych grzbietów — objaw silnie specyficzny dla czerniaka akralnego z linii lentiginous. Skierowano na biopsję celem potwierdzenia.',
     documents: [
       {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia choroby',
+        content: {
+          history: 'Cukrzyca typu II oraz łagodna niewydolność żylna kończyn dolnych.',
+        },
+      },
+      {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
         content: {
@@ -1034,6 +1113,13 @@ export const REAL_CASES: RealCaseSeed[] = [
     examinationFindings:
       'Biopsja wyklucza złośliwość i wykazuje rogowacenie słoneczne — zmianę przednowotworową związaną ze słońcem, nie nowotwór.',
     documents: [
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Historia ekspozycji na promieniowanie UV',
+        content: {
+          history: 'Jasna karnacja; w młodości często opalała się bez ochrony przeciwsłonecznej.',
+        },
+      },
       {
         type: 'CLINICAL_SYMPTOMS',
         title: 'Objawy kliniczne',
