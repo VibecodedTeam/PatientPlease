@@ -589,7 +589,7 @@ describe('startRound', () => {
     });
   });
 
-  it('never leaks the answer-key fields: correctDiagnosisId, correctTreatmentId, resultExplanationText', async () => {
+  it('never leaks correctDiagnosisId/correctTreatmentId/resultExplanationText', async () => {
     const prisma = createMockPrisma();
     primeHappyPath(prisma);
     prisma.case.findMany.mockResolvedValue([

@@ -499,6 +499,7 @@ describe('endDay', () => {
       penaltyApplied: endedLog.penaltyApplied,
       startedAt: endedLog.startedAt,
       endedAt: endedLog.endedAt,
+      elapsedMs: expect.any(Number) as number,
     });
   });
 

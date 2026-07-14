@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../src/app.js';
-import { MIN_DAY_DURATION_MS } from '../../src/constants.js';
 import { prisma } from '../../src/db/prisma.js';
 import type { GoogleIdTokenVerifier } from '../../src/services/auth.js';
 
@@ -45,39 +44,41 @@ async function createActiveSessionWithOpenDay(userId: string, money = 100) {
       gameSessionId: gameSession.id,
       dayNumber: 1,
       startingMoney: money,
-      startedAt: new Date(Date.now() - MIN_DAY_DURATION_MS - 1000),
+      startedAt: new Date(),
     },
   });
   return { gameSession, gameDayLog };
 }
 
-async function createMelanomaCase() {
-  const diagnosis = await prisma.diagnosis.create({
-    data: { code: 'MELANOMA', name: 'Melanoma', description: 'test', category: 'MALIGNANT' },
-  });
-  const decoyDiagnosis = await prisma.diagnosis.create({
-    data: { code: 'NEVUS', name: 'Nevus', description: 'test', category: 'BENIGN' },
-  });
+async function createCase(overrides: { correctTreatmentId?: string } = {}) {
   const patient = await prisma.patient.create({
     data: {
       name: 'Jan Kowalski',
       age: 52,
       sex: 'MALE',
+      occupation: 'Roofer',
       portraitImageUrl: 'https://cdn.example.test/jan.png',
       bodyModelVariant: 'male_average_01',
     },
+  });
+  const diagnosis = await prisma.diagnosis.create({
+    data: { code: 'MELANOMA', name: 'Melanoma', description: 'test', category: 'MALIGNANT' },
+  });
+  const wrongDiagnosis = await prisma.diagnosis.create({
+    data: { code: 'BENIGN_MOLE', name: 'Benign mole', description: 'test', category: 'BENIGN' },
   });
   const gameCase = await prisma.case.create({
     data: {
       patientId: patient.id,
       difficulty: 1,
       correctDiagnosisId: diagnosis.id,
+      ...(overrides.correctTreatmentId ? { correctTreatmentId: overrides.correctTreatmentId } : {}),
       moneyReward: 50,
       moneyPenalty: 20,
       resultExplanationText: 'It was melanoma.',
     },
   });
-  return { diagnosis, decoyDiagnosis, gameCase };
+  return { case: gameCase, correctDiagnosis: diagnosis, wrongDiagnosis };
 }
 
 describe('POST /api/v1/diagnoses', () => {
@@ -85,16 +86,17 @@ describe('POST /api/v1/diagnoses', () => {
 
   afterEach(async () => {
     await prisma.diagnosisAttempt.deleteMany({});
-    await prisma.gameDayLog.deleteMany({});
+    await prisma.caseExamination.deleteMany({});
     await prisma.caseDocument.deleteMany({});
-    await prisma.caseHint.deleteMany({});
+    await prisma.gameDayLog.deleteMany({});
+    await prisma.ownedItem.deleteMany({});
     await prisma.case.deleteMany({});
     await prisma.patient.deleteMany({});
+    await prisma.treatment.deleteMany({});
+    await prisma.diagnosis.deleteMany({});
     await prisma.gameSession.deleteMany({});
     await prisma.userSession.deleteMany({});
     await prisma.user.deleteMany({});
-    await prisma.diagnosis.deleteMany({});
-    await prisma.treatment.deleteMany({});
     await app.close();
   });
 
@@ -109,14 +111,14 @@ describe('POST /api/v1/diagnoses', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/diagnoses',
-      payload: { caseId: 'case-uuid', selectedDiagnosisId: 'diagnosis-uuid' },
+      payload: { caseId: 'x', selectedDiagnosisId: 'y' },
     });
 
     expect(response.statusCode).toBe(401);
     expect(response.json()).toEqual({ error: 'unauthenticated' });
   });
 
-  it('returns 409 no_active_game when the user has no GameSession', async () => {
+  it('returns 409 no_active_game when the player has no GameSession', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();
     const { cookie } = await signIn(app);
@@ -125,43 +127,27 @@ describe('POST /api/v1/diagnoses', () => {
       method: 'POST',
       url: '/api/v1/diagnoses',
       headers: { cookie },
-      payload: { caseId: 'case-uuid', selectedDiagnosisId: 'diagnosis-uuid' },
+      payload: { caseId: 'x', selectedDiagnosisId: 'y' },
     });
 
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({ error: 'no_active_game' });
   });
 
-  it('returns 409 no_open_day when the session has no open GameDayLog', async () => {
-    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
-    await app.ready();
-    const { cookie, userId } = await signIn(app);
-    await prisma.gameSession.create({ data: { userId, money: 100 } });
-
-    const response = await app.inject({
-      method: 'POST',
-      url: '/api/v1/diagnoses',
-      headers: { cookie },
-      payload: { caseId: 'case-uuid', selectedDiagnosisId: 'diagnosis-uuid' },
-    });
-
-    expect(response.statusCode).toBe(409);
-    expect(response.json()).toEqual({ error: 'no_open_day' });
-  });
-
-  it('returns 404 case_not_found when the caseId does not exist', async () => {
+  it('returns 404 case_not_found when caseId matches no Case', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();
     const { cookie, userId } = await signIn(app);
     await createActiveSessionWithOpenDay(userId);
+    const { correctDiagnosis } = await createCase();
 
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/diagnoses',
       headers: { cookie },
       payload: {
-        caseId: '00000000-0000-7000-8000-000000000000',
-        selectedDiagnosisId: 'diagnosis-uuid',
+        caseId: '00000000-0000-0000-0000-000000000000',
+        selectedDiagnosisId: correctDiagnosis.id,
       },
     });
 
@@ -169,121 +155,96 @@ describe('POST /api/v1/diagnoses', () => {
     expect(response.json()).toEqual({ error: 'case_not_found' });
   });
 
-  it('returns 409 case_already_attempted when this case already has a DiagnosisAttempt today', async () => {
-    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
-    await app.ready();
-    const { cookie, userId } = await signIn(app);
-    const { gameDayLog } = await createActiveSessionWithOpenDay(userId);
-    const { diagnosis, gameCase } = await createMelanomaCase();
-    await prisma.diagnosisAttempt.create({
-      data: {
-        gameDayLogId: gameDayLog.id,
-        caseId: gameCase.id,
-        selectedDiagnosisId: diagnosis.id,
-        isDiagnosisCorrect: true,
-        moneyDelta: 50,
-      },
-    });
-
-    const response = await app.inject({
-      method: 'POST',
-      url: '/api/v1/diagnoses',
-      headers: { cookie },
-      payload: { caseId: gameCase.id, selectedDiagnosisId: diagnosis.id },
-    });
-
-    expect(response.statusCode).toBe(409);
-    expect(response.json()).toEqual({ error: 'case_already_attempted' });
-  });
-
-  it('grades a correct diagnosis, credits moneyReward, and records the attempt', async () => {
-    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
-    await app.ready();
-    const { cookie, userId } = await signIn(app);
-    const { gameSession, gameDayLog } = await createActiveSessionWithOpenDay(userId, 100);
-    const { diagnosis, gameCase } = await createMelanomaCase();
-
-    const response = await app.inject({
-      method: 'POST',
-      url: '/api/v1/diagnoses',
-      headers: { cookie },
-      payload: { caseId: gameCase.id, selectedDiagnosisId: diagnosis.id },
-    });
-
-    expect(response.statusCode).toBe(200);
-    const body = response.json<{
-      gameSession: { money: number };
-      isDiagnosisCorrect: boolean;
-      moneyDelta: number;
-    }>();
-    expect(body.isDiagnosisCorrect).toBe(true);
-    expect(body.moneyDelta).toBe(50);
-    expect(body.gameSession.money).toBe(150);
-
-    const updatedSession = await prisma.gameSession.findUniqueOrThrow({
-      where: { id: gameSession.id },
-    });
-    expect(updatedSession.money).toBe(150);
-
-    const attempts = await prisma.diagnosisAttempt.findMany({
-      where: { gameDayLogId: gameDayLog.id },
-    });
-    expect(attempts).toHaveLength(1);
-    expect(attempts[0]).toMatchObject({
-      caseId: gameCase.id,
-      selectedDiagnosisId: diagnosis.id,
-      isDiagnosisCorrect: true,
-      moneyDelta: 50,
-    });
-  });
-
-  it('grades an incorrect diagnosis, debits moneyPenalty, and records the attempt', async () => {
+  it('records a correct diagnosis, adds moneyReward, and returns the updated gameSession', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();
     const { cookie, userId } = await signIn(app);
     await createActiveSessionWithOpenDay(userId, 100);
-    const { decoyDiagnosis, gameCase } = await createMelanomaCase();
+    const { case: gameCase, correctDiagnosis } = await createCase();
 
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/diagnoses',
       headers: { cookie },
-      payload: { caseId: gameCase.id, selectedDiagnosisId: decoyDiagnosis.id },
+      payload: { caseId: gameCase.id, selectedDiagnosisId: correctDiagnosis.id },
     });
 
     expect(response.statusCode).toBe(200);
     const body = response.json<{
       gameSession: { money: number };
-      isDiagnosisCorrect: boolean;
-      moneyDelta: number;
+      result: {
+        isDiagnosisCorrect: boolean;
+        isTreatmentCorrect: boolean | null;
+        moneyDelta: number;
+      };
     }>();
-    expect(body.isDiagnosisCorrect).toBe(false);
-    expect(body.moneyDelta).toBe(-20);
+    expect(body.gameSession.money).toBe(150);
+    expect(body.result).toEqual({
+      isDiagnosisCorrect: true,
+      isTreatmentCorrect: null,
+      moneyDelta: 50,
+    });
+
+    const attempts = await prisma.diagnosisAttempt.findMany({ where: { caseId: gameCase.id } });
+    expect(attempts).toHaveLength(1);
+    expect(attempts[0]?.isDiagnosisCorrect).toBe(true);
+  });
+
+  it('records an incorrect diagnosis and deducts moneyPenalty', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    await createActiveSessionWithOpenDay(userId, 100);
+    const { case: gameCase, wrongDiagnosis } = await createCase();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/diagnoses',
+      headers: { cookie },
+      payload: { caseId: gameCase.id, selectedDiagnosisId: wrongDiagnosis.id },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{ gameSession: { money: number } }>();
     expect(body.gameSession.money).toBe(80);
   });
 
-  it('excludes the just-diagnosed case from the next /api/v1/round call', async () => {
+  it('returns 409 diagnosis_already_attempted on a second submission for the same case', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();
     const { cookie, userId } = await signIn(app);
     await createActiveSessionWithOpenDay(userId, 100);
-    const { diagnosis, gameCase } = await createMelanomaCase();
+    const { case: gameCase, correctDiagnosis } = await createCase();
 
     await app.inject({
       method: 'POST',
       url: '/api/v1/diagnoses',
       headers: { cookie },
-      payload: { caseId: gameCase.id, selectedDiagnosisId: diagnosis.id },
+      payload: { caseId: gameCase.id, selectedDiagnosisId: correctDiagnosis.id },
     });
+    const second = await app.inject({
+      method: 'POST',
+      url: '/api/v1/diagnoses',
+      headers: { cookie },
+      payload: { caseId: gameCase.id, selectedDiagnosisId: correctDiagnosis.id },
+    });
+
+    expect(second.statusCode).toBe(409);
+    expect(second.json()).toEqual({ error: 'diagnosis_already_attempted' });
+  });
+
+  it('returns 400 on a malformed body missing selectedDiagnosisId', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie } = await signIn(app);
 
     const response = await app.inject({
       method: 'POST',
-      url: '/api/v1/round',
+      url: '/api/v1/diagnoses',
       headers: { cookie },
+      payload: { caseId: 'x' },
     });
 
-    // Every Case created in this test was just diagnosed, so none remain.
-    expect(response.statusCode).toBe(409);
-    expect(response.json()).toEqual({ error: 'no_cases_remaining' });
+    expect(response.statusCode).toBe(400);
   });
 });

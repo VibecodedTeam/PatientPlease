@@ -2,6 +2,7 @@ import {
   resolveChatAudioMaxBytes,
   resolveChatLlmProvider,
   resolveCookieSecret,
+  resolveDevSessionEnabled,
   resolveFrontendOrigin,
   resolveGeminiApiKey,
   resolveGeminiModel,
@@ -126,6 +127,22 @@ describe('resolveSessionTtlMs', () => {
     expect(() => resolveSessionTtlMs('thirty-days')).toThrow(
       'SESSION_TTL_MS environment variable must be a number',
     );
+  });
+});
+
+describe('resolveDevSessionEnabled', () => {
+  it('returns false when ENABLE_DEV_SESSION is unset', () => {
+    expect(resolveDevSessionEnabled(undefined)).toBe(false);
+  });
+
+  it('returns false when ENABLE_DEV_SESSION is not exactly "true"', () => {
+    expect(resolveDevSessionEnabled('1')).toBe(false);
+    expect(resolveDevSessionEnabled('yes')).toBe(false);
+    expect(resolveDevSessionEnabled('')).toBe(false);
+  });
+
+  it('returns true when ENABLE_DEV_SESSION is "true"', () => {
+    expect(resolveDevSessionEnabled('true')).toBe(true);
   });
 });
 

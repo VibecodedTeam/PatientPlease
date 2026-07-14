@@ -40,7 +40,8 @@ items.
       "price": 100,
       "unlockDay": null,
       "iconImageUrl": "https://cdn.example.com/handbook.png",
-      "owned": false
+      "owned": false,
+      "timeCostMs": null
     }
   ]
 }
@@ -49,10 +50,12 @@ items.
 Items are filtered to `isActive: true` and (`unlockDay: null` or `unlockDay <= upcomingDayNumber`)
 — locked/inactive items are omitted entirely, never returned with a `locked: true` flag.
 
-`itemType: "EXAMINATION"` items carry a `content: { "timeCostMs": number }` payload (omitted
-from this catalog response's `ShopCatalogItem` shape, same as every other item's `content` would
-be — the catalog never exposes `content`). Owning one lets the player order that examination
-against a case via `POST /api/v1/examinations` — see `docs/api/examinations.md`.
+`itemType: "EXAMINATION"` items carry a `content: { "timeCostMs": number }` payload. The catalog
+never exposes raw `content`, but it does surface the derived `timeCostMs: number` field on every
+item — `EXAMINATION` items get their `content.timeCostMs` value, every other item gets
+`timeCostMs: null`. This lets the frontend show/know an examination's time cost before ordering
+it. Owning an `EXAMINATION` item lets the player order it against a case via
+`POST /api/v1/examinations` — see `docs/api/examinations.md`.
 
 ## `POST /api/v1/shop/purchase`
 

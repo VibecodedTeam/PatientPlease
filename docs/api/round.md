@@ -95,17 +95,16 @@ existing open round looks identical to a client as starting a new one.
 }
 ```
 
-`diagnosisOptions` is **not** the full `Diagnosis` catalog — it's the case's correct diagnosis
-plus up to 3 randomly-selected decoys from the rest of the catalog (fewer than 4 total if the
-catalog itself has fewer than 4 diagnoses), sorted by `name`. Decoys are chosen fresh on every
-call to this endpoint, including when resuming an already-open round, so the wrong options shown
-for a given case can differ between calls. `treatmentOptions` is unaffected — it's still the full
-`Treatment` catalog.
+`diagnosisOptions` is **not** the full `Diagnosis` catalog — it's `case.correctDiagnosisId`'s
+diagnosis plus up to 3 randomly-selected decoys from the rest of the catalog (fewer than 4 total
+if the catalog itself has fewer than 4 diagnoses), sorted by `name`. Decoys are chosen fresh on
+every call to this endpoint, including when resuming an already-open round, so the wrong options
+shown for a given case can differ between calls. `treatmentOptions` is unaffected — it's still the
+full `Treatment` catalog.
 
 `case.correctDiagnosisId`, `case.correctTreatmentId`, and `case.resultExplanationText` are never
-included in the response — the answer key stays server-side. Grading a diagnosis submission is
-`POST /api/v1/diagnoses`'s job (see `docs/api/diagnoses.md`); the frontend's `ResultsProvider`
-uses that endpoint's response rather than comparing against a field of its own. There is no
+included in the response — grading now happens server-side via `POST /api/v1/diagnoses` (see
+`docs/api/diagnoses.md`), so the client has no need to see the answer key. There is no
 `case.attentionPoints` — each document instead carries `attentionPointRegion`, the coarse body
 region it's about (or `null`), and the frontend's `PatientScene` maps that region to a 3D hotspot
 position/zoom preset itself.
@@ -145,5 +144,3 @@ is resolved) returns the same case and does not create a duplicate `GameDayLog`.
 - App wiring: `src/backend/src/app.ts`
 - Tests: `src/backend/test/routes/round.test.ts`, `src/backend/test/services/round.test.ts`
 - Design spec: `docs/superpowers/specs/2026-07-07-start-round-endpoint-design.md`
-- Related: `docs/api/diagnoses.md` (grades a diagnosis and is what makes `selectNextCase`
-  stop re-serving the same case)

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './MainView.module.css';
 import { PatientScene, PatientSceneProvider } from '../../components/PatientScene';
+import { Chat } from '../../components/Chat';
 import { Wall } from '../../components/Wall';
 import { Table } from '../../components/Table';
 import { Settings } from '../../components/Settings';
@@ -37,6 +38,7 @@ function MainViewContent() {
   const { isOpen: isStatisticsOpen, statistics, closeStatistics } = useStatistics();
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [settingsAutoOpened, setSettingsAutoOpened] = useState(false);
+  const [activeView, setActiveView] = useState('scene');
 
   useEffect(() => {
     function handleVisibilityChange() {
@@ -77,8 +79,19 @@ function MainViewContent() {
 
   if (terminalState) {
     return (
-      <div className={styles.gameFinished} role="status">
-        {TERMINAL_MESSAGES[terminalState]}
+      <div className={styles.screen}>
+        <div className={styles.gameFinished} role="status">
+          {TERMINAL_MESSAGES[terminalState]}
+        </div>
+        <button type="button" className={styles.settingsButton} onClick={handleOpenSettings}>
+          <span className={styles.gearIcon} aria-hidden="true">
+            ⚙
+          </span>
+          <span>Open Settings</span>
+        </button>
+        {isSettingsOpen && (
+          <Settings onClose={handleCloseSettings} autoPaused={settingsAutoOpened} />
+        )}
       </div>
     );
   }
@@ -111,9 +124,40 @@ function MainViewContent() {
       </div>
       <div className={styles.mainView}>
         <section className={styles.patientArea} aria-label="Patient preview area">
-          <PatientSceneProvider url="/3DModels/FinalBaseMesh.obj">
-            <PatientScene documents={round?.case?.documents ?? NO_DOCUMENTS} />
-          </PatientSceneProvider>
+          <div className={styles.patientAreaToggle}>
+            <button
+              type="button"
+              className={styles.toggleButton}
+              aria-pressed={activeView === 'scene'}
+              onClick={() => setActiveView('scene')}
+            >
+              3D View
+            </button>
+            <button
+              type="button"
+              className={styles.toggleButton}
+              aria-pressed={activeView === 'chat'}
+              onClick={() => setActiveView('chat')}
+            >
+              Chat
+            </button>
+          </div>
+          <div className={styles.patientAreaContent}>
+            {/* PatientScene stays mounted (hidden when Chat is active) so its
+                Three.js model setup isn't re-run on every toggle. Chat is
+                mounted on demand — its history is restored from localStorage,
+                so unmounting it loses nothing. */}
+            <div className={activeView === 'scene' ? styles.pane : styles.paneHidden}>
+              <PatientSceneProvider url="/3DModels/FinalBaseMesh.obj">
+                <PatientScene documents={round?.case?.documents ?? NO_DOCUMENTS} />
+              </PatientSceneProvider>
+            </div>
+            {activeView === 'chat' && (
+              <div className={styles.pane}>
+                <Chat gameSessionId={round?.gameSession?.id} caseId={round?.case?.id} />
+              </div>
+            )}
+          </div>
         </section>
         <div className={styles.rightColumn}>
           <div className={styles.wallCell}>
@@ -131,6 +175,8 @@ function MainViewContent() {
         <ResultPopup
           isCorrect={result.isCorrect}
           moneyDelta={result.moneyDelta}
+          examineSeconds={result.examineSeconds}
+          balance={result.balance}
           onClose={closeResult}
         />
       )}

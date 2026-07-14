@@ -1,49 +1,71 @@
-import React, { createContext, useCallback, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useRound } from '../../../../providers/Round';
+import { useGameSession } from '../GameSession';
 
 export const ResultsContext = createContext(null);
 
 /**
  * Shows the result of a diagnosis submission: whether it matched the case's real
- * correct answer, and the real money reward/penalty for the active case.
- *
- * Grading happens server-side, via `useRound().submitDiagnosis()` (POST
- * /api/v1/diagnoses — see docs/api/diagnoses.md): the client never has access to
- * `correctDiagnosisId`, so `isDiagnosisCorrect`/`moneyDelta` come straight from
- * that response rather than being computed here. Submitting does NOT advance
- * the round — the popup still needs to show the case just diagnosed. Only
- * closeResult() refetches, so the next case appears once the player has
- * acknowledged this one, not the moment they hit Submit.
+ * correct answer, and the real money reward/penalty. Grading happens server-side,
+ * via `submitDiagnosis` (POST /api/v1/diagnoses) — see docs/api/diagnoses.md.
  */
 export function ResultsProvider({ children }) {
   const { round, submitDiagnosis, refreshRound } = useRound();
+  const { elapsedSeconds } = useGameSession();
   const [result, setResult] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  // elapsedSeconds ticks every second, so a stale closure over it (captured
+  // once when showResult was created) would report the wrong examine time.
+  // Reading it via a ref, updated every render, keeps showResult itself
+  // stable (see its deps below) while still observing the latest value.
+  const elapsedSecondsRef = useRef(elapsedSeconds);
+  elapsedSecondsRef.current = elapsedSeconds;
+
+  // Marks when the current case first appeared, so examineSeconds measures
+  // only the time spent on THIS case, not the whole day so far. Resets
+  // whenever the case identity changes.
+  const caseStartElapsedRef = useRef(elapsedSeconds);
+  useEffect(() => {
+    caseStartElapsedRef.current = elapsedSecondsRef.current;
+  }, [round?.case?.id]);
 
   const showResult = useCallback(
     async (selection) => {
-      // A real case always carries a real id — if round.case isn't loaded yet, there's
-      // nothing to submit against. isSubmitting guards against a second click firing a
-      // duplicate submission while the first is still in flight.
-      if (!round?.case || isSubmitting) return;
-      setIsSubmitting(true);
+      // No real case loaded yet means there's nothing to grade against.
+      if (!round?.case) return;
+      setError(null);
       try {
         const data = await submitDiagnosis(round.case.id, selection.id);
-        setResult({ selection, isCorrect: data.isDiagnosisCorrect, moneyDelta: data.moneyDelta });
-      } finally {
-        setIsSubmitting(false);
+        const examineSeconds = Math.max(
+          0,
+          elapsedSecondsRef.current - caseStartElapsedRef.current,
+        );
+        setResult({
+          selection,
+          isCorrect: data.result.isDiagnosisCorrect,
+          moneyDelta: data.result.moneyDelta,
+          examineSeconds,
+          balance: data.gameSession.money,
+        });
+      } catch (err) {
+        // Caught here (rather than left to reject) so a failed submission
+        // surfaces via `error` instead of becoming an unhandled rejection.
+        setError(err);
       }
     },
-    [round, submitDiagnosis, isSubmitting],
+    [round, submitDiagnosis],
   );
 
   const closeResult = useCallback(() => {
     setResult(null);
+    // The just-diagnosed case now has a DiagnosisAttempt, so refetching the round
+    // is what actually advances the desk to the next patient.
     refreshRound();
   }, [refreshRound]);
 
-  const value = { isOpen: result !== null, result, showResult, closeResult, isSubmitting };
+  const value = { isOpen: result !== null, result, error, showResult, closeResult };
 
   return <ResultsContext.Provider value={value}>{children}</ResultsContext.Provider>;
 }

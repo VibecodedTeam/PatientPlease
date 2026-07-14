@@ -6,7 +6,7 @@ export const GameSessionContext = createContext(null);
 
 // How long a day runs before it auto-ends and the Daily Statistics popup
 // appears (see views/MainView/providers/Statistics).
-export const DAY_DURATION_SECONDS = 10;
+export const DAY_DURATION_SECONDS = 600;
 
 export function GameSessionProvider({ children }) {
   const { pauseGame, resetDay: roundResetDay, resetGame: roundResetGame, endDay: roundEndDay } =
@@ -82,6 +82,21 @@ export function GameSessionProvider({ children }) {
     return data;
   }, [roundEndDay]);
 
+  // Advances the visible day timer by a fixed amount instead of waiting for
+  // the real-time tick above — used when an action (e.g. ordering an
+  // examination) consumes in-game time faster than the wall clock does.
+  // Mirrors the tick's own freeze-at-the-limit behavior so a large enough
+  // bump can end the day immediately, same as ticking there naturally would.
+  const addElapsedSeconds = useCallback((seconds) => {
+    setElapsedSeconds((current) => {
+      const next = current + seconds;
+      if (next >= DAY_DURATION_SECONDS) {
+        setIsPaused(true);
+      }
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     function handleVisibilityChange() {
       if (document.hidden) {
@@ -101,6 +116,7 @@ export function GameSessionProvider({ children }) {
     resetDay,
     resetGame,
     endDay,
+    addElapsedSeconds,
   };
 
   return <GameSessionContext.Provider value={value}>{children}</GameSessionContext.Provider>;

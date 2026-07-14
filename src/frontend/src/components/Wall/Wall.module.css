@@ -53,6 +53,13 @@
   gap: 0.4rem;
 }
 
+.moleCheckBoardSlot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1;
+}
+
 .board {
   max-width: 65%;
   background-color: #d9c9a3;
