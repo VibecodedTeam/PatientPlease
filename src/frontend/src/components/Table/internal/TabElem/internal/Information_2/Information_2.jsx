@@ -13,9 +13,9 @@ function formatKeyLabel(key) {
 function formatHistoryContent(content) {
   if (!content) return '';
   if (typeof content === 'string') return content;
-  return Object.entries(content)
-    .map(([key, value]) => `${formatKeyLabel(key)}: ${value}`)
-    .join('; ');
+  const entries = Object.entries(content);
+  if (entries.length === 1) return String(entries[0][1]);
+  return entries.map(([key, value]) => `${formatKeyLabel(key)}: ${value}`).join('; ');
 }
 
 /**
