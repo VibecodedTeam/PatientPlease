@@ -413,7 +413,13 @@ describe('MainView', () => {
     expect(screen.getByText('-$20')).toBeInTheDocument();
   });
 
-  it('shows the Daily Statistics popup once the day timer elapses, and navigates to /night on close', async () => {
+  function dayEndFetchCount() {
+    return global.fetch.mock.calls.filter(
+      ([request]) => new URL(request.url).pathname === '/api/v1/day/end',
+    ).length;
+  }
+
+  it('does not end the day while a patient is still being examined, and ends it once that examination is finished after the timer elapses', async () => {
     mockFetchRoutes({
       '/api/v1/day/end': () =>
         new Response(
@@ -434,15 +440,36 @@ describe('MainView', () => {
     jest.useFakeTimers({ doNotFake: ['queueMicrotask'] });
     try {
       await renderMainView();
+      await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
 
       await act(async () => {
         jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
+      });
+
+      // Timer ran out while the player was still deciding on a diagnosis —
+      // the day must not end (or interrupt them with the Daily Statistics
+      // popup) in the middle of that examination.
+      expect(screen.queryByRole('heading', { name: 'Daily Statistics' })).not.toBeInTheDocument();
+      expect(dayEndFetchCount()).toBe(0);
+
+      await act(async () => {
+        screen.getByRole('radio', { name: 'Skin Cancer' }).click();
+      });
+      await act(async () => {
+        screen.getByText('Submit Diagnosis').click();
+      });
+      expect(screen.getByText('Correct!')).toBeInTheDocument();
+      expect(dayEndFetchCount()).toBe(0);
+
+      await act(async () => {
+        screen.getByRole('button', { name: /continue/i }).click();
       });
 
       await waitFor(() =>
         expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument(),
       );
       expect(screen.getByText('$130')).toBeInTheDocument();
+      expect(dayEndFetchCount()).toBe(1);
 
       await act(async () => {
         screen.getByRole('button', { name: /continue/i }).click();
@@ -454,7 +481,7 @@ describe('MainView', () => {
     }
   });
 
-  it('defers the Daily Statistics popup until an open ResultPopup is closed', async () => {
+  it('defers ending the day until an open ResultPopup is closed, even though the timer already elapsed', async () => {
     mockFetchRoutes({
       '/api/v1/day/end': () =>
         new Response(
@@ -489,11 +516,11 @@ describe('MainView', () => {
         jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
       });
 
-      // The day-end call has already resolved in the background, but the
-      // popup itself must stay hidden while the player hasn't yet
-      // acknowledged their diagnosis result.
+      // The day must not actually end (no backend call, no popup) while the
+      // player hasn't yet acknowledged their diagnosis result.
       expect(screen.queryByRole('heading', { name: 'Daily Statistics' })).not.toBeInTheDocument();
       expect(screen.getByText('Correct!')).toBeInTheDocument();
+      expect(dayEndFetchCount()).toBe(0);
 
       await act(async () => {
         screen.getByRole('button', { name: /continue/i }).click();
@@ -503,6 +530,7 @@ describe('MainView', () => {
       await waitFor(() =>
         expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument(),
       );
+      expect(dayEndFetchCount()).toBe(1);
     } finally {
       jest.useRealTimers();
     }
