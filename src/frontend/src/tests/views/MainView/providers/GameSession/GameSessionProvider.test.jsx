@@ -7,6 +7,7 @@ import {
   useGameSession,
   DAY_DURATION_SECONDS,
 } from '../../../../../views/MainView/providers/GameSession';
+import { resolveDayDurationSeconds } from '../../../../../views/MainView/providers/GameSession/GameSessionProvider';
 
 function TestConsumer() {
   const {
@@ -32,7 +33,7 @@ function TestConsumer() {
       <button onClick={resetDay}>reset-day</button>
       <button onClick={resetGame}>reset-game</button>
       <button onClick={() => endDay().then((data) => setDayLog(data.dayLog))}>end-day</button>
-      <button onClick={() => addElapsedSeconds(90)}>add-90</button>
+      <button onClick={() => addElapsedSeconds(5)}>add-5</button>
       <button onClick={() => addElapsedSeconds(DAY_DURATION_SECONDS)}>add-full-day</button>
     </div>
   );
@@ -63,6 +64,32 @@ function fireVisibilityChange() {
 function lastRequest() {
   return global.fetch.mock.calls[global.fetch.mock.calls.length - 1][0];
 }
+
+describe('resolveDayDurationSeconds', () => {
+  it('returns the parsed value when VITE_DAY_DURATION_SECONDS is set', () => {
+    expect(resolveDayDurationSeconds('30', 60)).toBe(30);
+  });
+
+  it('falls back to the default when VITE_DAY_DURATION_SECONDS is unset', () => {
+    expect(resolveDayDurationSeconds(undefined, 60)).toBe(60);
+  });
+
+  it('falls back to the default when VITE_DAY_DURATION_SECONDS is an empty string', () => {
+    expect(resolveDayDurationSeconds('', 60)).toBe(60);
+  });
+
+  it('falls back to the default when VITE_DAY_DURATION_SECONDS is non-numeric', () => {
+    expect(resolveDayDurationSeconds('abc', 60)).toBe(60);
+  });
+
+  it('falls back to the default when VITE_DAY_DURATION_SECONDS is "0"', () => {
+    expect(resolveDayDurationSeconds('0', 60)).toBe(60);
+  });
+
+  it('falls back to the default when VITE_DAY_DURATION_SECONDS is negative', () => {
+    expect(resolveDayDurationSeconds('-1', 60)).toBe(60);
+  });
+});
 
 describe('GameSessionProvider / useGameSession', () => {
   beforeEach(() => {
@@ -112,6 +139,32 @@ describe('GameSessionProvider / useGameSession', () => {
     await waitFor(() => expect(screen.getByTestId('paused').textContent).toBe('true'));
 
     expect(screen.getByTestId('elapsed').textContent).toBe('18');
+  });
+
+  it('clamps elapsedSeconds seeded from round.dayLog.elapsedMs to DAY_DURATION_SECONDS, so a refresh while examining the last case does not show a growing time past the limit', async () => {
+    // The backend's real clock keeps running past the frontend's day-over
+    // freeze (it must, so the player can still submit the last diagnosis —
+    // see services/diagnosis.ts/examination.ts requiring an ACTIVE session,
+    // which pausing server-side would break). A refresh here must display
+    // the frozen limit, not the ever-growing real elapsed time.
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ dayLog: { elapsedMs: 95000 } }), { status: 200 }),
+      );
+
+    renderWithProviders();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS)),
+    );
+    expect(screen.getByTestId('day-over').textContent).toBe('true');
+    expect(screen.getByTestId('paused').textContent).toBe('true');
+
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS));
   });
 
   it('counts elapsed seconds upward while not paused', () => {
@@ -324,10 +377,10 @@ describe('GameSessionProvider / useGameSession', () => {
     });
 
     act(() => {
-      screen.getByText('add-90').click();
+      screen.getByText('add-5').click();
     });
 
-    expect(screen.getByTestId('elapsed').textContent).toBe('93');
+    expect(screen.getByTestId('elapsed').textContent).toBe('8');
     expect(screen.getByTestId('paused').textContent).toBe('false');
   });
 
