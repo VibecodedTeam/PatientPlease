@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { ApiProvider } from '../../../../../providers/Api';
 import { RoundProvider } from '../../../../../providers/Round';
-import { GameSessionProvider, DAY_DURATION_SECONDS } from '../../../../../views/MainView/providers/GameSession';
+import { GameSessionProvider } from '../../../../../views/MainView/providers/GameSession';
 import { StatisticsProvider, useStatistics } from '../../../../../views/MainView/providers/Statistics';
 
 const DAY_LOG_RESPONSE = {
@@ -18,12 +18,13 @@ const DAY_LOG_RESPONSE = {
 };
 
 function StatisticsConsumer() {
-  const { isOpen, statistics, closeStatistics } = useStatistics();
+  const { isOpen, statistics, closeStatistics, finishDay } = useStatistics();
   return (
     <div>
       <span data-testid="is-open">{String(isOpen)}</span>
       <span data-testid="statistics">{statistics ? JSON.stringify(statistics) : 'none'}</span>
       <button onClick={closeStatistics}>close</button>
+      <button onClick={finishDay}>finish-day</button>
     </div>
   );
 }
@@ -44,7 +45,6 @@ function renderWithProviders() {
 
 describe('StatisticsProvider', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
     // mockImplementation (not mockResolvedValue) so each call gets its own
     // Response instance — RoundProvider's own mount-time round-start call
     // now shares this mock too, and a Response body can only be read once.
@@ -53,20 +53,19 @@ describe('StatisticsProvider', () => {
       .mockImplementation(() => new Response(JSON.stringify(DAY_LOG_RESPONSE), { status: 200 }));
   });
 
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
   it('starts closed', () => {
     renderWithProviders();
     expect(screen.getByTestId('is-open').textContent).toBe('false');
   });
 
-  it('calls endDay and opens with the real day statistics derived from dayLog once the day timer elapses', async () => {
+  // Deciding *when* the day should actually end (i.e. not mid-examination)
+  // is ResultsProvider's job (see its closeResult) — this provider only
+  // owns *how* to end it once asked, via the exposed finishDay action.
+  it('finishDay calls the real day/end endpoint and opens with the real day statistics derived from dayLog', async () => {
     renderWithProviders();
 
     await act(async () => {
-      jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
+      screen.getByText('finish-day').click();
     });
 
     await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
@@ -95,13 +94,10 @@ describe('StatisticsProvider', () => {
     renderWithProviders();
 
     await act(async () => {
-      jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
+      screen.getByText('finish-day').click();
     });
 
     expect(screen.getByTestId('is-open').textContent).toBe('false');
-    // The rejection now propagates through an extra hop (RoundProvider's
-    // endDay -> GameSessionProvider's endDay -> this catch), so it needs a
-    // waitFor rather than a bare synchronous assertion right after act().
     await waitFor(() => expect(consoleError).toHaveBeenCalled());
     consoleError.mockRestore();
   });
@@ -110,7 +106,7 @@ describe('StatisticsProvider', () => {
     renderWithProviders();
 
     await act(async () => {
-      jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
+      screen.getByText('finish-day').click();
     });
     await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
 

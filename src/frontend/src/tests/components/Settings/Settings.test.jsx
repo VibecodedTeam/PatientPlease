@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { ApiProvider } from '../../../providers/Api';
 import { AuthProvider, useAuth } from '../../../providers/Auth';
 import { RoundProvider } from '../../../providers/Round';
@@ -17,6 +18,11 @@ function StatusReadout() {
       <span data-testid="elapsed">{elapsedSeconds}</span>
     </div>
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}</div>;
 }
 
 // Mirrors AuthGate's real contract: Settings only ever mounts once auth has
@@ -53,18 +59,21 @@ function findRequestByPath(pathname) {
 
 function renderSettings({ onClose = jest.fn(), autoPaused = false } = {}) {
   return render(
-    <ApiProvider baseUrl="http://api.test">
-      <AuthProvider>
-        <RoundProvider>
-          <GameSessionProvider>
-            <AuthenticatedGate>
-              <StatusReadout />
-              <Settings onClose={onClose} autoPaused={autoPaused} />
-            </AuthenticatedGate>
-          </GameSessionProvider>
-        </RoundProvider>
-      </AuthProvider>
-    </ApiProvider>,
+    <MemoryRouter initialEntries={['/game/main']}>
+      <ApiProvider baseUrl="http://api.test">
+        <AuthProvider>
+          <RoundProvider>
+            <GameSessionProvider>
+              <AuthenticatedGate>
+                <StatusReadout />
+                <Settings onClose={onClose} autoPaused={autoPaused} />
+              </AuthenticatedGate>
+            </GameSessionProvider>
+          </RoundProvider>
+        </AuthProvider>
+      </ApiProvider>
+      <LocationProbe />
+    </MemoryRouter>,
   );
 }
 
@@ -112,6 +121,19 @@ describe('Settings', () => {
 
     await waitFor(() => expect(findRequestByPath('/auth/logout')).toBeDefined());
     expect(findRequestByPath('/auth/logout').method).toBe('POST');
+  });
+
+  it('navigates back to / after Log out is clicked', async () => {
+    const user = userEvent.setup();
+    mockFetchRoutes();
+    renderSettings();
+
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    expect(screen.getByTestId('location')).toHaveTextContent('/game/main');
+
+    await user.click(screen.getByText('Log out'));
+
+    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/'));
   });
 
   it('confirming "Back to start of day" resets the day and closes Settings', async () => {

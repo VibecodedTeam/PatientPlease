@@ -533,6 +533,7 @@ describe('startRound', () => {
         createdAt: new Date('2026-07-01T00:00:00.000Z'),
         updatedAt: new Date('2026-07-01T00:00:00.000Z'),
       },
+      dayLog: { elapsedMs: expect.any(Number) as number },
       ownedItems: [
         {
           id: 'owned-item-uuid',
@@ -757,5 +758,33 @@ describe('startRound', () => {
     const result = await startRound(prisma, 'user-uuid');
 
     expect(result.case.documents.map((document) => document.id)).toEqual(['document-uuid']);
+  });
+
+  it('includes dayLog.elapsedMs computed from the open GameDayLog, so a page refresh does not lose progress', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    const now = Date.now();
+    prisma.gameDayLog.findFirst.mockResolvedValue(
+      makeGameDayLog({
+        startedAt: new Date(now - 10_000),
+        totalPausedMs: 2_000,
+        extraElapsedMs: 500,
+      }),
+    );
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    // ~10s wall clock - 2s paused + 0.5s extra = ~8.5s; allow scheduling slack.
+    expect(result.dayLog.elapsedMs).toBeGreaterThanOrEqual(8_400);
+    expect(result.dayLog.elapsedMs).toBeLessThan(8_800);
+  });
+
+  it('does not create a new GameDayLog to compute dayLog.elapsedMs (resume path)', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+
+    await startRound(prisma, 'user-uuid');
+
+    expect(prisma.gameDayLog.create).not.toHaveBeenCalled();
   });
 });

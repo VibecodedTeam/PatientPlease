@@ -55,6 +55,11 @@ export function resolveDevSessionEnabled(value: string | undefined): boolean {
   return value === 'true';
 }
 
+export function resolveDayDurationSeconds(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export function resolveRateLimitMax(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import { OverlayPortal } from '../OverlayPortal';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { useGameSession } from '../../views/MainView/providers/GameSession';
@@ -14,6 +15,7 @@ const CONFIRM_MESSAGES = {
 export function Settings({ onClose, autoPaused = false }) {
   const { pauseTimer, resumeTimer, resetDay, resetGame } = useGameSession();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [pendingReset, setPendingReset] = useState(null);
   const [isMusicOn, setIsMusicOn] = useState(true);
 
@@ -21,6 +23,10 @@ export function Settings({ onClose, autoPaused = false }) {
     pauseTimer();
     return () => resumeTimer();
   }, [pauseTimer, resumeTimer]);
+
+  function handleLogout() {
+    logout().then(() => navigate('/'));
+  }
 
   function handleConfirmReset() {
     if (pendingReset === 'day') {
@@ -52,7 +58,7 @@ export function Settings({ onClose, autoPaused = false }) {
             <button
               type="button"
               className={`${styles.button} ${styles.rowButton}`}
-              onClick={() => logout()}
+              onClick={handleLogout}
             >
               Log out
             </button>
