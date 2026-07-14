@@ -56,9 +56,8 @@
 .moleCheckBoardSlot {
   display: flex;
   align-items: flex-start;
-  justify-content: flex-end;
-  /* keep it in the top-right corner but not flush against the very edge */
-  margin-right: 1.5rem;
+  justify-content: center;
+  flex: 1;
 }
 
 .board {
@@ -379,8 +378,6 @@
 
 .shelfLamp {
   flex: 0 0 2.6rem;
-  /* push the lamp to the far-right end of the shelf, clear of the books/stamp */
-  margin-left: auto;
   align-self: flex-end;
   display: flex;
   flex-direction: column;
