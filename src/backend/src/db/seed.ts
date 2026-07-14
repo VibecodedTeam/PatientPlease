@@ -1,9 +1,11 @@
 import 'dotenv/config';
 import { pathToFileURL } from 'node:url';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from './prisma.js';
+import { REAL_CASES } from './data/realCases.js';
+import { resolveCaseSeedRefs } from './caseSeedRefs.js';
 
-const DIAGNOSES: Prisma.DiagnosisCreateManyInput[] = [
+export const DIAGNOSES: Prisma.DiagnosisCreateManyInput[] = [
   {
     code: 'melanoma',
     name: 'Melanoma',
@@ -167,7 +169,7 @@ const DIAGNOSES: Prisma.DiagnosisCreateManyInput[] = [
   },
 ];
 
-const TREATMENTS: Prisma.TreatmentCreateManyInput[] = [
+export const TREATMENTS: Prisma.TreatmentCreateManyInput[] = [
   {
     code: 'topical-corticosteroid',
     name: 'Topical Corticosteroid',
@@ -326,7 +328,7 @@ const TREATMENTS: Prisma.TreatmentCreateManyInput[] = [
   },
 ];
 
-const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
+export const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
   {
     sku: 'equip-dermatoscope',
     name: 'Dermatoscope',
@@ -545,93 +547,12 @@ const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
   },
 ];
 
-const PATIENT_NAMES = [
-  'Jan Kowalski',
-  'Anna Nowak',
-  'Piotr Wiśniewski',
-  'Maria Lewandowska',
-  'Tomasz Wójcik',
-  'Katarzyna Kamińska',
-  'Marek Zieliński',
-  'Agnieszka Szymańska',
-  'Krzysztof Woźniak',
-  'Magdalena Dąbrowska',
-  'Andrzej Kozłowski',
-  'Ewa Jankowska',
-  'Grzegorz Mazur',
-  'Joanna Kwiatkowska',
-  'Michał Krawczyk',
-  'Barbara Piotrowska',
-  'Paweł Grabowski',
-  'Monika Nowakowska',
-  'Rafał Pawłowski',
-  'Aleksandra Michalska',
-  'Dariusz Adamczyk',
-  'Beata Dudek',
-  'Wojciech Zając',
-  'Elżbieta Wieczorek',
-  'Sławomir Jabłoński',
-];
-
-const OCCUPATIONS = [
-  'Roofer',
-  'Teacher',
-  'Farmer',
-  'Office Clerk',
-  'Lifeguard',
-  'Construction Worker',
-  'Fisherman',
-  'Nurse',
-  'Truck Driver',
-  'Gardener',
-  'Retired',
-  'Student',
-  'Chef',
-  'Mechanic',
-  'Postal Worker',
-  'Beekeeper',
-  'Ski Instructor',
-  'Painter',
-  'Barista',
-  'Electrician',
-  'Sailor',
-  'Landscaper',
-  'Photographer',
-  'Warehouse Worker',
-  'Delivery Courier',
-];
-
 const BODY_MODEL_VARIANTS = [
   'male_average_01',
   'female_average_01',
   'male_slim_01',
   'female_slim_01',
 ] as const;
-const SEXES = ['MALE', 'FEMALE', 'OTHER'] as const;
-const BODY_REGIONS = [
-  'HEAD',
-  'NECK',
-  'CHEST',
-  'BACK',
-  'ABDOMEN',
-  'LEFT_ARM',
-  'RIGHT_ARM',
-  'LEFT_LEG',
-  'RIGHT_LEG',
-  'LEFT_HAND',
-  'RIGHT_HAND',
-  'LEFT_FOOT',
-  'RIGHT_FOOT',
-] as const;
-const SUPPORTING_DOCUMENT_TYPES = [
-  'DISEASE_HISTORY',
-  'UV_EXPOSURE_HISTORY',
-  'CLINICAL_SYMPTOMS',
-  'FAMILY_HISTORY',
-  'WEATHER_HISTORY',
-] as const;
-
-const CASE_COUNT = PATIENT_NAMES.length;
 
 export async function seed(options: { force?: boolean } = {}): Promise<void> {
   const alreadySeeded = (await prisma.diagnosis.count()) > 0;
@@ -661,17 +582,21 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
   const shopItems = await prisma.shopItem.findMany({ orderBy: { sku: 'asc' } });
   const examinationItems = shopItems.filter((item) => item.itemType === 'EXAMINATION');
 
-  for (let i = 0; i < CASE_COUNT; i++) {
-    const diagnosis = diagnoses[i % diagnoses.length]!;
-    const treatment = treatments[i % treatments.length]!;
-    const difficulty = (i % 3) + 1;
+  for (let i = 0; i < REAL_CASES.length; i++) {
+    const realCase = REAL_CASES[i]!;
+    const { diagnosisId, treatmentId, examinationShopItemId } = resolveCaseSeedRefs(realCase, {
+      diagnoses,
+      treatments,
+      shopItems,
+    });
+    const diagnosis = diagnoses.find((d) => d.id === diagnosisId)!;
 
     const patient = await prisma.patient.create({
       data: {
-        name: PATIENT_NAMES[i]!,
-        age: 8 + ((i * 7) % 70),
-        sex: SEXES[i % SEXES.length]!,
-        occupation: OCCUPATIONS[i]!,
+        name: realCase.patientName,
+        age: realCase.age,
+        sex: realCase.sex,
+        occupation: realCase.occupation,
         portraitImageUrl: `https://cdn.example.test/patients/patient-${String(i + 1).padStart(2, '0')}.png`,
         bodyModelVariant: BODY_MODEL_VARIANTS[i % BODY_MODEL_VARIANTS.length]!,
       },
@@ -680,12 +605,12 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
     const caseRecord = await prisma.case.create({
       data: {
         patientId: patient.id,
-        difficulty,
-        correctDiagnosisId: diagnosis.id,
-        correctTreatmentId: treatment.id,
-        moneyReward: 50 + difficulty * 25,
-        moneyPenalty: 20 + difficulty * 10,
-        resultExplanationText: `${diagnosis.name} confirmed on review; correct treatment was ${treatment.name}.`,
+        difficulty: realCase.difficulty,
+        correctDiagnosisId: diagnosisId,
+        correctTreatmentId: treatmentId,
+        moneyReward: 50 + realCase.difficulty * 25,
+        moneyPenalty: 20 + realCase.difficulty * 10,
+        resultExplanationText: realCase.resultExplanationText,
       },
     });
 
@@ -693,39 +618,37 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
       data: {
         caseId: caseRecord.id,
         type: 'SKIN_IMAGE',
-        attentionPointRegion: BODY_REGIONS[i % BODY_REGIONS.length]!,
+        attentionPointRegion: realCase.bodyRegion,
         title: 'Lesion close-up',
         sortOrder: 0,
-        imageUrl: `https://cdn.example.test/cases/case-${String(i + 1).padStart(2, '0')}-lesion.png`,
+        imageUrl: `/cases/${realCase.imageFile}`,
         imageWidthPx: 1024,
         imageHeightPx: 768,
         imageAltText: `Close-up photo of lesion on ${patient.name}`,
       },
     });
 
-    await prisma.caseDocument.create({
-      data: {
-        caseId: caseRecord.id,
-        type: SUPPORTING_DOCUMENT_TYPES[i % SUPPORTING_DOCUMENT_TYPES.length]!,
-        title: 'Patient history',
-        sortOrder: 1,
-        content: { note: `Relevant history for ${patient.name}'s case.` },
-      },
-    });
+    for (const [index, document] of realCase.documents.entries()) {
+      await prisma.caseDocument.create({
+        data: {
+          caseId: caseRecord.id,
+          type: document.type,
+          title: document.title,
+          sortOrder: index + 1,
+          content: (document.content as Prisma.InputJsonValue | null) ?? Prisma.DbNull,
+        },
+      });
+    }
 
-    // The one examination that "pays off" for this case: ordering it in the day
-    // phase succeeds and reveals this document. `content.shopItemId` is the link
-    // orderExamination checks; any other examination on this case fails.
-    const examinationItem = examinationItems[i % examinationItems.length]!;
     await prisma.caseDocument.create({
       data: {
         caseId: caseRecord.id,
         type: 'EXAMINATION_RESULTS',
-        title: `${examinationItem.name} results`,
-        sortOrder: 2,
+        title: 'Examination results',
+        sortOrder: realCase.documents.length + 1,
         content: {
-          shopItemId: examinationItem.id,
-          findings: `${examinationItem.name} for ${patient.name}: findings consistent with ${diagnosis.name}.`,
+          shopItemId: examinationShopItemId,
+          findings: realCase.examinationFindings,
         },
       },
     });
@@ -733,10 +656,10 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
     await prisma.caseHint.create({
       data: {
         caseId: caseRecord.id,
-        content: `Consider ${diagnosis.name} given the presentation.`,
+        content: `Consider ${diagnosis.name} given this presentation.`,
         sortOrder: 0,
-        unlockAfterDay: i % 5 === 0 ? null : (i % 3) + 1,
-        requiredShopItemId: i % 3 === 0 ? shopItems[i % shopItems.length]!.id : null,
+        unlockAfterDay: 1,
+        requiredShopItemId: null,
       },
     });
   }
