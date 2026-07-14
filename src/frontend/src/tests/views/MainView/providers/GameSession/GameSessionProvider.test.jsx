@@ -75,6 +75,45 @@ describe('GameSessionProvider / useGameSession', () => {
     setDocumentHidden(false);
   });
 
+  it('seeds elapsedSeconds from round.dayLog.elapsedMs on load, so a page refresh does not restart the timer at zero', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ dayLog: { elapsedMs: 15000 } }), { status: 200 }),
+      );
+
+    renderWithProviders();
+
+    await waitFor(() => expect(screen.getByTestId('elapsed').textContent).toBe('15'));
+  });
+
+  it('keeps ticking up from the server-seeded value and does not re-sync once round updates again later', async () => {
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const url = typeof request === 'string' ? request : request.url;
+      if (String(url).includes('/api/v1/round')) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ dayLog: { elapsedMs: 15000 } }), { status: 200 }),
+        );
+      }
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    });
+
+    renderWithProviders();
+    await waitFor(() => expect(screen.getByTestId('elapsed').textContent).toBe('15'));
+
+    act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+    expect(screen.getByTestId('elapsed').textContent).toBe('18');
+
+    act(() => {
+      screen.getByText('pause').click();
+    });
+    await waitFor(() => expect(screen.getByTestId('paused').textContent).toBe('true'));
+
+    expect(screen.getByTestId('elapsed').textContent).toBe('18');
+  });
+
   it('counts elapsed seconds upward while not paused', () => {
     renderWithProviders();
     act(() => {

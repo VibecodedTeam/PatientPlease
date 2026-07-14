@@ -347,6 +347,33 @@ describe('POST /api/v1/round', () => {
     expect(newSession?.money).toBe(0);
   });
 
+  it('returns dayLog.elapsedMs reflecting real wall-clock time already spent on the still-open day, so a refresh does not restart the timer at zero', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    await createCase(diagnosis.id, treatment.id);
+
+    const first = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const firstBody = first.json<{ gameSession: { id: string } }>();
+    const openDayLog = await prisma.gameDayLog.findFirstOrThrow({
+      where: { gameSessionId: firstBody.gameSession.id },
+    });
+    // Simulate the day having genuinely started 10s ago, as a real page
+    // refresh mid-day would see.
+    await prisma.gameDayLog.update({
+      where: { id: openDayLog.id },
+      data: { startedAt: new Date(Date.now() - 10_000) },
+    });
+
+    const second = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+
+    expect(second.statusCode).toBe(200);
+    const secondBody = second.json<{ dayLog: { elapsedMs: number } }>();
+    expect(secondBody.dayLog.elapsedMs).toBeGreaterThanOrEqual(9_800);
+  });
+
   it('hides an EXAMINATION_RESULTS document until a successful CaseExamination exists for it', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();
