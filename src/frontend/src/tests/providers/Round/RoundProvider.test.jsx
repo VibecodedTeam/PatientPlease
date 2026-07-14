@@ -499,6 +499,75 @@ describe('RoundProvider', () => {
     await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('case-b'));
   });
 
+  it('revealDocuments merges new documents into round.case.documents, deduping by id', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          gameSession: { money: 100 },
+          case: { id: 'case-1', documents: [{ id: 'doc-1', title: 'Existing doc' }] },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    function Probe() {
+      const { round, revealDocuments } = useRound();
+      const titles = (round?.case?.documents ?? []).map((doc) => doc.title).join(',');
+      return (
+        <div>
+          <span data-testid="titles">{titles}</span>
+          <button
+            onClick={() =>
+              revealDocuments([
+                { id: 'doc-1', title: 'Existing doc' },
+                { id: 'doc-2', title: 'New doc' },
+              ])
+            }
+          >
+            reveal
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('titles').textContent).toBe('Existing doc'));
+
+    await userEvent.setup().click(screen.getByText('reveal'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('titles').textContent).toBe('Existing doc,New doc'),
+    );
+  });
+
+  it('revealDocuments is a no-op when there is no active round case', async () => {
+    global.fetch = jest.fn().mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
+
+    function Probe() {
+      const { revealDocuments } = useRound();
+      return (
+        <button onClick={() => revealDocuments([{ id: 'doc-1', title: 'New doc' }])}>reveal</button>
+      );
+    }
+
+    render(
+      <ApiProvider baseUrl="http://api.test">
+        <RoundProvider>
+          <Probe />
+        </RoundProvider>
+      </ApiProvider>,
+    );
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+    await expect(userEvent.setup().click(screen.getByText('reveal'))).resolves.not.toThrow();
+  });
+
   it('discards a stale refreshRound response when a newer call resolves first', async () => {
     let resolveFirstCall;
     let callCount = 0;
