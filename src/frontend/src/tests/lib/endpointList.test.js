@@ -28,9 +28,6 @@ describe('endpointList', () => {
         reset: '/api/v1/day/reset',
         end: '/api/v1/day/end',
       },
-      diagnoses: {
-        submit: '/api/v1/diagnoses',
-      },
       examinations: {
         order: '/api/v1/examinations',
       },
