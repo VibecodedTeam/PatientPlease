@@ -642,3 +642,16 @@ describe('endDay', () => {
     expect(result.gameSession).not.toHaveProperty('userId');
   });
 });
+
+describe('MIN_DAY_DURATION_MS / frontend DAY_DURATION_SECONDS invariant', () => {
+  it('leaves headroom under the frontend day length, or the day can never end', () => {
+    // Mirrors src/frontend/src/views/MainView/providers/GameSession/
+    // GameSessionProvider.jsx's DAY_DURATION_SECONDS (currently 600s). The
+    // two constants can't literally share a value (backend never imports
+    // frontend, per CLAUDE.md), so this is a same-value tripwire instead:
+    // if you change MIN_DAY_DURATION_MS, also check/update
+    // DAY_DURATION_SECONDS, and vice versa.
+    const FRONTEND_DAY_DURATION_SECONDS = 600;
+    expect(MIN_DAY_DURATION_MS).toBeLessThan(FRONTEND_DAY_DURATION_SECONDS * 1000);
+  });
+});

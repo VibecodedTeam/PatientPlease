@@ -308,6 +308,18 @@ describe('GameSessionProvider / useGameSession', () => {
     expect(screen.getByTestId('elapsed').textContent).toBe(String(DAY_DURATION_SECONDS));
   });
 
+  it('stays comfortably above the backend day-end floor, or every day-end attempt will 409 forever', () => {
+    // Mirrors src/backend/src/constants.ts's MIN_DAY_DURATION_MS. The two
+    // constants can't literally share a value (frontend never imports
+    // backend, per CLAUDE.md), so this is a same-value tripwire instead: if
+    // you change DAY_DURATION_SECONDS, also check/update MIN_DAY_DURATION_MS,
+    // and vice versa. See the 4516f5e/revert history for what happens if
+    // this invariant breaks — the day timer freezes forever and the night
+    // shop becomes unreachable through normal play.
+    const BACKEND_MIN_DAY_DURATION_MS = 60_000;
+    expect(DAY_DURATION_SECONDS * 1000).toBeGreaterThan(BACKEND_MIN_DAY_DURATION_MS);
+  });
+
   it('does not auto-resume when the document becomes visible again', () => {
     renderWithProviders();
 
