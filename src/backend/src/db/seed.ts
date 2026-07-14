@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { Prisma } from '@prisma/client';
 import { prisma } from './prisma.js';
 import { REAL_CASES, type Sex } from './data/realCases.js';
+import { FICTIONAL_CASES } from './data/fictionalCases.js';
 import { resolveCaseSeedRefs } from './caseSeedRefs.js';
 
 export const DIAGNOSES: Prisma.DiagnosisCreateManyInput[] = [
@@ -591,8 +592,10 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
   const treatments = await prisma.treatment.findMany({ orderBy: { code: 'asc' } });
   const shopItems = await prisma.shopItem.findMany({ orderBy: { sku: 'asc' } });
 
-  for (let i = 0; i < REAL_CASES.length; i++) {
-    const realCase = REAL_CASES[i]!;
+  const ALL_CASES = [...REAL_CASES, ...FICTIONAL_CASES];
+
+  for (let i = 0; i < ALL_CASES.length; i++) {
+    const realCase = ALL_CASES[i]!;
     const { diagnosisId, treatmentId, examinationShopItemId } = resolveCaseSeedRefs(realCase, {
       diagnoses,
       treatments,

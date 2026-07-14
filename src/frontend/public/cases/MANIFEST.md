@@ -51,3 +51,45 @@ the file at the same filename.
 
 `STOCK_CLEAN2.png` was not used — kept in the folder in case you want to
 swap it in for a case later.
+
+## Fictional cases (case-32 through case-61)
+
+30 wholly invented cases (`FICTIONAL_CASES` in `src/backend/src/db/data/fictionalCases.ts`),
+added to cover diagnosis categories the 31 real cases above never touch (psoriasis, acne,
+vitiligo, eczema, etc.). None of these have a dedicated photo — every one reuses the same 9
+stock/real images from the table above, matched loosely by category. Several diagnoses here
+(impetigo, cellulitis) have no closely-matching stock photo at all and just reuse a
+`STOCK_CANCER*` placeholder, same as the BCC/SCC placeholder situation above.
+
+| Filename | Patient | Diagnosis | Source |
+|---|---|---|---|
+| case-32.png | Edward Sokołowski | Bowen's Disease | STOCK_CANCER1.png (placeholder) |
+| case-33.png | Teresa Malinowska | Seborrheic Keratosis | STOCK_CLEARMYSTERIOUS.png |
+| case-34.png | Weronika Kowalczyk | Common Nevus | STOCK_CLEAN2.png |
+| case-35.png | Grzegorz Pawlak | Dermatofibroma | STOCK_CLEARMYSTERIOUS.png |
+| case-36.png | Kinga Wieczorek | Vitiligo | STOCK_CLEAN1.png (placeholder) |
+| case-37.png | Justyna Kamińska | Melasma | STOCK_PRZEBARWIENIE.png |
+| case-38.png | Mariusz Jaworski | Psoriasis | STOCK_PRZEBARWIENIE.png |
+| case-39.png | Oliwia Zielińska | Atopic Dermatitis | STOCK_CLEAN2.png (placeholder) |
+| case-40.png | Bartosz Kubiak | Contact Dermatitis | STOCK_PRZEBARWIENIE.png |
+| case-41.png | Iwona Szymczak | Rosacea | STOCK_CLEAN1.png (placeholder) |
+| case-42.png | Kamil Górski | Acne Vulgaris | STOCK_CLEAN2.png (placeholder) |
+| case-43.png | Renata Wójcik | Lichen Planus | STOCK_PRZEBARWIENIE.png |
+| case-44.png | Damian Piotrowski | Urticaria | STOCK_CLEAN1.png (placeholder) |
+| case-45.png | Natalia Kwaśniewska | Alopecia Areata | STOCK_CLEAN2.png (placeholder) |
+| case-46.png | Łukasz Adamczyk | Tinea Corporis | STOCK_CLEARMYSTERIOUS.png |
+| case-47.png | Zuzanna Nowicka | Impetigo | STOCK_CANCER3.png (placeholder — no infectious-specific stock) |
+| case-48.png | Henryk Kaźmierczak | Cellulitis | STOCK_CANCER4.png (placeholder — no infectious-specific stock) |
+| case-49.png | Antoni Zawadzki | Molluscum Contagiosum | STOCK_CLEARMYSTERIOUS.png |
+| case-50.png | Filip Urbański | Warts (Verruca Vulgaris) | STOCK_CLEAN1.png (placeholder) |
+| case-51.png | Czesław Wrzesień | Seborrheic Keratosis | STOCK_CLEARMYSTERIOUS.png |
+| case-52.png | Amelia Dąbrowska | Common Nevus | STOCK_CLEAN2.png |
+| case-53.png | Bogdan Sadecki | Psoriasis | STOCK_PRZEBARWIENIE.png |
+| case-54.png | Marta Kowal | Contact Dermatitis | STOCK_PRZEBARWIENIE.png |
+| case-55.png | Wiesław Domański | Rosacea | STOCK_CLEAN1.png (placeholder) |
+| case-56.png | Emilia Stępień | Melanoma | STOCK_CANCER1.png |
+| case-57.png | Stanisław Górecki | Basal Cell Carcinoma | STOCK_CANCER2.png |
+| case-58.png | Krystian Wysocki | Squamous Cell Carcinoma | STOCK_CANCER3.png |
+| case-59.png | Aleksandra Michalska | Dysplastic Nevus (benign/atypical) | STOCK_CLEARMYSTERIOUS.png |
+| case-60.png | Zdzisław Karolak | Actinic Keratosis (not cancer) | STOCK_PRZEBARWIENIE.png |
+| case-61.png | Patrycja Olejnik | Tinea Corporis | STOCK_CLEARMYSTERIOUS.png |
