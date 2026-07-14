@@ -14,12 +14,14 @@ const DEFAULT_OPTIONS = [
  * @param {{id: string, label: string}[]} props.options - Selectable diagnosis options.
  * @param {function({id: string, label: string}): void} [props.onSubmit] - Called with the selected option when the player submits.
  * @param {string} [props.errorMessage] - Shown near the submit button when the last submission failed.
+ * @param {boolean} [props.disabled] - Blocks submission, e.g. while the real diagnosis catalog is still loading and `options` is showing DEFAULT_OPTIONS placeholders that don't exist in the backend.
  */
 export function Diagnose({
   title = 'Diagnosis',
   options = DEFAULT_OPTIONS,
   onSubmit,
   errorMessage,
+  disabled = false,
   className = '',
   ...rest
 }) {
@@ -30,7 +32,7 @@ export function Diagnose({
   const cardClassName = className ? `${styles.card} ${className}` : styles.card;
 
   async function handleSubmit() {
-    if (!selectedOption || !onSubmit || isSubmitting) return;
+    if (!selectedOption || !onSubmit || isSubmitting || disabled) return;
     setIsSubmitting(true);
     try {
       await onSubmit(selectedOption);
@@ -67,7 +69,7 @@ export function Diagnose({
         <button
           type="button"
           className={styles.submitButton}
-          disabled={!selectedOption || isSubmitting}
+          disabled={!selectedOption || isSubmitting || disabled}
           onClick={handleSubmit}
         >
           Submit Diagnosis
@@ -88,5 +90,6 @@ Diagnose.propTypes = {
   ),
   onSubmit: PropTypes.func,
   errorMessage: PropTypes.string,
+  disabled: PropTypes.bool,
   className: PropTypes.string,
 };

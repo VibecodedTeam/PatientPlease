@@ -8,10 +8,12 @@ import { useDocumentTable } from './providers/DocumentTable';
 
 export function Table({ children, className = '', ...rest }) {
   const { showResult, error } = useResults();
-  const { diagnosisOptions } = useDocumentTable();
+  const { diagnosisOptions, isLoading } = useDocumentTable();
   const rootClassName = className ? `${styles.table} ${className}` : styles.table;
   // undefined (not []) while the catalog isn't loaded yet, so Diagnose falls back to
-  // its own DEFAULT_OPTIONS instead of rendering an empty radiogroup.
+  // its own DEFAULT_OPTIONS instead of rendering an empty radiogroup. Those fallback
+  // ids don't exist in the backend, so submission is disabled below (via `disabled`)
+  // for as long as isLoading is true, closing the window where they could be POSTed.
   const options =
     diagnosisOptions && diagnosisOptions.length > 0
       ? diagnosisOptions.map((diagnosis) => ({ id: diagnosis.id, label: diagnosis.name }))
@@ -23,7 +25,12 @@ export function Table({ children, className = '', ...rest }) {
   return (
     <div className={rootClassName} {...rest}>
       <TabElem />
-      <Diagnose options={options} onSubmit={showResult} errorMessage={errorMessage} />
+      <Diagnose
+        options={options}
+        onSubmit={showResult}
+        errorMessage={errorMessage}
+        disabled={isLoading}
+      />
       {children}
     </div>
   );
