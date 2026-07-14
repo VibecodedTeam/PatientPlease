@@ -128,6 +128,15 @@ describe('Wall', () => {
     expect(screen.getByText(/visit the night shop/i)).toBeInTheDocument();
   });
 
+  it('still shows the desk lamp and dermatoscope wall fixtures when there are no owned items', async () => {
+    mockRoundFetch([]);
+    renderWithProviders(<Wall />);
+
+    await screen.findByText(/no handbooks bought yet/i);
+    expect(screen.getByRole('button', { name: /toggle desk lamp/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /toggle dermatoscope/i })).toBeInTheDocument();
+  });
+
   it('opens and closes the order-tests popup from the gear button', async () => {
     const user = userEvent.setup();
     mockRoundFetch(OWNED_ITEMS);
@@ -152,18 +161,47 @@ describe('Wall', () => {
 
     await screen.findByRole('button', { name: 'Dermatology Handbook' });
 
-    // The desk lamp starts ON by default; clicking it turns it off, then on again.
+    // The desk lamp starts OFF by default; clicking it turns it on, then off again.
     const lamp = screen.getByRole('button', { name: /toggle desk lamp/i });
-    expect(lamp).toHaveAttribute('aria-pressed', 'true');
-    await user.click(lamp);
     expect(lamp).toHaveAttribute('aria-pressed', 'false');
     await user.click(lamp);
     expect(lamp).toHaveAttribute('aria-pressed', 'true');
+    await user.click(lamp);
+    expect(lamp).toHaveAttribute('aria-pressed', 'false');
 
     const dermatoscope = screen.getByRole('button', { name: /toggle dermatoscope/i });
     expect(dermatoscope).toHaveAttribute('aria-pressed', 'false');
     await user.click(dermatoscope);
     expect(dermatoscope).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Dermatoscope ready')).toBeInTheDocument();
+  });
+
+  it('pins a new prevention note to the corkboard when clicked, up to the 6-note max', async () => {
+    const user = userEvent.setup();
+    mockRoundFetch(OWNED_ITEMS);
+    renderWithProviders(<Wall />);
+
+    await screen.findByRole('button', { name: 'Dermatology Handbook' });
+
+    const corkboard = screen.getByRole('button', { name: /pin new prevention note/i });
+    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+
+    for (let i = 0; i < 8; i += 1) {
+      await user.click(corkboard);
+    }
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(6);
+  });
+
+  it('keeps the phone/order-tests button on the right side of the header, next to the ABCDE board', async () => {
+    mockRoundFetch(OWNED_ITEMS);
+    renderWithProviders(<Wall />);
+
+    const orderTestsButton = await screen.findByRole('button', { name: /open test orders/i });
+    const abcdeButton = screen.getByRole('button', { name: /open the abcde mole self-check/i });
+
+    // Order-tests (phone) button must come after the ABCDE board in DOM order, so it renders
+    // to the right of it in the header's left-to-right flex layout.
+    expect(orderTestsButton.compareDocumentPosition(abcdeButton) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 });
