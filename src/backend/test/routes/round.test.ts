@@ -179,8 +179,6 @@ describe('POST /api/v1/round', () => {
       { id: treatment.id, code: 'REFER_ONCO', name: 'Refer to oncology', kind: 'REFERRAL' },
     ]);
     expect(body.case.documents[0]?.attentionPointRegion).toBe('LEFT_ARM');
-    // The answer key is never sent to the client — POST /api/v1/diagnoses grades
-    // server-side now (see docs/api/diagnoses.md), so none of these leak.
     expect(body.case).not.toHaveProperty('correctDiagnosisId');
     expect(body.case).not.toHaveProperty('correctTreatmentId');
     expect(body.case).not.toHaveProperty('resultExplanationText');

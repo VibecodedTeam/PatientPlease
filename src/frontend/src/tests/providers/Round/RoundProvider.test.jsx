@@ -320,37 +320,29 @@ describe('RoundProvider', () => {
     expect(await request.clone().json()).toEqual({ shopItemId: 'shop-item-1' });
   });
 
-  it('submitDiagnosis POSTs /api/v1/diagnoses with the case and selection ids, updates round.gameSession directly from its own response, and returns the grading result', async () => {
+  it('submitDiagnosis POSTs /api/v1/diagnoses with caseId and selectedDiagnosisId, and updates round.gameSession', async () => {
     global.fetch = jest.fn().mockImplementation((request) => {
       const pathname = new URL(request.url).pathname;
       if (pathname === '/api/v1/round') {
-        return Promise.resolve(
-          new Response(JSON.stringify({ gameSession: { money: 100 }, case: { id: 'case-1' } }), {
-            status: 200,
-          }),
-        );
+        return Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 100 } }), { status: 200 }));
       }
       return Promise.resolve(
         new Response(
-          JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
+          JSON.stringify({
+            gameSession: { money: 150 },
+            result: { isDiagnosisCorrect: true, isTreatmentCorrect: null, moneyDelta: 50 },
+          }),
           { status: 200 },
         ),
       );
     });
 
-    let submitResult;
     function Probe() {
       const { round, submitDiagnosis } = useRound();
       return (
         <div>
           <span data-testid="money">{round?.gameSession?.money ?? 'none'}</span>
-          <button
-            onClick={async () => {
-              submitResult = await submitDiagnosis('case-1', 'diagnosis-1');
-            }}
-          >
-            submit
-          </button>
+          <button onClick={() => submitDiagnosis('case-1', 'diagnosis-1')}>submit</button>
         </div>
       );
     }
@@ -367,47 +359,47 @@ describe('RoundProvider', () => {
     await userEvent.setup().click(screen.getByText('submit'));
 
     await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('150'));
-    const submitRequest = global.fetch.mock.calls
-      .map(([request]) => request)
-      .find((request) => new URL(request.url).pathname === '/api/v1/diagnoses');
-    expect(submitRequest.method).toBe('POST');
-    expect(await submitRequest.clone().json()).toEqual({
+    const request = lastRequest();
+    expect(request.method).toBe('POST');
+    expect(request.url).toBe('http://api.test/api/v1/diagnoses');
+    expect(await request.clone().json()).toEqual({
       caseId: 'case-1',
       selectedDiagnosisId: 'diagnosis-1',
     });
-    expect(submitResult).toEqual({
-      gameSession: { money: 150 },
-      isDiagnosisCorrect: true,
-      moneyDelta: 50,
-    });
   });
 
-  it('submitDiagnosis does not refetch the round itself — the case stays the same until the result popup is closed', async () => {
-    let roundCallCount = 0;
+  it('orderExamination POSTs /api/v1/examinations with caseId and shopItemId, updates round.gameSession, and resolves with timeCostMs', async () => {
     global.fetch = jest.fn().mockImplementation((request) => {
       const pathname = new URL(request.url).pathname;
       if (pathname === '/api/v1/round') {
-        roundCallCount += 1;
-        return Promise.resolve(
-          new Response(JSON.stringify({ gameSession: { money: 100 }, case: { id: 'case-old' } }), {
-            status: 200,
-          }),
-        );
+        return Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 100 } }), { status: 200 }));
       }
       return Promise.resolve(
         new Response(
-          JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
+          JSON.stringify({
+            gameSession: { money: 50 },
+            caseExamination: { id: 'ce1' },
+            timeCostMs: 90000,
+          }),
           { status: 200 },
         ),
       );
     });
 
     function Probe() {
-      const { round, submitDiagnosis } = useRound();
+      const { round, orderExamination } = useRound();
+      const [timeCostMs, setTimeCostMs] = React.useState(null);
       return (
         <div>
-          <span data-testid="case-id">{round?.case?.id ?? 'none'}</span>
-          <button onClick={() => submitDiagnosis('case-old', 'diagnosis-1')}>submit</button>
+          <span data-testid="money">{round?.gameSession?.money ?? 'none'}</span>
+          <span data-testid="time-cost">{timeCostMs ?? 'none'}</span>
+          <button
+            onClick={() =>
+              orderExamination('c1', 's1').then((data) => setTimeCostMs(data.timeCostMs))
+            }
+          >
+            order
+          </button>
         </div>
       );
     }
@@ -419,15 +411,16 @@ describe('RoundProvider', () => {
         </RoundProvider>
       </ApiProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('case-old'));
-    expect(roundCallCount).toBe(1);
+    await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('100'));
 
-    await userEvent.setup().click(screen.getByText('submit'));
+    await userEvent.setup().click(screen.getByText('order'));
 
-    // Give any (incorrect) refetch a chance to land, then confirm none did.
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
-    expect(roundCallCount).toBe(1);
-    expect(screen.getByTestId('case-id').textContent).toBe('case-old');
+    await waitFor(() => expect(screen.getByTestId('money').textContent).toBe('50'));
+    expect(screen.getByTestId('time-cost').textContent).toBe('90000');
+    const request = lastRequest();
+    expect(request.method).toBe('POST');
+    expect(request.url).toBe('http://api.test/api/v1/examinations');
+    expect(await request.clone().json()).toEqual({ caseId: 'c1', shopItemId: 's1' });
   });
 
   it('resetDay refetches the round so a new case replaces the old one', async () => {

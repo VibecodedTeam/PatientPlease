@@ -88,7 +88,13 @@ No request body.
 | No `GameSession`, or latest one is not `ACTIVE`      | 409    | `{ "error": "no_active_game" }`                                                                                                                                  |
 | Session is `ACTIVE` but has no open `GameDayLog`     | 409    | `{ "error": "no_open_day" }`                                                                                                                                     |
 | Open `GameDayLog` has been open less than `MIN_DAY_DURATION_MS` | 409 | `{ "error": "day_not_elapsed", "remainingMs": 342000 }` |
-| Success                                              | 200    | `{ "gameSession": { ..., "consecutiveBadDiagnosisCount" }, "dayLog": { "id", "dayNumber", "startingMoney", "endingMoney", "casesAttempted", "casesCorrect", "thresholdMet", "penaltyApplied", "startedAt", "endedAt" } }` |
+| Success                                              | 200    | `{ "gameSession": { ..., "consecutiveBadDiagnosisCount" }, "dayLog": { "id", "dayNumber", "startingMoney", "endingMoney", "casesAttempted", "casesCorrect", "thresholdMet", "penaltyApplied", "startedAt", "endedAt", "elapsedMs" } }` |
+
+`dayLog.elapsedMs` is the day's final **effective elapsed time** in milliseconds — the same
+`effectiveElapsedMs` value computed above and checked against `MIN_DAY_DURATION_MS`, returned so
+the frontend's day-statistics popup can show the real elapsed time rather than recomputing it
+from its own (possibly drifted) countdown timer. It is only ever present on this endpoint's
+response — the day log shape returned elsewhere does not include it.
 
 Calling this twice in a row is safe: the second call finds no open day log and returns
 `409 no_open_day`, which doubles as an "you're already at night" signal.

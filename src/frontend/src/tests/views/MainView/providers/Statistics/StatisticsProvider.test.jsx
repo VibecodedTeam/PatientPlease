@@ -13,6 +13,7 @@ const DAY_LOG_RESPONSE = {
     endingMoney: 130,
     casesAttempted: 2,
     casesCorrect: 2,
+    elapsedMs: 65000,
   },
 };
 
@@ -61,7 +62,7 @@ describe('StatisticsProvider', () => {
     expect(screen.getByTestId('is-open').textContent).toBe('false');
   });
 
-  it('calls endDay and opens with real dayLog data plus the placeholder money breakdown once the day timer elapses', async () => {
+  it('calls endDay and opens with the real day statistics derived from dayLog once the day timer elapses', async () => {
     renderWithProviders();
 
     await act(async () => {
@@ -72,13 +73,14 @@ describe('StatisticsProvider', () => {
     const statistics = JSON.parse(screen.getByTestId('statistics').textContent);
     expect(statistics).toEqual({
       dayNumber: 3,
-      startingMoney: 100,
-      endingMoney: 130,
       casesAttempted: 2,
       casesCorrect: 2,
-      moneyMade: 30,
-      moneyLost: 0,
+      moneyEarned: 30,
+      endingMoney: 130,
+      elapsedMs: 65000,
     });
+    expect(statistics.moneyMade).toBeUndefined();
+    expect(statistics.moneyLost).toBeUndefined();
 
     const lastCallRequest = global.fetch.mock.calls[global.fetch.mock.calls.length - 1][0];
     expect(lastCallRequest.method).toBe('POST');

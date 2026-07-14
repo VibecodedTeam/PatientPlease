@@ -119,7 +119,7 @@ function toGameSessionResponse(record: GameSessionRecord): GameSessionRecord {
   };
 }
 
-function toGameDayLogResponse(record: GameDayLogRecord): GameDayLogResponse {
+function toGameDayLogResponse(record: GameDayLogRecord): Omit<GameDayLogResponse, 'elapsedMs'> {
   return {
     id: record.id,
     dayNumber: record.dayNumber,
@@ -283,6 +283,6 @@ export async function endDay(
 
   return {
     gameSession: toGameSessionResponse(updatedSession),
-    dayLog: toGameDayLogResponse(updatedDayLog),
+    dayLog: { ...toGameDayLogResponse(updatedDayLog), elapsedMs },
   };
 }

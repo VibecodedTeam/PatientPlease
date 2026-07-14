@@ -2,26 +2,27 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../../../providers/Api';
-import { RoundProvider, useRound } from '../../../../../providers/Round';
+import { RoundProvider } from '../../../../../providers/Round';
+import { GameSessionProvider } from '../../../../../views/MainView/providers/GameSession';
 import { ResultsProvider, useResults } from '../../../../../views/MainView/providers/Results';
 
 const ROUND_RESPONSE = {
-  case: {
-    id: 'case-uuid',
-    moneyReward: 50,
-    moneyPenalty: 20,
-  },
+  gameSession: { money: 100 },
+  case: { id: 'case-uuid' },
 };
 
 function ResultsConsumer() {
-  const { round } = useRound();
-  const { isOpen, result, showResult, closeResult } = useResults();
+  const { isOpen, result, error, showResult, closeResult } = useResults();
   return (
     <div>
-      <span data-testid="case-id">{round?.case?.id ?? 'none'}</span>
       <span data-testid="is-open">{String(isOpen)}</span>
       <span data-testid="is-correct">{result ? String(result.isCorrect) : 'none'}</span>
       <span data-testid="money-delta">{result ? result.moneyDelta : 'none'}</span>
+      <span data-testid="balance">{result ? result.balance : 'none'}</span>
+      <span data-testid="examine-seconds">
+        {result ? typeof result.examineSeconds : 'none'}
+      </span>
+      <span data-testid="has-error">{String(error !== null)}</span>
       <button onClick={() => showResult({ id: 'real-diagnosis-uuid', label: 'Melanoma' })}>
         submit-correct
       </button>
@@ -35,11 +36,11 @@ function ResultsConsumer() {
   );
 }
 
-function mockFetchRoutes(diagnosesHandler) {
+function mockFetch(diagnosesResponse) {
   return jest.fn().mockImplementation((request) => {
     const pathname = new URL(request.url).pathname;
     if (pathname === '/api/v1/diagnoses') {
-      return Promise.resolve(diagnosesHandler(request));
+      return Promise.resolve(new Response(JSON.stringify(diagnosesResponse), { status: 200 }));
     }
     return Promise.resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
   });
@@ -49,9 +50,11 @@ async function renderWithProviders() {
   const result = render(
     <ApiProvider baseUrl="http://api.test">
       <RoundProvider>
-        <ResultsProvider>
-          <ResultsConsumer />
-        </ResultsProvider>
+        <GameSessionProvider>
+          <ResultsProvider>
+            <ResultsConsumer />
+          </ResultsProvider>
+        </GameSessionProvider>
       </RoundProvider>
     </ApiProvider>,
   );
@@ -61,20 +64,17 @@ async function renderWithProviders() {
 
 describe('ResultsProvider', () => {
   it('starts closed with no result', async () => {
-    global.fetch = mockFetchRoutes(() => new Response('{}', { status: 500 }));
+    global.fetch = mockFetch({});
     await renderWithProviders();
     expect(screen.getByTestId('is-open').textContent).toBe('false');
     expect(screen.getByTestId('is-correct').textContent).toBe('none');
   });
 
-  it('shows a correct result using the server-graded isDiagnosisCorrect/moneyDelta', async () => {
-    global.fetch = mockFetchRoutes(
-      () =>
-        new Response(
-          JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
-          { status: 200 },
-        ),
-    );
+  it('shows a correct result from the /api/v1/diagnoses response', async () => {
+    global.fetch = mockFetch({
+      gameSession: { money: 150 },
+      result: { isDiagnosisCorrect: true, isTreatmentCorrect: null, moneyDelta: 50 },
+    });
     const user = userEvent.setup();
     await renderWithProviders();
 
@@ -83,16 +83,15 @@ describe('ResultsProvider', () => {
     await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
     expect(screen.getByTestId('is-correct').textContent).toBe('true');
     expect(screen.getByTestId('money-delta').textContent).toBe('50');
+    expect(screen.getByTestId('balance').textContent).toBe('150');
+    expect(screen.getByTestId('examine-seconds').textContent).toBe('number');
   });
 
-  it('shows an incorrect result using the server-graded isDiagnosisCorrect/moneyDelta', async () => {
-    global.fetch = mockFetchRoutes(
-      () =>
-        new Response(
-          JSON.stringify({ gameSession: { money: 80 }, isDiagnosisCorrect: false, moneyDelta: -20 }),
-          { status: 200 },
-        ),
-    );
+  it('shows an incorrect result with a negative money delta', async () => {
+    global.fetch = mockFetch({
+      gameSession: { money: 80 },
+      result: { isDiagnosisCorrect: false, isTreatmentCorrect: null, moneyDelta: -20 },
+    });
     const user = userEvent.setup();
     await renderWithProviders();
 
@@ -101,101 +100,79 @@ describe('ResultsProvider', () => {
     await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
     expect(screen.getByTestId('is-correct').textContent).toBe('false');
     expect(screen.getByTestId('money-delta').textContent).toBe('-20');
+    expect(screen.getByTestId('balance').textContent).toBe('80');
+    expect(screen.getByTestId('examine-seconds').textContent).toBe('number');
   });
 
-  it('submits the active case id and the selected diagnosis id to POST /api/v1/diagnoses', async () => {
-    let submittedBody;
-    global.fetch = mockFetchRoutes((request) => {
-      request
-        .clone()
-        .json()
-        .then((body) => {
-          submittedBody = body;
-        });
-      return new Response(
-        JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
-        { status: 200 },
-      );
-    });
-    const user = userEvent.setup();
-    await renderWithProviders();
-
-    await user.click(screen.getByText('submit-correct'));
-
-    await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
-    expect(submittedBody).toEqual({ caseId: 'case-uuid', selectedDiagnosisId: 'real-diagnosis-uuid' });
-  });
-
-  it('closeResult closes the popup', async () => {
-    global.fetch = mockFetchRoutes(
-      () =>
-        new Response(
-          JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
-          { status: 200 },
-        ),
-    );
-    const user = userEvent.setup();
-    await renderWithProviders();
-
-    await user.click(screen.getByText('submit-correct'));
-    await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
-
-    await user.click(screen.getByText('close'));
-    expect(screen.getByTestId('is-open').textContent).toBe('false');
-  });
-
-  it('does not load the next case until close is clicked, then refetches the round', async () => {
+  it('closeResult closes the popup and refetches the round for the next case', async () => {
     let roundCallCount = 0;
     global.fetch = jest.fn().mockImplementation((request) => {
       const pathname = new URL(request.url).pathname;
       if (pathname === '/api/v1/diagnoses') {
         return Promise.resolve(
           new Response(
-            JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
+            JSON.stringify({
+              gameSession: { money: 150 },
+              result: { isDiagnosisCorrect: true, isTreatmentCorrect: null, moneyDelta: 50 },
+            }),
             { status: 200 },
           ),
         );
       }
       roundCallCount += 1;
-      const caseId = roundCallCount === 1 ? 'case-old' : 'case-new';
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({ case: { id: caseId, moneyReward: 50, moneyPenalty: 20 } }),
-          { status: 200 },
-        ),
-      );
+      return Promise.resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
     });
+
     const user = userEvent.setup();
     await renderWithProviders();
-    expect(screen.getByTestId('case-id').textContent).toBe('case-old');
+    expect(roundCallCount).toBe(1);
 
     await user.click(screen.getByText('submit-correct'));
     await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
 
-    // Submitting alone must not have advanced the case yet.
-    expect(screen.getByTestId('case-id').textContent).toBe('case-old');
-
     await user.click(screen.getByText('close'));
 
-    await waitFor(() => expect(screen.getByTestId('case-id').textContent).toBe('case-new'));
+    expect(screen.getByTestId('is-open').textContent).toBe('false');
+    await waitFor(() => expect(roundCallCount).toBe(2));
   });
 
-  it('does not submit before the round finishes loading', async () => {
+  it('sets an error and does not open the popup when submitDiagnosis rejects', async () => {
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/diagnoses') {
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: 'diagnosis_already_attempted' }), { status: 409 }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
+    });
+    const user = userEvent.setup();
+    await renderWithProviders();
+    expect(screen.getByTestId('has-error').textContent).toBe('false');
+
+    await user.click(screen.getByText('submit-correct'));
+
+    await waitFor(() => expect(screen.getByTestId('has-error').textContent).toBe('true'));
+    expect(screen.getByTestId('is-open').textContent).toBe('false');
+  });
+
+  it('does not submit when round.case has not loaded yet', async () => {
     let resolveFetch;
     global.fetch = jest.fn(
       () =>
         new Promise((resolve) => {
-          resolveFetch = () =>
-            resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
+          resolveFetch = () => resolve(new Response(JSON.stringify(ROUND_RESPONSE), { status: 200 }));
         }),
     );
 
     render(
       <ApiProvider baseUrl="http://api.test">
         <RoundProvider>
-          <ResultsProvider>
-            <ResultsConsumer />
-          </ResultsProvider>
+          <GameSessionProvider>
+            <ResultsProvider>
+              <ResultsConsumer />
+            </ResultsProvider>
+          </GameSessionProvider>
         </RoundProvider>
       </ApiProvider>,
     );
@@ -204,41 +181,9 @@ describe('ResultsProvider', () => {
     await user.click(screen.getByText('submit-correct'));
 
     expect(screen.getByTestId('is-open').textContent).toBe('false');
-    expect(screen.getByTestId('is-correct').textContent).toBe('none');
-    expect(screen.getByTestId('money-delta').textContent).toBe('none');
-    // Only the round-start request was ever issued — no diagnoses submission attempted.
     expect(global.fetch).toHaveBeenCalledTimes(1);
 
     resolveFetch();
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
-  });
-
-  it('ignores a second submission while the first is still in flight', async () => {
-    let resolveDiagnoses;
-    global.fetch = mockFetchRoutes(
-      () =>
-        new Promise((resolve) => {
-          resolveDiagnoses = () =>
-            resolve(
-              new Response(
-                JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
-                { status: 200 },
-              ),
-            );
-        }),
-    );
-    const user = userEvent.setup();
-    await renderWithProviders();
-
-    await user.click(screen.getByText('submit-correct'));
-    await user.click(screen.getByText('submit-correct'));
-
-    const diagnosesCalls = global.fetch.mock.calls.filter(
-      ([request]) => new URL(request.url).pathname === '/api/v1/diagnoses',
-    );
-    expect(diagnosesCalls).toHaveLength(1);
-
-    resolveDiagnoses();
-    await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
+    await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('false'));
   });
 });

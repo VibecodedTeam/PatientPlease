@@ -46,7 +46,11 @@ returns `200`: the response's `caseExamination.isSuccessful` tells the caller wh
 | Player has no `OwnedItem` for `shopItemId` in this session              | 409    | `{ "error": "examination_not_owned" }`                                                                         |
 | A `CaseExamination` already exists for this `(session, case, shopItem)` | 409    | `{ "error": "examination_already_ordered" }`                                                                   |
 | `ACTIVE` session has no open `GameDayLog`                               | 409    | `{ "error": "no_open_day" }`                                                                                   |
-| Success (matched or unmatched alike)                                    | 200    | `{ "gameSession": { ... }, "caseExamination": { "id", "caseId", "shopItemId", "isSuccessful", "orderedAt" } }` |
+| Success (matched or unmatched alike)                                    | 200    | `{ "gameSession": { ... }, "caseExamination": { "id", "caseId", "shopItemId", "isSuccessful", "orderedAt" }, "timeCostMs": number }` |
+
+`timeCostMs` echoes the same value just added to the day's `extraElapsedMs` (the `ShopItem`'s
+`content.timeCostMs`, or `0` if absent), so the caller can advance a visible day-clock UI by
+that amount without a second round-trip.
 
 Checks run in the order listed above — a request failing more than one check gets the
 earliest-listed error. Note ownership and duplicate-order checks run **before** the open-day

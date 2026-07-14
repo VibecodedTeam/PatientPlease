@@ -1,8 +1,10 @@
 import 'dotenv/config';
 import { buildApp } from './app.js';
-import { resolvePort } from './config.js';
+import { resolveDevSessionEnabled, resolvePort } from './config.js';
 
-const app = buildApp();
+const app = buildApp({
+  enableDevSession: resolveDevSessionEnabled(process.env['ENABLE_DEV_SESSION']),
+});
 const port = resolvePort(process.env['PORT'], 4000);
 
 app

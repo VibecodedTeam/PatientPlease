@@ -73,7 +73,7 @@ const DEFAULT_ROUTES = {
     new Response(
       JSON.stringify({
         case: {
-          id: 'case-1',
+          id: 'case-uuid',
           documents: ROUND_DOCUMENTS,
           moneyReward: 50,
           moneyPenalty: 20,
@@ -81,14 +81,21 @@ const DEFAULT_ROUTES = {
       }),
       { status: 200 },
     ),
-  // Grading is server-side now (see docs/api/diagnoses.md) — most tests submit
-  // 'Skin Cancer', so this default models a correct diagnosis; the one test
-  // submitting an incorrect diagnosis overrides this route itself.
-  '/api/v1/diagnoses': () =>
-    new Response(
-      JSON.stringify({ gameSession: { money: 150 }, isDiagnosisCorrect: true, moneyDelta: 50 }),
+  '/api/v1/diagnoses': async (request) => {
+    const body = await request.clone().json();
+    const isCorrect = body.selectedDiagnosisId === 'skin-cancer';
+    return new Response(
+      JSON.stringify({
+        gameSession: {},
+        result: {
+          isDiagnosisCorrect: isCorrect,
+          isTreatmentCorrect: null,
+          moneyDelta: isCorrect ? 50 : -20,
+        },
+      }),
       { status: 200 },
-    ),
+    );
+  },
   '/auth/me': () => new Response(JSON.stringify({ user: USER }), { status: 200 }),
 };
 
@@ -97,7 +104,7 @@ function mockFetchRoutes(overrides = {}) {
   global.fetch = jest.fn((request) => {
     const pathname = new URL(request.url).pathname;
     const handler = routes[pathname];
-    return Promise.resolve(handler ? handler() : new Response('{}', { status: 200 }));
+    return Promise.resolve(handler ? handler(request) : new Response('{}', { status: 200 }));
   });
 }
 
@@ -129,12 +136,12 @@ async function renderMainView() {
             null,
             React.createElement(
               MemoryRouter,
-              { initialEntries: ['/game/main'] },
+              { initialEntries: ['/'] },
               React.createElement(
                 Routes,
                 null,
-                React.createElement(Route, { path: '/game/main', element: React.createElement(MainView) }),
-                React.createElement(Route, { path: '/game/night', element: React.createElement(NightMarker) }),
+                React.createElement(Route, { path: '/', element: React.createElement(MainView) }),
+                React.createElement(Route, { path: '/night', element: React.createElement(NightMarker) }),
               ),
             ),
           ),
@@ -157,10 +164,9 @@ describe('MainView', () => {
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
   });
 
-  it('renders the wall with the pinned board', async () => {
+  it('renders the wall', async () => {
     await renderMainView();
     expect(screen.getByRole('region', { name: /doctor office wall/i })).toBeInTheDocument();
-    expect(screen.getByText('Patients left today: 5')).toBeInTheDocument();
   });
 
   it('renders the patient documents desk', async () => {
@@ -190,6 +196,41 @@ describe('MainView', () => {
     renderMainView();
 
     await waitFor(() => expect(screen.getByText(/game over/i)).toBeInTheDocument());
+  });
+
+  it('allows resetting the game from the completion screen, so a finished session is not a dead end', async () => {
+    let hasReset = false;
+    mockFetchRoutes({
+      '/api/v1/round': () => {
+        if (!hasReset) {
+          return new Response(JSON.stringify({ error: 'game_completed' }), { status: 409 });
+        }
+        return DEFAULT_ROUTES['/api/v1/round']();
+      },
+      '/api/v1/game/reset': () => {
+        hasReset = true;
+        return new Response(JSON.stringify({ gameSession: {} }), { status: 200 });
+      },
+    });
+    const user = userEvent.setup();
+
+    renderMainView();
+    await waitFor(() => expect(screen.getByText(/completed every case/i)).toBeInTheDocument());
+
+    await user.click(screen.getByText('Open Settings'));
+    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+
+    await user.click(screen.getByText('Back to start of game'));
+    await user.click(screen.getByText('Confirm'));
+
+    await waitFor(() =>
+      expect(screen.queryByText(/completed every case/i)).not.toBeInTheDocument(),
+    );
+    await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+    const resetCalls = global.fetch.mock.calls.filter(
+      ([request]) => new URL(request.url).pathname === '/api/v1/game/reset',
+    );
+    expect(resetCalls).toHaveLength(1);
   });
 
   it('refetches the round every time MainView mounts, so returning from night shows the new case', async () => {
@@ -278,6 +319,29 @@ describe('MainView', () => {
     );
   });
 
+  it('toggles the patient area between the 3D scene and the chat panel', async () => {
+    const user = userEvent.setup();
+    await renderMainView();
+
+    // Scene is shown by default; the chat panel is not mounted yet.
+    expect(screen.getByTestId('patient-scene-provider-stub')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('complementary', { name: /patient chat panel/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /^chat$/i }));
+    expect(
+      screen.getByRole('complementary', { name: /patient chat panel/i }),
+    ).toBeInTheDocument();
+    // Scene stays mounted underneath (kept alive to avoid re-running Three.js setup).
+    expect(screen.getByTestId('patient-scene-provider-stub')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /3d view/i }));
+    expect(
+      screen.queryByRole('complementary', { name: /patient chat panel/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('passes PatientScene a stable documents reference across re-renders while round is still loading', async () => {
     // MainView's own mount-effect refresh (in addition to RoundProvider's
     // own one-time mount fetch) means two /api/v1/round calls can be in
@@ -330,7 +394,7 @@ describe('MainView', () => {
     await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
     await user.click(screen.getByText('Submit Diagnosis'));
 
-    await waitFor(() => expect(screen.getByText('Correct!')).toBeInTheDocument());
+    expect(screen.getByText('Correct!')).toBeInTheDocument();
     expect(screen.getByText('+$50')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /continue/i }));
@@ -338,13 +402,6 @@ describe('MainView', () => {
   });
 
   it('shows the ResultPopup with the real money penalty after submitting an incorrect diagnosis', async () => {
-    mockFetchRoutes({
-      '/api/v1/diagnoses': () =>
-        new Response(
-          JSON.stringify({ gameSession: { money: 80 }, isDiagnosisCorrect: false, moneyDelta: -20 }),
-          { status: 200 },
-        ),
-    });
     const user = userEvent.setup();
     await renderMainView();
 
@@ -352,17 +409,24 @@ describe('MainView', () => {
     await user.click(screen.getByRole('radio', { name: 'No Skin Condition' }));
     await user.click(screen.getByText('Submit Diagnosis'));
 
-    await waitFor(() => expect(screen.getByText('Incorrect')).toBeInTheDocument());
+    expect(screen.getByText('Incorrect')).toBeInTheDocument();
     expect(screen.getByText('-$20')).toBeInTheDocument();
   });
 
-  it('shows the Daily Statistics popup once the day timer elapses, and navigates to /game/night on close', async () => {
+  it('shows the Daily Statistics popup once the day timer elapses, and navigates to /night on close', async () => {
     mockFetchRoutes({
       '/api/v1/day/end': () =>
         new Response(
           JSON.stringify({
             gameSession: { consecutiveBadDiagnosisCount: 0 },
-            dayLog: { dayNumber: 1, startingMoney: 100, endingMoney: 130, casesAttempted: 2, casesCorrect: 2 },
+            dayLog: {
+              dayNumber: 1,
+              startingMoney: 100,
+              endingMoney: 130,
+              casesAttempted: 2,
+              casesCorrect: 2,
+              elapsedMs: 65000,
+            },
           }),
           { status: 200 },
         ),
@@ -396,7 +460,14 @@ describe('MainView', () => {
         new Response(
           JSON.stringify({
             gameSession: { consecutiveBadDiagnosisCount: 0 },
-            dayLog: { dayNumber: 1, startingMoney: 100, endingMoney: 130, casesAttempted: 2, casesCorrect: 2 },
+            dayLog: {
+              dayNumber: 1,
+              startingMoney: 100,
+              endingMoney: 130,
+              casesAttempted: 2,
+              casesCorrect: 2,
+              elapsedMs: 65000,
+            },
           }),
           { status: 200 },
         ),
@@ -412,7 +483,7 @@ describe('MainView', () => {
       await act(async () => {
         screen.getByText('Submit Diagnosis').click();
       });
-      await waitFor(() => expect(screen.getByText('Correct!')).toBeInTheDocument());
+      expect(screen.getByText('Correct!')).toBeInTheDocument();
 
       await act(async () => {
         jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);

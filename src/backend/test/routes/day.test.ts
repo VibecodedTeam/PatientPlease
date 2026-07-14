@@ -362,12 +362,15 @@ describe('POST /api/v1/day/end', () => {
         startingMoney: number;
         endingMoney: number;
         endedAt: string;
+        elapsedMs: number;
       };
     }>();
     expect(body.gameSession.status).toBe('ACTIVE');
     expect(body.dayLog.id).toBe(gameDayLog.id);
     expect(body.dayLog.endingMoney).toBe(80);
     expect(body.dayLog.endedAt).not.toBeNull();
+    expect(typeof body.dayLog.elapsedMs).toBe('number');
+    expect(body.dayLog.elapsedMs).toBeGreaterThanOrEqual(MIN_DAY_DURATION_MS);
     expect(rawBody).not.toContain('gameSessionId');
 
     const updated = await prisma.gameDayLog.findUniqueOrThrow({ where: { id: gameDayLog.id } });
