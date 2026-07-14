@@ -7,6 +7,7 @@ import { DocumentTableContext } from '../../../components/Table/providers/Docume
 import { ApiProvider } from '../../../providers/Api';
 import { RoundProvider } from '../../../providers/Round';
 import { GameSessionProvider } from '../../../views/MainView/providers/GameSession';
+import { StatisticsProvider } from '../../../views/MainView/providers/Statistics';
 import { ResultsProvider, useResults } from '../../../views/MainView/providers/Results';
 
 function ResultsPeek() {
@@ -19,14 +20,16 @@ function renderWithProviders(ui) {
     <ApiProvider baseUrl="http://api.test">
       <RoundProvider>
         <GameSessionProvider>
-          <ResultsProvider>
-            <DocumentTableContext.Provider
-              value={{ documents: [], patient: null, isLoading: false, error: null }}
-            >
-              {ui}
-            </DocumentTableContext.Provider>
-            <ResultsPeek />
-          </ResultsProvider>
+          <StatisticsProvider>
+            <ResultsProvider>
+              <DocumentTableContext.Provider
+                value={{ documents: [], patient: null, isLoading: false, error: null }}
+              >
+                {ui}
+              </DocumentTableContext.Provider>
+              <ResultsPeek />
+            </ResultsProvider>
+          </StatisticsProvider>
         </GameSessionProvider>
       </RoundProvider>
     </ApiProvider>,
@@ -125,22 +128,24 @@ describe('Table', () => {
       <ApiProvider baseUrl="http://api.test">
         <RoundProvider>
           <GameSessionProvider>
-            <ResultsProvider>
-              <DocumentTableContext.Provider
-                value={{
-                  documents: [],
-                  patient: null,
-                  diagnosisOptions: [
-                    { id: 'dx-1', code: 'MELANOMA', name: 'Melanoma', category: 'MALIGNANT' },
-                    { id: 'dx-2', code: 'SEB_KER', name: 'Seborrheic Keratosis', category: 'BENIGN' },
-                  ],
-                  isLoading: false,
-                  error: null,
-                }}
-              >
-                <Table />
-              </DocumentTableContext.Provider>
-            </ResultsProvider>
+            <StatisticsProvider>
+              <ResultsProvider>
+                <DocumentTableContext.Provider
+                  value={{
+                    documents: [],
+                    patient: null,
+                    diagnosisOptions: [
+                      { id: 'dx-1', code: 'MELANOMA', name: 'Melanoma', category: 'MALIGNANT' },
+                      { id: 'dx-2', code: 'SEB_KER', name: 'Seborrheic Keratosis', category: 'BENIGN' },
+                    ],
+                    isLoading: false,
+                    error: null,
+                  }}
+                >
+                  <Table />
+                </DocumentTableContext.Provider>
+              </ResultsProvider>
+            </StatisticsProvider>
           </GameSessionProvider>
         </RoundProvider>
       </ApiProvider>,
@@ -158,13 +163,15 @@ describe('Table', () => {
       <ApiProvider baseUrl="http://api.test">
         <RoundProvider>
           <GameSessionProvider>
-            <ResultsProvider>
-              <DocumentTableContext.Provider
-                value={{ documents: [], patient: null, diagnosisOptions: [], isLoading: true, error: null }}
-              >
-                <Table />
-              </DocumentTableContext.Provider>
-            </ResultsProvider>
+            <StatisticsProvider>
+              <ResultsProvider>
+                <DocumentTableContext.Provider
+                  value={{ documents: [], patient: null, diagnosisOptions: [], isLoading: true, error: null }}
+                >
+                  <Table />
+                </DocumentTableContext.Provider>
+              </ResultsProvider>
+            </StatisticsProvider>
           </GameSessionProvider>
         </RoundProvider>
       </ApiProvider>,
