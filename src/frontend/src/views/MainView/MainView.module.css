@@ -182,3 +182,29 @@
   color: #e8ddd2;
   background: #0d0a08;
 }
+
+.endDayError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--color-bg-elevated);
+  border-top: 1px solid var(--color-danger);
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.retryButton {
+  padding: 0.35rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-danger);
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.retryButton:hover {
+  border-color: var(--color-accent);
+}

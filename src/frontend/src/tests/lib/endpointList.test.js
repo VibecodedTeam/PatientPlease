@@ -22,6 +22,7 @@ describe('endpointList', () => {
       },
       game: {
         pause: '/api/v1/game/pause',
+        resume: '/api/v1/game/resume',
         reset: '/api/v1/game/reset',
       },
       day: {

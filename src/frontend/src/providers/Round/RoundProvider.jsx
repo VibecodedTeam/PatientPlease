@@ -93,6 +93,12 @@ export function RoundProvider({ children }) {
     return data;
   }, [api]);
 
+  const resumeGame = useCallback(async () => {
+    const data = await api.post(ENDPOINTS.game.resume);
+    setRound((current) => (current ? { ...current, gameSession: data.gameSession } : current));
+    return data;
+  }, [api]);
+
   // Unlike pauseGame/endDay/purchaseShopItem, a reset needs a whole new case,
   // not just an updated gameSession — refetching the round is what actually
   // makes the desk show the next case instead of the one that was just reset.
@@ -108,9 +114,19 @@ export function RoundProvider({ children }) {
     return data;
   }, [api, refreshRound]);
 
+  // Drops the finished day's `dayLog` from `round` (sets it to null) as well
+  // as merging the fresh gameSession. Leaving the ended day's dayLog in place
+  // makes GameSessionProvider's timer seed latch that day's elapsed (~full
+  // duration) when the day view remounts for the next day (returning from
+  // night), freezing the new day at "day over". The next POST /api/v1/round
+  // supplies the new day's dayLog. The full response (including the ended
+  // day's dayLog) is still returned so StatisticsProvider can show the Daily
+  // Statistics popup.
   const endDay = useCallback(async () => {
     const data = await api.post(ENDPOINTS.day.end);
-    setRound((current) => (current ? { ...current, gameSession: data.gameSession } : current));
+    setRound((current) =>
+      current ? { ...current, gameSession: data.gameSession, dayLog: null } : current,
+    );
     return data;
   }, [api]);
 
@@ -193,6 +209,7 @@ export function RoundProvider({ children }) {
     terminalState,
     refreshRound,
     pauseGame,
+    resumeGame,
     resetDay,
     resetGame,
     endDay,

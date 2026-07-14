@@ -200,8 +200,10 @@ export interface RoundResponse {
   treatmentOptions: TreatmentRecord[];
   /** Lets the frontend's day timer resume from the true server-side elapsed
    * time (see services/dayElapsed.ts) instead of restarting from zero on
-   * every page refresh / remount. */
-  dayLog: { elapsedMs: number };
+   * every page refresh / remount. `dayNumber` identifies which day this
+   * elapsed belongs to, so the frontend re-seeds the timer when a new day
+   * begins (returning from night) rather than only once per mount. */
+  dayLog: { elapsedMs: number; dayNumber: number };
 }
 
 export class NoCasesRemainingError extends Error {
@@ -515,6 +517,6 @@ export async function startRound(
       toDiagnosisResponse,
     ),
     treatmentOptions: treatments.map(toTreatmentResponse),
-    dayLog: { elapsedMs },
+    dayLog: { elapsedMs, dayNumber: openDayLog.dayNumber },
   };
 }

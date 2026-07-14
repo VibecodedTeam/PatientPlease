@@ -35,7 +35,13 @@ function MainViewContent() {
   const { elapsedSeconds, isPaused } = useGameSession();
   const { round, terminalState, refreshRound } = useRound();
   const { isOpen: isResultOpen, result, closeResult } = useResults();
-  const { isOpen: isStatisticsOpen, statistics, closeStatistics } = useStatistics();
+  const {
+    isOpen: isStatisticsOpen,
+    statistics,
+    closeStatistics,
+    endDayError,
+    retryFinishDay,
+  } = useStatistics();
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [settingsAutoOpened, setSettingsAutoOpened] = useState(false);
   const [activeView, setActiveView] = useState('scene');
@@ -168,6 +174,17 @@ function MainViewContent() {
           </div>
         </div>
       </div>
+      {/* A failed day-end (e.g. a transient backend error) would otherwise
+          leave the player on a frozen desk with no way forward — this makes
+          it recoverable. Hidden once the Daily Statistics popup succeeds. */}
+      {endDayError && !isStatisticsOpen && (
+        <div className={styles.endDayError} role="alert">
+          <span>Couldn't end the day. Please try again.</span>
+          <button type="button" className={styles.retryButton} onClick={retryFinishDay}>
+            Try again
+          </button>
+        </div>
+      )}
       {isSettingsOpen && (
         <Settings onClose={handleCloseSettings} autoPaused={settingsAutoOpened} />
       )}

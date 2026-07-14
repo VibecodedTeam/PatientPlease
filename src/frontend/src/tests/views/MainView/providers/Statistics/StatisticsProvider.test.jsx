@@ -18,13 +18,16 @@ const DAY_LOG_RESPONSE = {
 };
 
 function StatisticsConsumer() {
-  const { isOpen, statistics, closeStatistics, finishDay } = useStatistics();
+  const { isOpen, statistics, closeStatistics, finishDay, endDayError, retryFinishDay } =
+    useStatistics();
   return (
     <div>
       <span data-testid="is-open">{String(isOpen)}</span>
       <span data-testid="statistics">{statistics ? JSON.stringify(statistics) : 'none'}</span>
+      <span data-testid="end-day-error">{endDayError ? 'error' : 'none'}</span>
       <button onClick={closeStatistics}>close</button>
       <button onClick={finishDay}>finish-day</button>
+      <button onClick={retryFinishDay}>retry</button>
     </div>
   );
 }
@@ -86,11 +89,10 @@ describe('StatisticsProvider', () => {
     expect(lastCallRequest.url).toBe('http://api.test/api/v1/day/end');
   });
 
-  it('logs the error and stays closed (no unhandled rejection) if endDay fails', async () => {
+  it('surfaces endDayError and stays closed (no unhandled rejection) if endDay fails', async () => {
     global.fetch = jest
       .fn()
       .mockImplementation(() => new Response('Internal Server Error', { status: 500 }));
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     renderWithProviders();
 
     await act(async () => {
@@ -98,8 +100,33 @@ describe('StatisticsProvider', () => {
     });
 
     expect(screen.getByTestId('is-open').textContent).toBe('false');
-    await waitFor(() => expect(consoleError).toHaveBeenCalled());
-    consoleError.mockRestore();
+    await waitFor(() => expect(screen.getByTestId('end-day-error').textContent).toBe('error'));
+  });
+
+  it('retryFinishDay re-attempts the day-end and, on success, clears the error and opens the popup', async () => {
+    let shouldFail = true;
+    global.fetch = jest.fn().mockImplementation((request) => {
+      const pathname = new URL(request.url).pathname;
+      if (pathname === '/api/v1/day/end' && shouldFail) {
+        return new Response('Internal Server Error', { status: 500 });
+      }
+      return new Response(JSON.stringify(DAY_LOG_RESPONSE), { status: 200 });
+    });
+    renderWithProviders();
+
+    await act(async () => {
+      screen.getByText('finish-day').click();
+    });
+    await waitFor(() => expect(screen.getByTestId('end-day-error').textContent).toBe('error'));
+    expect(screen.getByTestId('is-open').textContent).toBe('false');
+
+    shouldFail = false;
+    await act(async () => {
+      screen.getByText('retry').click();
+    });
+
+    await waitFor(() => expect(screen.getByTestId('is-open').textContent).toBe('true'));
+    expect(screen.getByTestId('end-day-error').textContent).toBe('none');
   });
 
   it('closeStatistics closes the popup', async () => {

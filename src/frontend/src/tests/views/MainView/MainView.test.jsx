@@ -141,7 +141,10 @@ async function renderMainView() {
                 Routes,
                 null,
                 React.createElement(Route, { path: '/', element: React.createElement(MainView) }),
-                React.createElement(Route, { path: '/night', element: React.createElement(NightMarker) }),
+                React.createElement(Route, {
+                  path: '/game/night',
+                  element: React.createElement(NightMarker),
+                }),
               ),
             ),
           ),
@@ -384,6 +387,18 @@ describe('MainView', () => {
         'doc-1,doc-2',
       ),
     );
+
+    // Closes the Settings opened above so its unmount-triggered resumeGame()
+    // call resolves within this test's own async flow, instead of firing
+    // unawaited into RTL's automatic cleanup after the test returns.
+    await user.click(screen.getByText('Resume'));
+    await waitFor(() =>
+      expect(
+        global.fetch.mock.calls.some(
+          ([request]) => new URL(request.url).pathname === '/api/v1/game/resume',
+        ),
+      ).toBe(true),
+    );
   });
 
   it('shows the ResultPopup with the real money reward after submitting a correct diagnosis', async () => {
@@ -536,6 +551,66 @@ describe('MainView', () => {
     }
   });
 
+  it('surfaces a recoverable error (instead of a silent frozen desk) and retries when ending the day fails', async () => {
+    let dayEndShouldFail = true;
+    mockFetchRoutes({
+      '/api/v1/day/end': () => {
+        if (dayEndShouldFail) {
+          return new Response('Internal Server Error', { status: 500 });
+        }
+        return new Response(
+          JSON.stringify({
+            gameSession: { consecutiveBadDiagnosisCount: 0 },
+            dayLog: {
+              dayNumber: 1,
+              startingMoney: 100,
+              endingMoney: 130,
+              casesAttempted: 1,
+              casesCorrect: 1,
+              elapsedMs: 65000,
+            },
+          }),
+          { status: 200 },
+        );
+      },
+    });
+    jest.useFakeTimers({ doNotFake: ['queueMicrotask'] });
+    try {
+      await renderMainView();
+      await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+
+      await act(async () => {
+        jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
+      });
+      await act(async () => {
+        screen.getByRole('radio', { name: 'Skin Cancer' }).click();
+      });
+      await act(async () => {
+        screen.getByText('Submit Diagnosis').click();
+      });
+      await act(async () => {
+        screen.getByRole('button', { name: /continue/i }).click();
+      });
+
+      // endDay failed: the player must see a recoverable error, not a silent
+      // frozen desk, and the Daily Statistics popup must NOT have opened.
+      await waitFor(() => expect(screen.getByText(/couldn't end the day/i)).toBeInTheDocument());
+      expect(screen.queryByRole('heading', { name: 'Daily Statistics' })).not.toBeInTheDocument();
+
+      dayEndShouldFail = false;
+      await act(async () => {
+        screen.getByRole('button', { name: /try again/i }).click();
+      });
+
+      await waitFor(() =>
+        expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument(),
+      );
+      expect(screen.queryByText(/couldn't end the day/i)).not.toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('opens Settings (pausing the timer) and closes it via Resume', async () => {
     const user = userEvent.setup();
     await renderMainView();
@@ -565,6 +640,18 @@ describe('MainView', () => {
     expect(screen.getByText('Status: Paused')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('Settings')).toBeInTheDocument());
     expect(screen.getByText('Game paused because you left the tab.')).toBeInTheDocument();
+
+    // Closes the auto-opened Settings so its unmount-triggered resumeGame()
+    // call resolves within this test's own async flow, instead of firing
+    // unawaited into RTL's automatic cleanup after the test returns.
+    await userEvent.setup().click(screen.getByText('Resume'));
+    await waitFor(() =>
+      expect(
+        global.fetch.mock.calls.some(
+          ([request]) => new URL(request.url).pathname === '/api/v1/game/resume',
+        ),
+      ).toBe(true),
+    );
   });
 
   it('does not send a duplicate pause request if the tab is hidden repeatedly while already paused', async () => {
@@ -583,6 +670,18 @@ describe('MainView', () => {
       ([request]) => new URL(request.url).pathname === '/api/v1/game/pause',
     );
     expect(pauseCalls).toHaveLength(1);
+
+    // Closes the auto-opened Settings so its unmount-triggered resumeGame()
+    // call resolves within this test's own async flow, instead of firing
+    // unawaited into RTL's automatic cleanup after the test returns.
+    await userEvent.setup().click(screen.getByText('Resume'));
+    await waitFor(() =>
+      expect(
+        global.fetch.mock.calls.some(
+          ([request]) => new URL(request.url).pathname === '/api/v1/game/resume',
+        ),
+      ).toBe(true),
+    );
   });
 
   it('closes Settings and calls onClose when a reset is confirmed from the HUD path', async () => {
@@ -597,5 +696,15 @@ describe('MainView', () => {
 
     expect(screen.queryByText('Settings')).not.toBeInTheDocument();
     expect(screen.getByText('Status: Running')).toBeInTheDocument();
+
+    // Settings unmounting here fires resumeTimer's resumeGame() call; wait
+    // for it to resolve so it doesn't dangle into RTL's post-test cleanup.
+    await waitFor(() =>
+      expect(
+        global.fetch.mock.calls.some(
+          ([request]) => new URL(request.url).pathname === '/api/v1/game/resume',
+        ),
+      ).toBe(true),
+    );
   });
 });

@@ -20,36 +20,45 @@ export const StatisticsContext = createContext(null);
 export function StatisticsProvider({ children }) {
   const { endDay } = useGameSession();
   const [statistics, setStatistics] = useState(null);
+  // Surfaced (rather than only console.error'd) so a failed day-end is
+  // recoverable: MainView renders a message + retry from this, instead of the
+  // player being silently stranded on a frozen desk if endDay 409s/500s.
+  const [endDayError, setEndDayError] = useState(null);
 
-  const finishDay = useCallback(
-    () =>
-      endDay()
-        .then(({ dayLog }) => {
-          setStatistics({
-            dayNumber: dayLog.dayNumber,
-            casesAttempted: dayLog.casesAttempted,
-            casesCorrect: dayLog.casesCorrect,
-            moneyEarned: dayLog.endingMoney - dayLog.startingMoney,
-            endingMoney: dayLog.endingMoney,
-            elapsedMs: dayLog.elapsedMs,
-          });
-        })
-        .catch((error) => {
-          // No retry/error UI yet — the player can still fall back on
-          // Settings' existing "Back to start of day"/"Back to start of
-          // game" actions, which reset elapsedSeconds regardless of pause
-          // state. This only guards against an unhandled rejection.
-          // eslint-disable-next-line no-console
-          console.error('Failed to end the day:', error);
-        }),
-    [endDay],
-  );
+  const finishDay = useCallback(() => {
+    setEndDayError(null);
+    return endDay()
+      .then(({ dayLog }) => {
+        setStatistics({
+          dayNumber: dayLog.dayNumber,
+          casesAttempted: dayLog.casesAttempted,
+          casesCorrect: dayLog.casesCorrect,
+          moneyEarned: dayLog.endingMoney - dayLog.startingMoney,
+          endingMoney: dayLog.endingMoney,
+          elapsedMs: dayLog.elapsedMs,
+        });
+      })
+      .catch((error) => {
+        setEndDayError(error);
+      });
+  }, [endDay]);
+
+  // retryFinishDay is just finishDay again — kept as a distinct name so the
+  // recovery UI reads clearly and the retry intent is explicit at call sites.
+  const retryFinishDay = finishDay;
 
   const closeStatistics = useCallback(() => {
     setStatistics(null);
   }, []);
 
-  const value = { isOpen: statistics !== null, statistics, closeStatistics, finishDay };
+  const value = {
+    isOpen: statistics !== null,
+    statistics,
+    closeStatistics,
+    finishDay,
+    endDayError,
+    retryFinishDay,
+  };
 
   return <StatisticsContext.Provider value={value}>{children}</StatisticsContext.Provider>;
 }
