@@ -164,16 +164,6 @@ export function Excisio() {
               </div>
             )}
 
-            {ui.alarm && (
-              <div className={styles.alarmLayer}>
-                <div className={styles.alarmWash} />
-                <div className={styles.alarmSkull}>
-                  <SkullIcon />
-                </div>
-                <div className={styles.alarmBanner}>{ui.alarmText}</div>
-              </div>
-            )}
-
             {ui.redFlash && (
               <div className={styles.redFlashLayer}>
                 <div className={styles.redFlashEmoji}>👎</div>
@@ -228,20 +218,41 @@ export function Excisio() {
                       <div className={styles.trayTitle}>Wybierz plasterek na ranę</div>
                     </div>
                   </div>
-                  <div className={styles.plasterScroll}>
-                    <div className={styles.plasterGrid}>
-                      {plasterCards.map((card) => (
-                        <button
-                          key={card.id}
-                          type="button"
-                          title={card.name}
-                          className={styles.plasterCardButton}
-                          onClick={() => handlers.pickPlaster(card.id)}
-                        >
-                          {/* eslint-disable-next-line react/no-danger */}
-                          <span className={styles.plasterCardImage} dangerouslySetInnerHTML={{ __html: card.svgMarkup }} />
-                        </button>
-                      ))}
+                  <div className={styles.plasterBody}>
+                    <div className={styles.plasterScroll} ref={refs.plasterScrollRef}>
+                      <div className={styles.plasterGrid}>
+                        {plasterCards.map((card) => (
+                          <button
+                            key={card.id}
+                            type="button"
+                            title={card.name}
+                            className={styles.plasterCardButton}
+                            onClick={() => handlers.pickPlaster(card.id)}
+                          >
+                            {/* eslint-disable-next-line react/no-danger */}
+                            <span className={styles.plasterCardImage} dangerouslySetInnerHTML={{ __html: card.svgMarkup }} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className={styles.plasterScrollNav}>
+                      <button
+                        type="button"
+                        className={styles.plasterNavButton}
+                        onClick={handlers.scrollPlastersUp}
+                        aria-label="Przewiń w górę"
+                      >
+                        ▲
+                      </button>
+                      <div className={styles.plasterNavTrack} />
+                      <button
+                        type="button"
+                        className={styles.plasterNavButton}
+                        onClick={handlers.scrollPlastersDown}
+                        aria-label="Przewiń w dół"
+                      >
+                        ▼
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -261,6 +272,16 @@ export function Excisio() {
           </button>
         </div>
       </div>
+
+      {ui.alarm && (
+        // overlay-portal: melanoma-left-behind alarm must flash the entire screen, not just the operating stage
+        <OverlayPortal onDismiss={undefined} dismissOnBackdropClick={false} overlayClassName={styles.alarmOverlay}>
+          <div className={styles.alarmContent}>
+            <SkullIcon />
+            <div className={styles.alarmBanner}>{ui.alarmText}</div>
+          </div>
+        </OverlayPortal>
+      )}
 
       {ui.screen === 'tutorial' && (
         // overlay-portal: tutorial instructions must render above the whole operating field

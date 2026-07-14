@@ -28,6 +28,18 @@ describe('motifSvg', () => {
     expect(motifSvg(undefined, 0, 0, 16, '#fff')).toBe('');
     expect(motifSvg('nonsense', 0, 0, 16, '#fff')).toBe('');
   });
+
+  it.each(['sun', 'dog', 'bunny', 'frog', 'person'])('renders markup for the %s motif', (type) => {
+    const svg = motifSvg(type, 10, 10, 16, '#123456');
+    expect(svg).toContain('#123456');
+    expect(svg.length).toBeGreaterThan(0);
+  });
+});
+
+describe('PLASTER_DEFS motif variety', () => {
+  it.each(['sun', 'dog', 'bunny', 'frog', 'person'])('includes at least one %s design', (motif) => {
+    expect(PLASTER_DEFS.some((d) => d.motif === motif)).toBe(true);
+  });
 });
 
 describe('plasterSvg', () => {

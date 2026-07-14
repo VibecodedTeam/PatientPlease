@@ -141,6 +141,7 @@ export function useExcisio() {
   const canvasRef = useRef(null);
   const confettiRef = useRef(null);
   const viewRef = useRef(null);
+  const plasterScrollRef = useRef(null);
   const audioContextRef = useRef(null);
   const engine = useRef(null);
   if (!engine.current) engine.current = createEngine();
@@ -846,6 +847,11 @@ export function useExcisio() {
   const stopPropagation = (event) => event.stopPropagation();
   const zoomIn = () => patchUi((s) => ({ zoom: Math.min(3, s.zoom + 0.25) }));
   const zoomOut = () => patchUi((s) => ({ zoom: Math.max(0.9, s.zoom - 0.25) }));
+  const scrollPlasters = (dir) => {
+    plasterScrollRef.current?.scrollBy({ top: dir * 220, behavior: 'smooth' });
+  };
+  const scrollPlastersUp = () => scrollPlasters(-1);
+  const scrollPlastersDown = () => scrollPlasters(1);
   const openTutorial = () => patchUi({ screen: 'tutorial' });
 
   function startGame() {
@@ -947,7 +953,7 @@ export function useExcisio() {
     setupLevel(1);
     const view = viewRef.current;
     const handleWheel = (event) => {
-      if (uiRef.current.screen !== 'play') return;
+      if (uiRef.current.screen !== 'play' || uiRef.current.showTray) return;
       event.preventDefault();
       const current = uiRef.current.zoom;
       const next = clamp(current + (event.deltaY < 0 ? 0.18 : -0.18), 0.9, 3);
@@ -970,7 +976,7 @@ export function useExcisio() {
 
   return {
     ui,
-    refs: { canvasRef, confettiRef, viewRef },
+    refs: { canvasRef, confettiRef, viewRef, plasterScrollRef },
     DEEP_NEED,
     SKIN_NEED,
     plasterCards,
@@ -988,6 +994,8 @@ export function useExcisio() {
       equipCream: () => equip('cream'),
       zoomIn,
       zoomOut,
+      scrollPlastersUp,
+      scrollPlastersDown,
       clearLine,
       openTutorial,
       startGame,
