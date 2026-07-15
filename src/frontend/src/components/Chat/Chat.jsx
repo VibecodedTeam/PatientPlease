@@ -5,30 +5,13 @@ import { useApi } from '../../providers/Api';
 import { useRound } from '../../providers/Round';
 import { loadChatMessages, saveChatMessages, clearAllChatMessages } from './internal/chatStorage';
 
-const PORTRAIT_FILES = [
-  '001_45-year-old-male-stern-square-jaw-recedi_20260709-152719.png',
-  '002_elderly-woman-soft-round-face-smile-line_20260709-152810.png',
-  '003_45-year-old-male-square-jaw-with-light-s_20260709-152832.png',
-  '004_middle-aged-female-sharp-cheekbones-hook_20260709-152854.png',
-  '005_middle-aged-male-strong-jawline-and-slig_20260709-152914.png',
-  '006_elderly-male-wrinkled-forehead-and-bushy_20260709-152928.png',
-  '007_elderly-female-high-cheekbones-and-thin-_20260709-152944.png',
-  '008_80-year-old-woman-high-cheekbones-thin-l_20260709-153010.png',
-  '009_45-year-old-male-strong-jawline-faint-cr_20260709-153107.png',
-  '010_middle-aged-female-rounded-cheeks-should_20260709-153146.png',
-];
-
-function pickRandomPortrait() {
-  return PORTRAIT_FILES[Math.floor(Math.random() * PORTRAIT_FILES.length)];
-}
-
 /**
  * @param {{ gameSessionId: string, caseId: string }} props
  */
 export function Chat({ gameSessionId, caseId }) {
   const api = useApi();
-  const { revealDocuments } = useRound();
-  const [portrait] = useState(pickRandomPortrait);
+  const { round, revealDocuments } = useRound();
+  const portraitImageUrl = round?.case?.patient?.portraitImageUrl;
   const [messages, setMessages] = useState(() => loadChatMessages(gameSessionId, caseId));
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -105,11 +88,9 @@ export function Chat({ gameSessionId, caseId }) {
       </header>
 
       <section className={styles.face}>
-        <img
-          className={styles.portrait}
-          alt="Patient portrait"
-          src={`/patient-portraits/${portrait}`}
-        />
+        {portraitImageUrl && (
+          <img className={styles.portrait} alt="Patient portrait" src={portraitImageUrl} />
+        )}
       </section>
 
       <div className={styles.log} role="log" aria-live="polite">

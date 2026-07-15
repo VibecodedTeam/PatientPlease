@@ -565,6 +565,29 @@ function pickBodyModelVariant(sex: Sex, index: number): (typeof BODY_MODEL_VARIA
   return BODY_MODEL_VARIANTS[index % BODY_MODEL_VARIANTS.length]!;
 }
 
+const FALLBACK_PORTRAIT_FILES = [
+  '001_45-year-old-male-stern-square-jaw-recedi_20260709-152719.png',
+  '002_elderly-woman-soft-round-face-smile-line_20260709-152810.png',
+  '003_45-year-old-male-square-jaw-with-light-s_20260709-152832.png',
+  '004_middle-aged-female-sharp-cheekbones-hook_20260709-152854.png',
+  '005_middle-aged-male-strong-jawline-and-slig_20260709-152914.png',
+  '006_elderly-male-wrinkled-forehead-and-bushy_20260709-152928.png',
+  '007_elderly-female-high-cheekbones-and-thin-_20260709-152944.png',
+  '008_80-year-old-woman-high-cheekbones-thin-l_20260709-153010.png',
+  '009_45-year-old-male-strong-jawline-faint-cr_20260709-153107.png',
+  '010_middle-aged-female-rounded-cheeks-should_20260709-153146.png',
+] as const;
+
+/** The first 15 cases (case-01..case-15) get a dedicated mock portrait; every other
+ * patient cycles through the existing generic portrait set. */
+function pickPortraitImageUrl(imageFile: string, index: number): string {
+  const caseNumber = Number(imageFile.match(/^case-(\d+)\.png$/)?.[1]);
+  if (caseNumber >= 1 && caseNumber <= 15) {
+    return `/portraits/portrait-${String(caseNumber).padStart(2, '0')}.png`;
+  }
+  return `/patient-portraits/${FALLBACK_PORTRAIT_FILES[index % FALLBACK_PORTRAIT_FILES.length]}`;
+}
+
 export async function seed(options: { force?: boolean } = {}): Promise<void> {
   const alreadySeeded = (await prisma.diagnosis.count()) > 0;
   if (alreadySeeded && !options.force) {
@@ -609,7 +632,7 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
         age: realCase.age,
         sex: realCase.sex,
         occupation: realCase.occupation,
-        portraitImageUrl: `https://cdn.example.test/patients/patient-${String(i + 1).padStart(2, '0')}.png`,
+        portraitImageUrl: pickPortraitImageUrl(realCase.imageFile, i),
         bodyModelVariant: pickBodyModelVariant(realCase.sex, i),
       },
     });
@@ -618,6 +641,7 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
       data: {
         patientId: patient.id,
         difficulty: realCase.difficulty,
+        featuredOrder: realCase.featuredOrder ?? null,
         correctDiagnosisId: diagnosisId,
         correctTreatmentId: treatmentId,
         moneyReward: 50 + realCase.difficulty * 25,

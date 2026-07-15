@@ -63,6 +63,7 @@ function makeCase(overrides: Partial<CaseRecord> = {}): CaseRecord {
   return {
     id: 'case-uuid',
     difficulty: 1,
+    featuredOrder: null,
     correctDiagnosisId: 'diagnosis-uuid',
     moneyReward: 50,
     moneyPenalty: 20,
@@ -265,14 +266,46 @@ describe('pickIndexForSeed', () => {
 });
 
 describe('selectNextCase', () => {
-  it('queries the minimum difficulty among active, un-attempted cases', async () => {
+  it('checks for an un-attempted featured case before considering difficulty tiers', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 2 });
+    prisma.case.findFirst.mockResolvedValueOnce(null);
+    prisma.case.findFirst.mockResolvedValueOnce({ difficulty: 2 });
     prisma.case.findMany.mockResolvedValue([makeCase({ difficulty: 2 })]);
 
     await selectNextCase(prisma, 'session-uuid');
 
-    expect(prisma.case.findFirst).toHaveBeenCalledWith({
+    expect(prisma.case.findFirst).toHaveBeenNthCalledWith(1, {
+      where: {
+        isActive: true,
+        featuredOrder: { not: null },
+        diagnosisAttempts: { none: { gameDayLog: { gameSessionId: 'session-uuid' } } },
+      },
+      orderBy: { featuredOrder: 'asc' },
+      include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
+    });
+  });
+
+  it('returns the lowest-featuredOrder un-attempted case directly, without the difficulty-tiered lookup', async () => {
+    const prisma = createMockPrisma();
+    const featuredCase = makeCase({ id: 'case-featured', featuredOrder: 3 });
+    prisma.case.findFirst.mockResolvedValueOnce(featuredCase);
+
+    const result = await selectNextCase(prisma, 'session-uuid');
+
+    expect(result).toEqual(featuredCase);
+    expect(prisma.case.findFirst).toHaveBeenCalledTimes(1);
+    expect(prisma.case.findMany).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the difficulty-tiered lookup once no featured case remains un-attempted', async () => {
+    const prisma = createMockPrisma();
+    prisma.case.findFirst.mockResolvedValueOnce(null);
+    prisma.case.findFirst.mockResolvedValueOnce({ difficulty: 2 });
+    prisma.case.findMany.mockResolvedValue([makeCase({ difficulty: 2 })]);
+
+    await selectNextCase(prisma, 'session-uuid');
+
+    expect(prisma.case.findFirst).toHaveBeenNthCalledWith(2, {
       where: {
         isActive: true,
         diagnosisAttempts: { none: { gameDayLog: { gameSessionId: 'session-uuid' } } },
@@ -284,7 +317,8 @@ describe('selectNextCase', () => {
 
   it('fetches every active, un-attempted case at that minimum difficulty', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 2 });
+    prisma.case.findFirst.mockResolvedValueOnce(null);
+    prisma.case.findFirst.mockResolvedValueOnce({ difficulty: 2 });
     prisma.case.findMany.mockResolvedValue([makeCase({ difficulty: 2 })]);
 
     await selectNextCase(prisma, 'session-uuid');
@@ -302,7 +336,8 @@ describe('selectNextCase', () => {
 
   it('deterministically picks among tied candidates based on the game session id', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(null);
+    prisma.case.findFirst.mockResolvedValueOnce({ difficulty: 1 });
     const candidates = [
       makeCase({ id: 'case-a' }),
       makeCase({ id: 'case-b' }),
@@ -318,7 +353,8 @@ describe('selectNextCase', () => {
 
   it('returns the same case across repeated calls for the same session and candidate set', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findFirst.mockResolvedValue(null);
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({ difficulty: 1 });
     const candidates = [
       makeCase({ id: 'case-a' }),
       makeCase({ id: 'case-b' }),
@@ -327,6 +363,7 @@ describe('selectNextCase', () => {
     prisma.case.findMany.mockResolvedValue(candidates);
 
     const first = await selectNextCase(prisma, 'session-uuid');
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({ difficulty: 1 });
     const second = await selectNextCase(prisma, 'session-uuid');
 
     expect(second).toEqual(first);
@@ -334,16 +371,18 @@ describe('selectNextCase', () => {
 
   it('returns the sole candidate when only one case ties at the lowest difficulty', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(null);
+    prisma.case.findFirst.mockResolvedValueOnce({ difficulty: 1 });
     const onlyCase = makeCase({ id: 'case-only' });
     prisma.case.findMany.mockResolvedValue([onlyCase]);
 
     await expect(selectNextCase(prisma, 'session-uuid')).resolves.toEqual(onlyCase);
   });
 
-  it('returns null when no case matches, without querying for tied candidates', async () => {
+  it('returns null when no featured or difficulty-tiered case matches, without querying for tied candidates', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue(null);
+    prisma.case.findFirst.mockResolvedValueOnce(null);
+    prisma.case.findFirst.mockResolvedValueOnce(null);
 
     const result = await selectNextCase(prisma, 'session-uuid');
 
@@ -488,6 +527,7 @@ describe('resolveOpenGameDayLog', () => {
 describe('startRound', () => {
   function primeHappyPath(prisma: ReturnType<typeof createMockPrisma>) {
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
+    prisma.case.findFirst.mockResolvedValueOnce(null);
     prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
     prisma.case.findMany.mockResolvedValue([makeCase()]);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog());

@@ -22,14 +22,21 @@ describe('Chat', () => {
     // on mount — give every test a harmless default response for that call so
     // tests that only care about the chat POST don't need to special-case it.
     global.fetch = jest.fn().mockResolvedValue(
-      new Response(JSON.stringify({ case: { documents: [] } }), { status: 200 }),
+      new Response(
+        JSON.stringify({
+          case: { documents: [], patient: { portraitImageUrl: '/portraits/portrait-01.png' } },
+        }),
+        { status: 200 },
+      ),
     );
   });
 
-  it('renders a patient portrait chosen from the known portrait set', () => {
+  it("renders the current patient's portrait from round data", async () => {
     renderChat();
-    const portrait = screen.getByAltText(/patient portrait/i);
-    expect(portrait.getAttribute('src')).toMatch(/^\/patient-portraits\/.+\.png$/);
+    await waitFor(() => {
+      const portrait = screen.getByAltText(/patient portrait/i);
+      expect(portrait.getAttribute('src')).toBe('/portraits/portrait-01.png');
+    });
   });
 
   it('sends the doctor message to POST /api/v1/chat and renders the real patient reply', async () => {

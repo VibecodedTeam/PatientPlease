@@ -44,6 +44,9 @@ export type RealCaseSeed = {
   difficulty: 1 | 2 | 3;
   resultExplanationText: string;
   sourceNote: string | null;
+  /** 1-based position among the first cases a new session sees, ascending. Omitted for the
+   * ~46 non-featured cases, which fall back to the existing difficulty-tiered random selection. */
+  featuredOrder?: number;
 };
 
 export const REAL_CASES: RealCaseSeed[] = [
@@ -78,6 +81,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'dysplastic-nevus',
     treatmentCode: 'watchful-waiting',
     difficulty: 1,
+    featuredOrder: 1,
     resultExplanationText:
       'Symetryczne, równomiernie pigmentowane znamiona o łagodnym obrazie dermoskopowym — znamię dysplastyczne, leczone obserwacją i kontrolą po 3 miesiącach zamiast natychmiastowego wycięcia.',
     sourceNote: null,
@@ -110,6 +114,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'surgical-excision',
     difficulty: 3,
+    featuredOrder: 2,
     resultExplanationText:
       'Rzadki pierwotny czerniak okolicy gruczołu podżuchwowego, wymagający całkowitej resekcji chirurgicznej i rekonstrukcji żuchwy.',
     sourceNote: null,
@@ -145,6 +150,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'surgical-excision',
     difficulty: 2,
+    featuredOrder: 3,
     resultExplanationText:
       'Krwawiące, swędzące, wielobarwne znamię z niedawnym wzrostem — czerniak potwierdzony biopsją, leczony wycięciem z marginesem i diagnostyką stopnia zaawansowania.',
     sourceNote: null,
@@ -179,6 +185,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 3,
+    featuredOrder: 4,
     resultExplanationText:
       'Czerniak rozwijający się w obrębie wytatuowanej skóry — rzadka, lecz udokumentowana postać, w której guz można pomylić ze zmianami pigmentu tatuażu.',
     sourceNote: null,
@@ -214,6 +221,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'surgical-excision',
     difficulty: 3,
+    featuredOrder: 5,
     resultExplanationText:
       'Znamię obecne od dzieciństwa przekształciło się w guzek wypełniony krwią, z powiększonymi węzłami chłonnymi pachwinowymi — potwierdzony czerniak, leczony resekcją.',
     sourceNote: null,
@@ -248,6 +256,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 3,
+    featuredOrder: 6,
     resultExplanationText:
       'Rzadki desmoplastyczny czerniak błony śluzowej nosa, wykryty przypadkowo podczas diagnostyki przewlekłych objawów nosowych.',
     sourceNote: null,
@@ -283,6 +292,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 3,
+    featuredOrder: 7,
     resultExplanationText:
       'Liczne ciemniejące, zmieniające się znamiona wraz z melanurią i limfadenopatią pachową wskazują na czerniaka rozsianego.',
     sourceNote: null,
@@ -317,6 +327,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 2,
+    featuredOrder: 8,
     resultExplanationText:
       'Nowa, postrzępiona, ciemna, ewoluująca zmiana nad obojczykiem po intensywnej ekspozycji na słońce — czerniak w I stopniu zaawansowania podejrzewany w dermoskopii.',
     sourceNote: null,
@@ -352,6 +363,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 2,
+    featuredOrder: 9,
     resultExplanationText:
       'Zmieniające się znamię na szyi spełniające wszystkie pięć kryteriów ostrzegawczych ABCDE u długoletniego pracownika fizycznego pracującego na zewnątrz, z historią oparzeń słonecznych w dzieciństwie.',
     sourceNote:
@@ -387,6 +399,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'basal-cell-carcinoma',
     treatmentCode: 'mohs-surgery',
     difficulty: 1,
+    featuredOrder: 10,
     resultExplanationText:
       'Klasyczny perłowy, błyszczący guzek na policzku — rak podstawnokomórkowy w I stopniu zaawansowania, leczony chirurgią mikrograficzną Mohsa ze względu na lokalizację na twarzy.',
     sourceNote: null,
@@ -419,6 +432,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'squamous-cell-carcinoma',
     treatmentCode: 'referral-oncology',
     difficulty: 3,
+    featuredOrder: 11,
     resultExplanationText:
       'Długotrwałe owrzodziałe, łuszczące się zmiany na szyi przekształciły się w raka kolczystokomórkowego w III stopniu zaawansowania z przerzutami do węzłów chłonnych i płuc, wymagające skierowania onkologicznego celem resekcji, usunięcia węzłów chłonnych i chemioterapii.',
     sourceNote: null,
@@ -453,6 +467,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'surgical-excision',
     difficulty: 3,
+    featuredOrder: 12,
     resultExplanationText:
       'Pigmentowana zmiana na dziąśle, długo ignorowana z powodu braku objawów, okazała się rzadkim pierwotnym czerniakiem błony śluzowej jamy ustnej.',
     sourceNote: null,
@@ -488,6 +503,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'referral-oncology',
     difficulty: 3,
+    featuredOrder: 13,
     resultExplanationText:
       'Guz żołądka pojawiający się dekady po wcześniejszym wycięciu czerniaka okazał się późnym przerzutowym nawrotem tego pierwotnego czerniaka.',
     sourceNote: null,
@@ -531,6 +547,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 2,
+    featuredOrder: 14,
     resultExplanationText:
       'Maleńkie, lecz nietypowo wyglądające znamię u pacjentki z istotnymi czynnikami ryzyka związanymi z ekspozycją na UV oraz historią rodzinną okazało się czerniakiem.',
     sourceNote: null,
@@ -566,6 +583,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'surgical-excision',
     difficulty: 3,
+    featuredOrder: 15,
     resultExplanationText:
       'Szybko rosnący, ciemnoniebieski guzek na plecach — czerniak guzkowy w II stopniu zaawansowania, leczony szerokim wycięciem i biopsją węzła wartowniczego.',
     sourceNote: null,
