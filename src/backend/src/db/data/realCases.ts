@@ -128,7 +128,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     imageFile: 'case-03.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsja potwierdza czerniaka; wykonano wycięcie z marginesem bezpieczeństwa i zlecono dalsze badania oceniające stopień zaawansowania.',
+      'Biopsja wykazuje jedynie warstwy rogowe i brodawkowate rozrosty naskórka bez atypii — obraz typowy dla łagodnego rogowacenia łojotokowego.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
@@ -143,17 +143,18 @@ export const REAL_CASES: RealCaseSeed[] = [
         title: 'Objawy kliniczne',
         content: {
           description:
-            'Znamię na plecach zaczęło krwawić po prysznicu i wycieraniu się ręcznikiem. Partnerka obejrzała je i stwierdziła, że jest pokryte licznymi małymi pęcherzykami, wyraźnie większe od pozostałych znamion pacjenta, z ciemnymi plamami. Znamię z czasem także się powiększało, a ostatnio zaczęło swędzieć.',
+            'Chropowata, brązowa narośl na plecach, obecna od lat, jakby "przyklejona" do skóry. Zaczęła krwawić po prysznicu i wycieraniu się ręcznikiem — partnerka zauważyła, że skóra wokół niej się podrażniła od ubrania. Sama narośl nie zmienia kształtu ani wielkości, czasem tylko swędzi po podrażnieniu.',
         },
       },
     ],
-    diagnosisCode: 'melanoma',
-    treatmentCode: 'surgical-excision',
-    difficulty: 2,
+    diagnosisCode: 'seborrheic-keratosis',
+    treatmentCode: 'no-treatment',
+    difficulty: 1,
     featuredOrder: 3,
     resultExplanationText:
-      'Krwawiące, swędzące, wielobarwne znamię z niedawnym wzrostem — czerniak potwierdzony biopsją, leczony wycięciem z marginesem i diagnostyką stopnia zaawansowania.',
-    sourceNote: null,
+      'Stabilna, chropowata, "przyklejona" narośl na plecach, krwawiąca jedynie po podrażnieniu ręcznikiem — łagodne rogowacenie łojotokowe, niewymagające leczenia.',
+    sourceNote:
+      'Zmodyfikowany wariant fabularny — pierwotny raport dotyczył czerniaka; tutaj zmiana zaadaptowana na łagodne rogowacenie łojotokowe w celu urozmaicenia rozkładu diagnoz.',
   },
   {
     patientName: 'Kamil Zych',
@@ -199,14 +200,14 @@ export const REAL_CASES: RealCaseSeed[] = [
     imageFile: 'case-05.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsja potwierdza czerniaka; powiększone węzły chłonne pachwinowe budzą obawy o rozprzestrzenienie regionalne.',
+      'Biopsja potwierdza włókniaka twardego (dermatofibroma) — łagodną zmianę tkanki łącznej, bez cech złośliwości.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
         title: 'Historia choroby',
         content: {
           history:
-            'Ma liczne znamiona odkąd pamięta, ale nigdy nie sprawiały problemów, a poza tym zawsze była zdrowa.',
+            'Ma liczne znamiona odkąd pamięta, ale nigdy nie sprawiały problemów, a poza tym zawsze była zdrowa. Przy pracy z igłami i szpilkami zdarzają jej się drobne ukłucia i skaleczenia.',
         },
       },
       {
@@ -214,17 +215,18 @@ export const REAL_CASES: RealCaseSeed[] = [
         title: 'Objawy kliniczne',
         content: {
           description:
-            'Znamię o chropowatej powierzchni po prawej stronie brzucha, obecne od dzieciństwa, po urlopie zmieniło się w półprzezroczysty guzek wypełniony krwią i płynem. Wcześniej nigdy nie obserwowała żadnych zmian w swoich znamionach. Węzły chłonne pachwinowe są powiększone.',
+            'Twardy, brązowawy guzek po prawej stronie brzucha, obecny od dzieciństwa po drobnym skaleczeniu przy pracy. Charakterystycznie wciąga się do wewnątrz przy ściśnięciu z boków. Nie powiększa się, nie boli, węzły chłonne pachwinowe są niewyczuwalne.',
         },
       },
     ],
-    diagnosisCode: 'melanoma',
-    treatmentCode: 'surgical-excision',
-    difficulty: 3,
+    diagnosisCode: 'dermatofibroma',
+    treatmentCode: 'no-treatment',
+    difficulty: 1,
     featuredOrder: 5,
     resultExplanationText:
-      'Znamię obecne od dzieciństwa przekształciło się w guzek wypełniony krwią, z powiększonymi węzłami chłonnymi pachwinowymi — potwierdzony czerniak, leczony resekcją.',
-    sourceNote: null,
+      'Twardy guzek wciągający się przy ucisku, powstały po drobnym urazie przy pracy z igłami — klasyczny obraz włókniaka twardego, zmiany łagodnej.',
+    sourceNote:
+      'Zmodyfikowany wariant fabularny — pierwotny raport dotyczył czerniaka; tutaj zmiana zaadaptowana na włókniaka twardego w celu urozmaicenia rozkładu diagnoz.',
   },
   {
     patientName: 'Wanda Kaczmarek',
@@ -270,14 +272,14 @@ export const REAL_CASES: RealCaseSeed[] = [
     imageFile: 'case-07.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Biopsja ciemniejących znamion potwierdza czerniaka; melanuria i limfadenopatia pachowa sugerują chorobę rozsianą.',
+      'Badanie kliniczne i biopsja potwierdzają srebrzyste, dobrze odgraniczone blaszki typowe dla łuszczycy zwykłej, bez cech złośliwości.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
         title: 'Historia choroby',
         content: {
           history:
-            'Długa historia cukrzycy typu II, nadciśnienia tętniczego i miażdżycy. Powiększone węzły chłonne stwierdzono w lewej okolicy pachowej podczas niezwiązanego z tym zabiegu chirurgicznego.',
+            'Długa historia cukrzycy typu II, nadciśnienia tętniczego i miażdżycy. Ojciec pacjenta chorował na łuszczycę przez całe dorosłe życie.',
         },
       },
       {
@@ -285,17 +287,18 @@ export const REAL_CASES: RealCaseSeed[] = [
         title: 'Objawy kliniczne',
         content: {
           description:
-            'Po zabiegu kardiologicznym zauważył silne ciemnienie kilku znamion, które z czasem zmieniły kształt i uzyskały nieregularne brzegi. Zauważył także, że jego mocz stał się ciemniejszy (melanuria), a badania krwi wykazały leukocytozę, podwyższone OB i podwyższony cholesterol.',
+            'Na lewym ramieniu i łokciu od kilku lat nawracają grube, srebrzyście łuszczące się, czerwone blaszki. Objawy nasilają się zimą i w okresach stresu, a niedawny zabieg kardiologiczny zaostrzył ich przebieg. Żadne znamiona pacjenta nie zmieniły kształtu ani koloru.',
         },
       },
     ],
-    diagnosisCode: 'melanoma',
-    treatmentCode: null,
-    difficulty: 3,
+    diagnosisCode: 'psoriasis',
+    treatmentCode: 'topical-corticosteroid',
+    difficulty: 1,
     featuredOrder: 7,
     resultExplanationText:
-      'Liczne ciemniejące, zmieniające się znamiona wraz z melanurią i limfadenopatią pachową wskazują na czerniaka rozsianego.',
-    sourceNote: null,
+      'Nawracające, srebrzyście łuszczące się czerwone blaszki na ramieniu i łokciu, z dodatnim wywiadem rodzinnym — łuszczyca zwykła.',
+    sourceNote:
+      'Zmodyfikowany wariant fabularny — pierwotny raport dotyczył czerniaka; tutaj zmiana zaadaptowana na łuszczycę w celu urozmaicenia rozkładu diagnoz.',
   },
   {
     patientName: 'Barbara Sikora',
@@ -306,13 +309,13 @@ export const REAL_CASES: RealCaseSeed[] = [
     imageFile: 'case-08.png',
     examinationSku: 'exam-dermoscopy',
     examinationFindings:
-      'Dermoskopia budzi podejrzenie czerniaka w I stopniu zaawansowania o szacowanej grubości 1,2 mm; skierowano na biopsję celem potwierdzenia.',
+      'Dermoskopia wykazuje symetryczną strukturę i regularną, jednolitą pigmentację — typowy obraz łagodnego znamienia melanocytowego, bez cech niepokojących.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
         title: 'Historia ekspozycji na promieniowanie UV',
         content: {
-          history: 'Niedawny, intensywnie słoneczny urlop na Maderze poprzedził pojawienie się zmiany.',
+          history: 'Niedawny, intensywnie słoneczny urlop na Maderze skłonił ją do przyjrzenia się swoim znamionom.',
         },
       },
       {
@@ -320,17 +323,18 @@ export const REAL_CASES: RealCaseSeed[] = [
         title: 'Objawy kliniczne',
         content: {
           description:
-            'Kilka miesięcy po powrocie z urlopu na Maderze zauważyła nietypową zmianę skórną nad lewym obojczykiem. Jej brzegi były postrzępione, kolor ciemniejszy niż w przypadku pozostałych znamion, a kształt lekko uniesiony. Po miesiącu obserwacji zmiana wyraźnie ewoluowała — powiększała się i stawała bardziej rozlana.',
+            'Po powrocie z urlopu na Maderze zauważyła znamię nad lewym obojczykiem, którego wcześniej nie zauważyła. Ma równe brzegi, jednolity brązowy kolor i nie zmieniła się w ciągu miesiąca obserwacji — dermoskopia nie wykazuje żadnej ewolucji.',
         },
       },
     ],
-    diagnosisCode: 'melanoma',
-    treatmentCode: null,
-    difficulty: 2,
-    featuredOrder: 8,
+    diagnosisCode: 'common-nevus',
+    treatmentCode: 'watchful-waiting',
+    difficulty: 1,
+    featuredOrder: 9,
     resultExplanationText:
-      'Nowa, postrzępiona, ciemna, ewoluująca zmiana nad obojczykiem po intensywnej ekspozycji na słońce — czerniak w I stopniu zaawansowania podejrzewany w dermoskopii.',
-    sourceNote: null,
+      'Symetryczne, jednolicie zabarwione znamię nad obojczykiem, niezmienione w miesięcznej obserwacji — zwykłe znamię melanocytowe, niewymagające interwencji.',
+    sourceNote:
+      'Zmodyfikowany wariant fabularny — pierwotny raport dotyczył czerniaka; tutaj zmiana zaadaptowana na zwykłe znamię w celu urozmaicenia rozkładu diagnoz.',
   },
   {
     patientName: 'Józef Baran',
@@ -363,7 +367,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 2,
-    featuredOrder: 9,
+    featuredOrder: 8,
     resultExplanationText:
       'Zmieniające się znamię na szyi spełniające wszystkie pięć kryteriów ostrzegawczych ABCDE u długoletniego pracownika fizycznego pracującego na zewnątrz, z historią oparzeń słonecznych w dzieciństwie.',
     sourceNote:
@@ -399,7 +403,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'basal-cell-carcinoma',
     treatmentCode: 'mohs-surgery',
     difficulty: 1,
-    featuredOrder: 10,
+    featuredOrder: 13,
     resultExplanationText:
       'Klasyczny perłowy, błyszczący guzek na policzku — rak podstawnokomórkowy w I stopniu zaawansowania, leczony chirurgią mikrograficzną Mohsa ze względu na lokalizację na twarzy.',
     sourceNote: null,
@@ -432,7 +436,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'squamous-cell-carcinoma',
     treatmentCode: 'referral-oncology',
     difficulty: 3,
-    featuredOrder: 11,
+    featuredOrder: 15,
     resultExplanationText:
       'Długotrwałe owrzodziałe, łuszczące się zmiany na szyi przekształciły się w raka kolczystokomórkowego w III stopniu zaawansowania z przerzutami do węzłów chłonnych i płuc, wymagające skierowania onkologicznego celem resekcji, usunięcia węzłów chłonnych i chemioterapii.',
     sourceNote: null,
@@ -467,7 +471,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'surgical-excision',
     difficulty: 3,
-    featuredOrder: 12,
+    featuredOrder: 10,
     resultExplanationText:
       'Pigmentowana zmiana na dziąśle, długo ignorowana z powodu braku objawów, okazała się rzadkim pierwotnym czerniakiem błony śluzowej jamy ustnej.',
     sourceNote: null,
@@ -503,7 +507,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'referral-oncology',
     difficulty: 3,
-    featuredOrder: 13,
+    featuredOrder: 12,
     resultExplanationText:
       'Guz żołądka pojawiający się dekady po wcześniejszym wycięciu czerniaka okazał się późnym przerzutowym nawrotem tego pierwotnego czerniaka.',
     sourceNote: null,
@@ -517,7 +521,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     imageFile: 'case-14.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
-      'Dermoskopia i biopsja, wykonane z powodu istotnych czynników ryzyka, potwierdzają czerniaka.',
+      'Test płatkowy wykazuje wyraźnie dodatnią reakcję na nikiel; biopsja wykazuje jedynie zmiany zapalne, bez cech nowotworowych.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
@@ -540,17 +544,18 @@ export const REAL_CASES: RealCaseSeed[] = [
         title: 'Objawy kliniczne',
         content: {
           description:
-            'Zauważyła maleńkie, ale ciemne znamię na prawym ramieniu. Nie zaobserwowała wyraźnych zmian jego kształtu, ale dobrze zna swoje znamiona i to jedno wygląda dla niej nietypowo.',
+            'Zgłosiła się z powodu swędzącej, zaczerwienionej wysypki na prawym ramieniu, która pojawiła się po założeniu nowej bransoletki. Dobrze zna swoje znamiona i żadne z nich nie wygląda nietypowo — wysypka ustępuje po zdjęciu biżuterii, ale nawraca po ponownym założeniu.',
         },
       },
     ],
-    diagnosisCode: 'melanoma',
-    treatmentCode: null,
-    difficulty: 2,
-    featuredOrder: 14,
+    diagnosisCode: 'contact-dermatitis',
+    treatmentCode: 'topical-corticosteroid',
+    difficulty: 1,
+    featuredOrder: 11,
     resultExplanationText:
-      'Maleńkie, lecz nietypowo wyglądające znamię u pacjentki z istotnymi czynnikami ryzyka związanymi z ekspozycją na UV oraz historią rodzinną okazało się czerniakiem.',
-    sourceNote: null,
+      'Swędząca wysypka ograniczona do miejsca kontaktu z bransoletką, z dodatnim testem płatkowym na nikiel — alergiczne kontaktowe zapalenie skóry, mimo istotnych czynników ryzyka związanych z UV i historią rodzinną.',
+    sourceNote:
+      'Zmodyfikowany wariant fabularny — pierwotny raport dotyczył czerniaka; tutaj zmiana zaadaptowana na alergiczne kontaktowe zapalenie skóry w celu urozmaicenia rozkładu diagnoz.',
   },
   {
     patientName: 'Tomasz Ryba',
@@ -583,7 +588,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'surgical-excision',
     difficulty: 3,
-    featuredOrder: 15,
+    featuredOrder: 14,
     resultExplanationText:
       'Szybko rosnący, ciemnoniebieski guzek na plecach — czerniak guzkowy w II stopniu zaawansowania, leczony szerokim wycięciem i biopsją węzła wartowniczego.',
     sourceNote: null,
