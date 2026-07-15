@@ -183,6 +183,12 @@ export interface RoundPrismaClient {
       select: { shopItemId: true };
     }): Promise<{ shopItemId: string }[]>;
   };
+  caseDocumentReveal: {
+    findMany(args: {
+      where: { gameSessionId: string; caseId: string };
+      select: { caseDocumentId: true };
+    }): Promise<{ caseDocumentId: string }[]>;
+  };
 }
 
 export interface RoundResponse {
@@ -388,20 +394,33 @@ export async function resolveOpenGameDayLog(
   });
 }
 
+const REVEAL_GATED_DOCUMENT_TYPES = new Set([
+  'DISEASE_HISTORY',
+  'UV_EXPOSURE_HISTORY',
+  'CLINICAL_SYMPTOMS',
+  'FAMILY_HISTORY',
+  'WEATHER_HISTORY',
+]);
+
 function isVisibleDocument(
   document: CaseDocumentRecord,
   visibleExaminationShopItemIds: Set<string>,
+  revealedDocumentIds: Set<string>,
 ): boolean {
-  if (document.type !== 'EXAMINATION_RESULTS') {
-    return true;
+  if (document.type === 'EXAMINATION_RESULTS') {
+    const shopItemId = (document.content as { shopItemId?: string } | null)?.shopItemId;
+    return shopItemId !== undefined && visibleExaminationShopItemIds.has(shopItemId);
   }
-  const shopItemId = (document.content as { shopItemId?: string } | null)?.shopItemId;
-  return shopItemId !== undefined && visibleExaminationShopItemIds.has(shopItemId);
+  if (REVEAL_GATED_DOCUMENT_TYPES.has(document.type)) {
+    return revealedDocumentIds.has(document.id);
+  }
+  return true;
 }
 
 function toCaseResponse(
   record: CaseRecord,
   visibleExaminationShopItemIds: Set<string>,
+  revealedDocumentIds: Set<string>,
 ): RoundResponse['case'] {
   return {
     id: record.id,
@@ -418,7 +437,9 @@ function toCaseResponse(
       bodyModelVariant: record.patient.bodyModelVariant,
     },
     documents: record.documents
-      .filter((document) => isVisibleDocument(document, visibleExaminationShopItemIds))
+      .filter((document) =>
+        isVisibleDocument(document, visibleExaminationShopItemIds, revealedDocumentIds),
+      )
       .map((document) => ({
         id: document.id,
         attentionPointRegion: document.attentionPointRegion,
@@ -492,7 +513,7 @@ export async function startRound(
     extraElapsedMs: openDayLog.extraElapsedMs,
   });
 
-  const [ownedItems, diagnoses, treatments, successfulExaminations] = await Promise.all([
+  const [ownedItems, diagnoses, treatments, successfulExaminations, documentReveals] = await Promise.all([
     prisma.ownedItem.findMany({
       where: { gameSessionId: session.id },
       include: { shopItem: true },
@@ -504,15 +525,20 @@ export async function startRound(
       where: { gameSessionId: session.id, caseId: nextCase.id, isSuccessful: true },
       select: { shopItemId: true },
     }),
+    prisma.caseDocumentReveal.findMany({
+      where: { gameSessionId: session.id, caseId: nextCase.id },
+      select: { caseDocumentId: true },
+    }),
   ]);
   const visibleExaminationShopItemIds = new Set(
     successfulExaminations.map((examination) => examination.shopItemId),
   );
+  const revealedDocumentIds = new Set(documentReveals.map((reveal) => reveal.caseDocumentId));
 
   return {
     gameSession: toGameSessionResponse(session),
     ownedItems: ownedItems.map(toOwnedItemResponse),
-    case: toCaseResponse(nextCase, visibleExaminationShopItemIds),
+    case: toCaseResponse(nextCase, visibleExaminationShopItemIds, revealedDocumentIds),
     diagnosisOptions: selectDiagnosisOptions(diagnoses, nextCase.correctDiagnosisId).map(
       toDiagnosisResponse,
     ),

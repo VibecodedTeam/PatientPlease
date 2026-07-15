@@ -43,6 +43,9 @@ function createMockPrisma() {
     caseExamination: {
       findMany: jest.fn<RoundPrismaClient['caseExamination']['findMany']>(),
     },
+    caseDocumentReveal: {
+      findMany: jest.fn<RoundPrismaClient['caseDocumentReveal']['findMany']>(),
+    },
   };
 }
 
@@ -515,6 +518,7 @@ describe('startRound', () => {
       { id: 'treatment-uuid', code: 'REFER_ONCO', name: 'Refer to oncology', kind: 'REFERRAL' },
     ]);
     prisma.caseExamination.findMany.mockResolvedValue([]);
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
   }
 
   it('shapes the full happy-path response', async () => {
@@ -587,6 +591,7 @@ describe('startRound', () => {
       treatmentOptions: [
         { id: 'treatment-uuid', code: 'REFER_ONCO', name: 'Refer to oncology', kind: 'REFERRAL' },
       ],
+      dayLog: { elapsedMs: expect.any(Number) as number, dayNumber: 1 },
     });
   });
 
@@ -728,6 +733,73 @@ describe('startRound', () => {
     ]);
   });
 
+  it('omits a reveal-gated document (e.g. DISEASE_HISTORY) when no CaseDocumentReveal row exists for it', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.case.findMany.mockResolvedValue([
+      makeCase({
+        documents: [
+          ...makeCase().documents,
+          {
+            id: 'history-doc-uuid',
+            attentionPointRegion: null,
+            type: 'DISEASE_HISTORY',
+            title: 'Disease history',
+            documentDate: null,
+            sortOrder: 2,
+            imageUrl: null,
+            imageWidthPx: null,
+            imageHeightPx: null,
+            imageAltText: null,
+            content: { pastDiagnoses: 'None' },
+          },
+        ],
+      }),
+    ]);
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(prisma.caseDocumentReveal.findMany).toHaveBeenCalledWith({
+      where: { gameSessionId: 'session-uuid', caseId: 'case-uuid' },
+      select: { caseDocumentId: true },
+    });
+    expect(result.case.documents.map((document) => document.id)).toEqual(['document-uuid']);
+  });
+
+  it('includes a reveal-gated document once a CaseDocumentReveal row exists for it', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.case.findMany.mockResolvedValue([
+      makeCase({
+        documents: [
+          ...makeCase().documents,
+          {
+            id: 'history-doc-uuid',
+            attentionPointRegion: null,
+            type: 'DISEASE_HISTORY',
+            title: 'Disease history',
+            documentDate: null,
+            sortOrder: 2,
+            imageUrl: null,
+            imageWidthPx: null,
+            imageHeightPx: null,
+            imageAltText: null,
+            content: { pastDiagnoses: 'None' },
+          },
+        ],
+      }),
+    ]);
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([{ caseDocumentId: 'history-doc-uuid' }]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(result.case.documents.map((document) => document.id)).toEqual([
+      'document-uuid',
+      'history-doc-uuid',
+    ]);
+  });
+
   it('narrows diagnosisOptions to 4 entries (correct + 3 decoys) when the catalog has more', async () => {
     const prisma = createMockPrisma();
     primeHappyPath(prisma);
@@ -750,10 +822,11 @@ describe('startRound', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('never filters non-EXAMINATION_RESULTS document types', async () => {
+  it('always includes a SKIN_IMAGE document regardless of CaseDocumentReveal rows', async () => {
     const prisma = createMockPrisma();
     primeHappyPath(prisma);
     prisma.caseExamination.findMany.mockResolvedValue([]);
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
 
     const result = await startRound(prisma, 'user-uuid');
 
