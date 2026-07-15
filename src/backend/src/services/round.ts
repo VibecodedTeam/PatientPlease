@@ -394,6 +394,9 @@ export async function resolveOpenGameDayLog(
   });
 }
 
+// Must stay identical to CASE_DOCUMENT_TYPES in
+// src/frontend/src/components/Notebook/internal/CaseDocumentsPage/CaseDocumentsPage.jsx —
+// there's no cross-package import to enforce this, so keep the two lists in sync by hand.
 const REVEAL_GATED_DOCUMENT_TYPES = new Set([
   'DISEASE_HISTORY',
   'UV_EXPOSURE_HISTORY',

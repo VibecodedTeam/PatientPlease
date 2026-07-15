@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 import { formatHistoryContent } from '../formatDocumentContent';
 import styles from './CaseDocumentsPage.module.css';
 
+// Must stay identical to REVEAL_GATED_DOCUMENT_TYPES in
+// src/backend/src/services/round.ts — there's no cross-package import to enforce this,
+// so keep the two lists in sync by hand.
 const CASE_DOCUMENT_TYPES = [
   'DISEASE_HISTORY',
   'UV_EXPOSURE_HISTORY',
