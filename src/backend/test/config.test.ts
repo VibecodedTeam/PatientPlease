@@ -266,11 +266,11 @@ describe('resolveGeminiModel', () => {
   });
 
   it('falls back to the default when GEMINI_MODEL is unset', () => {
-    expect(resolveGeminiModel(undefined)).toBe('gemini-2.0-flash');
+    expect(resolveGeminiModel(undefined)).toBe('gemini-2.5-flash');
   });
 
   it('falls back to the default when GEMINI_MODEL is an empty string', () => {
-    expect(resolveGeminiModel('')).toBe('gemini-2.0-flash');
+    expect(resolveGeminiModel('')).toBe('gemini-2.5-flash');
   });
 });
 
