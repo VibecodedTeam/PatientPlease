@@ -1,33 +1,33 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { formatHistoryContent } from '../formatDocumentContent';
-import styles from './HistoryPage.module.css';
+import styles from './ExaminationsPage.module.css';
 
 /**
  * @param {object} props
  * @param {Array<{id: string, type: string, title: string, content: (string|Record<string, unknown>|null)}>} props.documents
  */
-export function HistoryPage({ documents }) {
-  const historyDocuments = documents.filter((doc) => doc.type.includes('HISTORY'));
+export function ExaminationsPage({ documents }) {
+  const examDocuments = documents.filter((doc) => doc.type === 'EXAMINATION_RESULTS');
 
   return (
     <div className={styles.page}>
-      <h3 className={styles.heading}>History</h3>
-      {historyDocuments.length > 0 ? (
-        historyDocuments.map((doc) => (
+      <h3 className={styles.heading}>Examinations</h3>
+      {examDocuments.length > 0 ? (
+        examDocuments.map((doc) => (
           <p key={doc.id} className={styles.entry}>
             <strong>{doc.title}: </strong>
             {formatHistoryContent(doc.content)}
           </p>
         ))
       ) : (
-        <p className={styles.empty}>No history recorded yet.</p>
+        <p className={styles.empty}>No examinations completed yet.</p>
       )}
     </div>
   );
 }
 
-HistoryPage.propTypes = {
+ExaminationsPage.propTypes = {
   documents: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,

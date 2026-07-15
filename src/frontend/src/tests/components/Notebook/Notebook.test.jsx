@@ -12,7 +12,7 @@ function renderWithDocumentTable(documents) {
 }
 
 describe('Notebook', () => {
-  it('renders history documents on the left page', () => {
+  it('renders all five reveal-gated document types as a flat list on the left page, with no subheadings', () => {
     const { container } = renderWithDocumentTable([
       {
         id: 'd1',
@@ -20,21 +20,6 @@ describe('Notebook', () => {
         title: 'Sun exposure history',
         content: { sunbedUse: 'frequent', occupationalExposure: 'high' },
       },
-    ]);
-
-    expect(screen.getByText('History')).toBeInTheDocument();
-    expect(container.textContent).toContain('Sun exposure history:');
-    expect(container.textContent).toContain('Sunbed Use: frequent');
-    expect(container.textContent).toContain('Occupational Exposure: high');
-  });
-
-  it('shows the empty state when there are no history documents', () => {
-    renderWithDocumentTable([]);
-    expect(screen.getByText('No history recorded yet.')).toBeInTheDocument();
-  });
-
-  it('renders the clinical symptoms document on the right page', () => {
-    renderWithDocumentTable([
       {
         id: 'd2',
         type: 'CLINICAL_SYMPTOMS',
@@ -43,38 +28,55 @@ describe('Notebook', () => {
       },
     ]);
 
-    expect(screen.getByText('Symptoms')).toBeInTheDocument();
-    expect(screen.getByText('Itching and bleeding for the past week.')).toBeInTheDocument();
+    expect(screen.getByText('Case Documents')).toBeInTheDocument();
+    expect(screen.queryByText('History')).not.toBeInTheDocument();
+    expect(screen.queryByText('Symptoms')).not.toBeInTheDocument();
+    expect(container.textContent).toContain('Sun exposure history:');
+    expect(container.textContent).toContain('Sunbed Use: frequent');
+    expect(container.textContent).toContain('Occupational Exposure: high');
+    expect(container.textContent).toContain('Symptoms: Itching and bleeding for the past week.');
   });
 
-  it('shows the empty state when there is no clinical symptoms document', () => {
+  it('renders DISEASE_HISTORY, FAMILY_HISTORY, and WEATHER_HISTORY documents on the left page', () => {
+    const { container } = renderWithDocumentTable([
+      { id: 'd3', type: 'DISEASE_HISTORY', title: 'Disease history', content: 'None reported.' },
+      { id: 'd4', type: 'FAMILY_HISTORY', title: 'Family history', content: 'Father: melanoma.' },
+      { id: 'd5', type: 'WEATHER_HISTORY', title: 'Weather history', content: 'High UV index region.' },
+    ]);
+
+    expect(container.textContent).toContain('Disease history: None reported.');
+    expect(container.textContent).toContain('Family history: Father: melanoma.');
+    expect(container.textContent).toContain('Weather history: High UV index region.');
+  });
+
+  it('shows the empty state when there are no case documents', () => {
     renderWithDocumentTable([]);
-    expect(screen.getByText('No symptoms documented yet.')).toBeInTheDocument();
+    expect(screen.getByText('No case documents revealed yet.')).toBeInTheDocument();
   });
 
   it('renders every exam results document, including multiple results', () => {
     const { container } = renderWithDocumentTable([
       {
-        id: 'd3',
+        id: 'd6',
         type: 'EXAMINATION_RESULTS',
         title: 'Dermoscopy',
         content: { finding: 'Irregular pigment network' },
       },
       {
-        id: 'd4',
+        id: 'd7',
         type: 'EXAMINATION_RESULTS',
         title: 'Biopsy',
         content: { finding: 'Atypical melanocytes' },
       },
     ]);
 
-    expect(screen.getByText('Exam Results')).toBeInTheDocument();
+    expect(screen.getByText('Examinations')).toBeInTheDocument();
     expect(container.textContent).toContain('Dermoscopy: Irregular pigment network');
     expect(container.textContent).toContain('Biopsy: Atypical melanocytes');
   });
 
-  it('shows the empty state when no examinations have been ordered', () => {
+  it('shows the empty state when no examinations have been completed', () => {
     renderWithDocumentTable([]);
-    expect(screen.getByText('No examinations ordered yet.')).toBeInTheDocument();
+    expect(screen.getByText('No examinations completed yet.')).toBeInTheDocument();
   });
 });
