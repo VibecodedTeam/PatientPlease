@@ -126,7 +126,9 @@ A `documents` entry of `type: "EXAMINATION_RESULTS"` is only included once the p
 successfully ordered the matching examination for this case — i.e. a `CaseExamination` row
 exists for `(this session, this case, content.shopItemId)` with `isSuccessful: true`. Until
 then it's omitted entirely, not returned with placeholder/redacted content. See
-`docs/api/examinations.md` for how examinations are ordered.
+`docs/api/examinations.md` for how examinations are ordered. Once included, its `content` is
+`{ "findings": string }` only — the `shopItemId` used internally to match it against the
+`CaseExamination` is never included in the serialized response.
 
 A `documents` entry of type `DISEASE_HISTORY`, `UV_EXPOSURE_HISTORY`, `CLINICAL_SYMPTOMS`,
 `FAMILY_HISTORY`, or `WEATHER_HISTORY` is only included once a `CaseDocumentReveal` row exists
