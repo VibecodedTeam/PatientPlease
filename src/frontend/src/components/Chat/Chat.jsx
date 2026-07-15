@@ -27,8 +27,12 @@ function pickRandomPortrait() {
  */
 export function Chat({ gameSessionId, caseId }) {
   const api = useApi();
-  const { revealDocuments } = useRound();
-  const [portrait] = useState(pickRandomPortrait);
+  const { round, revealDocuments } = useRound();
+  const [fallbackPortrait] = useState(pickRandomPortrait);
+  // Prefer the active case's seeded portrait; fall back to a stable random one
+  // while the round payload is still loading (or lacks a portrait).
+  const portraitSrc =
+    round?.case?.patient?.portraitImageUrl ?? `/patient-portraits/${fallbackPortrait}`;
   const [messages, setMessages] = useState(() => loadChatMessages(gameSessionId, caseId));
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -105,11 +109,7 @@ export function Chat({ gameSessionId, caseId }) {
       </header>
 
       <section className={styles.face}>
-        <img
-          className={styles.portrait}
-          alt="Patient portrait"
-          src={`/patient-portraits/${portrait}`}
-        />
+        <img className={styles.portrait} alt="Patient portrait" src={portraitSrc} />
       </section>
 
       <div className={styles.log} role="log" aria-live="polite">

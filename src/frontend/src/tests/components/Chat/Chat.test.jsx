@@ -26,10 +26,41 @@ describe('Chat', () => {
     );
   });
 
-  it('renders a patient portrait chosen from the known portrait set', () => {
+  it('falls back to a known portrait when the round has no case portrait yet', () => {
     renderChat();
     const portrait = screen.getByAltText(/patient portrait/i);
     expect(portrait.getAttribute('src')).toMatch(/^\/patient-portraits\/.+\.png$/);
+  });
+
+  it('renders the active case portrait from the round payload', async () => {
+    global.fetch = jest.fn().mockImplementation((input) => {
+      const url = typeof input === 'string' ? input : input.url;
+      if (new URL(url, 'http://api.test').pathname === '/api/v1/round') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              case: {
+                id: 'case-1',
+                patient: { portraitImageUrl: '/portraits/portrait-03.png' },
+                documents: [],
+              },
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify({ chatMessages: [], revealedDocuments: [] }), { status: 200 }),
+      );
+    });
+
+    renderChat();
+
+    await waitFor(() =>
+      expect(screen.getByAltText(/patient portrait/i).getAttribute('src')).toBe(
+        '/portraits/portrait-03.png',
+      ),
+    );
   });
 
   it('sends the doctor message to POST /api/v1/chat and renders the real patient reply', async () => {
