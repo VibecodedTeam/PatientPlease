@@ -2,9 +2,12 @@ import {
   resolveChatAudioMaxBytes,
   resolveChatLlmProvider,
   resolveCookieSecret,
+  resolveDayDurationSeconds,
+  resolveDevSessionEnabled,
   resolveFrontendOrigin,
   resolveGeminiApiKey,
   resolveGeminiModel,
+  resolveGeminiFallbackModel,
   resolveGoogleClientId,
   resolvePort,
   resolveRateLimitMax,
@@ -129,6 +132,48 @@ describe('resolveSessionTtlMs', () => {
   });
 });
 
+describe('resolveDevSessionEnabled', () => {
+  it('returns false when ENABLE_DEV_SESSION is unset', () => {
+    expect(resolveDevSessionEnabled(undefined)).toBe(false);
+  });
+
+  it('returns false when ENABLE_DEV_SESSION is not exactly "true"', () => {
+    expect(resolveDevSessionEnabled('1')).toBe(false);
+    expect(resolveDevSessionEnabled('yes')).toBe(false);
+    expect(resolveDevSessionEnabled('')).toBe(false);
+  });
+
+  it('returns true when ENABLE_DEV_SESSION is "true"', () => {
+    expect(resolveDevSessionEnabled('true')).toBe(true);
+  });
+});
+
+describe('resolveDayDurationSeconds', () => {
+  it('returns the parsed value when DAY_DURATION_SECONDS is set', () => {
+    expect(resolveDayDurationSeconds('30', 60)).toBe(30);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is unset', () => {
+    expect(resolveDayDurationSeconds(undefined, 60)).toBe(60);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is an empty string', () => {
+    expect(resolveDayDurationSeconds('', 60)).toBe(60);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is non-numeric', () => {
+    expect(resolveDayDurationSeconds('abc', 60)).toBe(60);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is "0"', () => {
+    expect(resolveDayDurationSeconds('0', 60)).toBe(60);
+  });
+
+  it('falls back to the default when DAY_DURATION_SECONDS is negative', () => {
+    expect(resolveDayDurationSeconds('-1', 60)).toBe(60);
+  });
+});
+
 describe('resolveRateLimitMax', () => {
   it('returns the parsed value when RATE_LIMIT_MAX is set', () => {
     expect(resolveRateLimitMax('50', 100)).toBe(50);
@@ -222,11 +267,25 @@ describe('resolveGeminiModel', () => {
   });
 
   it('falls back to the default when GEMINI_MODEL is unset', () => {
-    expect(resolveGeminiModel(undefined)).toBe('gemini-2.0-flash');
+    expect(resolveGeminiModel(undefined)).toBe('gemini-2.5-flash');
   });
 
   it('falls back to the default when GEMINI_MODEL is an empty string', () => {
-    expect(resolveGeminiModel('')).toBe('gemini-2.0-flash');
+    expect(resolveGeminiModel('')).toBe('gemini-2.5-flash');
+  });
+});
+
+describe('resolveGeminiFallbackModel', () => {
+  it('returns the value when GEMINI_FALLBACK_MODEL is set', () => {
+    expect(resolveGeminiFallbackModel('gemini-1.5-pro')).toBe('gemini-1.5-pro');
+  });
+
+  it('falls back to the default when GEMINI_FALLBACK_MODEL is unset', () => {
+    expect(resolveGeminiFallbackModel(undefined)).toBe('gemini-flash-latest');
+  });
+
+  it('falls back to the default when GEMINI_FALLBACK_MODEL is an empty string', () => {
+    expect(resolveGeminiFallbackModel('')).toBe('gemini-flash-latest');
   });
 });
 

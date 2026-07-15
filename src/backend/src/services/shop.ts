@@ -17,6 +17,7 @@ export interface ShopCatalogItemRecord {
   unlockDay: number | null;
   isActive: boolean;
   iconImageUrl: string | null;
+  content: unknown;
 }
 
 /** Narrow, structurally-compatible subset of PrismaClient this service depends on — mirrors RoundPrismaClient in services/round.ts. */
@@ -64,6 +65,7 @@ export interface ShopCatalogItem {
   unlockDay: number | null;
   iconImageUrl: string | null;
   owned: boolean;
+  timeCostMs: number | null;
 }
 
 export interface ShopCatalogResponse extends DayPhaseInfo {
@@ -175,6 +177,7 @@ export async function getShopCatalog(
       unlockDay: item.unlockDay,
       iconImageUrl: item.iconImageUrl,
       owned: ownedShopItemIds.has(item.id),
+      timeCostMs: (item.content as { timeCostMs?: number } | null)?.timeCostMs ?? null,
     })),
   };
 }

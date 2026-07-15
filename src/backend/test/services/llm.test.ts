@@ -82,6 +82,107 @@ describe('createGeminiClient', () => {
       }),
     ).rejects.toThrow('Gemini returned an empty reply');
   });
+
+  it('retries with the fallback model when the primary model returns a non-ok response', async () => {
+    const fetchImpl = jest.fn<FetchLike>();
+    fetchImpl.mockResolvedValueOnce(jsonResponse(404, {}));
+    fetchImpl.mockResolvedValueOnce(
+      jsonResponse(200, { candidates: [{ content: { parts: [{ text: 'fallback reply' }] } }] }),
+    );
+    const client = createGeminiClient({
+      apiKey: 'test-key',
+      model: 'gemini-2.0-flash',
+      fallbackModel: 'gemini-flash-latest',
+      fetchImpl,
+    });
+
+    const reply = await client.generateReply({
+      systemInstruction: 'x',
+      contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
+    });
+
+    expect(reply).toBe('fallback reply');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls[0]?.[0]).toContain('/models/gemini-2.0-flash:generateContent');
+    expect(fetchImpl.mock.calls[1]?.[0]).toContain('/models/gemini-flash-latest:generateContent');
+  });
+
+  it('retries with the fallback model when the primary model request throws', async () => {
+    const fetchImpl = jest.fn<FetchLike>();
+    fetchImpl.mockImplementationOnce(() => {
+      throw new Error('network down');
+    });
+    fetchImpl.mockResolvedValueOnce(
+      jsonResponse(200, { candidates: [{ content: { parts: [{ text: 'fallback reply' }] } }] }),
+    );
+    const client = createGeminiClient({
+      apiKey: 'test-key',
+      model: 'gemini-2.0-flash',
+      fallbackModel: 'gemini-flash-latest',
+      fetchImpl,
+    });
+
+    const reply = await client.generateReply({
+      systemInstruction: 'x',
+      contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
+    });
+
+    expect(reply).toBe('fallback reply');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws GeminiError when both the primary and fallback model fail', async () => {
+    const fetchImpl = jest.fn(() => Promise.resolve(jsonResponse(500, {})));
+    const client = createGeminiClient({
+      apiKey: 'test-key',
+      model: 'gemini-2.0-flash',
+      fallbackModel: 'gemini-flash-latest',
+      fetchImpl: fetchImpl as unknown as FetchLike,
+    });
+
+    await expect(
+      client.generateReply({
+        systemInstruction: 'x',
+        contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
+      }),
+    ).rejects.toThrow(GeminiError);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry when no fallback model is configured', async () => {
+    const fetchImpl = jest.fn(() => Promise.resolve(jsonResponse(404, {})));
+    const client = createGeminiClient({
+      apiKey: 'test-key',
+      model: 'gemini-2.0-flash',
+      fetchImpl: fetchImpl as unknown as FetchLike,
+    });
+
+    await expect(
+      client.generateReply({
+        systemInstruction: 'x',
+        contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
+      }),
+    ).rejects.toThrow(GeminiError);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry when the fallback model is the same as the primary model', async () => {
+    const fetchImpl = jest.fn(() => Promise.resolve(jsonResponse(404, {})));
+    const client = createGeminiClient({
+      apiKey: 'test-key',
+      model: 'gemini-2.0-flash',
+      fallbackModel: 'gemini-2.0-flash',
+      fetchImpl: fetchImpl as unknown as FetchLike,
+    });
+
+    await expect(
+      client.generateReply({
+        systemInstruction: 'x',
+        contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
+      }),
+    ).rejects.toThrow(GeminiError);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('createMockGeminiClient', () => {
@@ -156,6 +257,36 @@ describe('createGeminiClient.selectRelevantDocumentIds', () => {
       fetchImpl: fetchImpl,
     });
     await expect(client.selectRelevantDocumentIds(input)).rejects.toThrow();
+  });
+
+  it('retries with the fallback model when the primary model returns a non-ok response', async () => {
+    const fetchImpl = jest.fn<FetchLike>();
+    fetchImpl.mockResolvedValueOnce({ ok: false, status: 404, json: () => Promise.resolve({}) });
+    fetchImpl.mockResolvedValueOnce(geminiJsonResponse('["doc-1"]'));
+    const client = createGeminiClient({
+      apiKey: 'k',
+      model: 'gemini-2.0-flash',
+      fallbackModel: 'gemini-flash-latest',
+      fetchImpl,
+    });
+
+    await expect(client.selectRelevantDocumentIds(input)).resolves.toEqual(['doc-1']);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws GeminiError when both the primary and fallback model fail', async () => {
+    const fetchImpl = jest.fn(() =>
+      Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) }),
+    );
+    const client = createGeminiClient({
+      apiKey: 'k',
+      model: 'gemini-2.0-flash',
+      fallbackModel: 'gemini-flash-latest',
+      fetchImpl: fetchImpl,
+    });
+
+    await expect(client.selectRelevantDocumentIds(input)).rejects.toThrow(GeminiError);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 });
 

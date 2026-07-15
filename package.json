@@ -9,7 +9,8 @@
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "docker:up": "docker compose -f docker/docker-compose.yml up --build",
-    "docker:down": "docker compose -f docker/docker-compose.yml down"
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "docker:seed": "docker compose -f docker/docker-compose.yml --profile seed run --rm seed"
   },
   "engines": {
     "node": ">=22.13.0"

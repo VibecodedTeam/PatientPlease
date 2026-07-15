@@ -8,6 +8,7 @@ import {
   resolveFrontendOrigin,
   resolveGeminiApiKey,
   resolveGeminiModel,
+  resolveGeminiFallbackModel,
   resolveGoogleClientId,
   resolveRateLimitMax,
   resolveRateLimitWindowMs,
@@ -22,10 +23,12 @@ import rateLimitPlugin from './plugins/rate-limit.js';
 import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import dayRoutes from './routes/day.js';
+import diagnosisRoutes from './routes/diagnoses.js';
 import examinationRoutes from './routes/examinations.js';
 import gameRoutes from './routes/game.js';
 import healthRoutes from './routes/health.js';
 import inventoryRoutes from './routes/inventory.js';
+import logRoutes from './routes/logs.js';
 import roundRoutes from './routes/round.js';
 import shopRoutes from './routes/shop.js';
 import type { GoogleIdTokenVerifier } from './services/auth.js';
@@ -35,6 +38,8 @@ import { createWhisperClient, type TranscriptionClient } from './services/transc
 export interface BuildAppOptions {
   /** Overrides the real google-auth-library OAuth2Client — used by tests to avoid real network calls to Google. */
   googleClient?: GoogleIdTokenVerifier;
+  /** Enables the POST /auth/dev-session login bypass — must never be true in production (see resolveDevSessionEnabled). */
+  enableDevSession?: boolean;
   /** Overrides the resolved request cap for the rate-limit plugin — used by tests to force throttling without waiting out real time windows. */
   rateLimitMax?: number;
   /** Overrides the resolved window (ms) for the rate-limit plugin — used by tests alongside rateLimitMax. */
@@ -71,6 +76,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   app.register(authRoutes, {
     googleClientId,
     sessionTtlMs,
+    enableDevSession: options.enableDevSession ?? false,
     ...(options.googleClient ? { googleClient: options.googleClient } : {}),
   });
   app.register(healthRoutes);
@@ -92,11 +98,14 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
         : createGeminiClient({
             apiKey: resolveGeminiApiKey(process.env['GEMINI_API_KEY']),
             model: resolveGeminiModel(process.env['GEMINI_MODEL']),
+            fallbackModel: resolveGeminiFallbackModel(process.env['GEMINI_FALLBACK_MODEL']),
           })),
   });
   app.register(shopRoutes);
   app.register(inventoryRoutes);
   app.register(examinationRoutes);
+  app.register(diagnosisRoutes);
+  app.register(logRoutes);
 
   return app;
 }

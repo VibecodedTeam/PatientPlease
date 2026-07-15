@@ -13,16 +13,31 @@ const DEFAULT_OPTIONS = [
  * @param {string} props.title - Panel heading, e.g. "Diagnosis".
  * @param {{id: string, label: string}[]} props.options - Selectable diagnosis options.
  * @param {function({id: string, label: string}): void} [props.onSubmit] - Called with the selected option when the player submits.
+ * @param {string} [props.errorMessage] - Shown near the submit button when the last submission failed.
+ * @param {boolean} [props.disabled] - Blocks submission, e.g. while the real diagnosis catalog is still loading and `options` is showing DEFAULT_OPTIONS placeholders that don't exist in the backend.
  */
-export function Diagnose({ title = 'Diagnosis', options = DEFAULT_OPTIONS, onSubmit, className = '', ...rest }) {
+export function Diagnose({
+  title = 'Diagnosis',
+  options = DEFAULT_OPTIONS,
+  onSubmit,
+  errorMessage,
+  disabled = false,
+  className = '',
+  ...rest
+}) {
   const [selectedId, setSelectedId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const selectedOption = options.find((option) => option.id === selectedId) || null;
 
   const cardClassName = className ? `${styles.card} ${className}` : styles.card;
 
-  function handleSubmit() {
-    if (selectedOption && onSubmit) {
-      onSubmit(selectedOption);
+  async function handleSubmit() {
+    if (!selectedOption || !onSubmit || isSubmitting || disabled) return;
+    setIsSubmitting(true);
+    try {
+      await onSubmit(selectedOption);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -54,11 +69,12 @@ export function Diagnose({ title = 'Diagnosis', options = DEFAULT_OPTIONS, onSub
         <button
           type="button"
           className={styles.submitButton}
-          disabled={!selectedOption}
+          disabled={!selectedOption || isSubmitting || disabled}
           onClick={handleSubmit}
         >
           Submit Diagnosis
         </button>
+        {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
       </div>
     </div>
   );
@@ -73,5 +89,7 @@ Diagnose.propTypes = {
     })
   ),
   onSubmit: PropTypes.func,
+  errorMessage: PropTypes.string,
+  disabled: PropTypes.bool,
   className: PropTypes.string,
 };

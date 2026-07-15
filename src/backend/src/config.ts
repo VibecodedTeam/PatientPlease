@@ -50,6 +50,16 @@ export function resolveSessionTtlMs(value: string | undefined): number {
   return parsed;
 }
 
+/** Strictly gates the dev-session login bypass — only the literal string "true" enables it, so a typo'd or truthy-but-wrong value (e.g. "1", "yes") never accidentally exposes the bypass. */
+export function resolveDevSessionEnabled(value: string | undefined): boolean {
+  return value === 'true';
+}
+
+export function resolveDayDurationSeconds(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export function resolveRateLimitMax(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return value && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -84,10 +94,21 @@ export function resolveWhisperApiKey(value: string | undefined): string | undefi
   return value ? value : undefined;
 }
 
-const DEFAULT_GEMINI_MODEL = 'gemini-2.0-flash';
+const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 
 export function resolveGeminiModel(value: string | undefined): string {
   return value ? value : DEFAULT_GEMINI_MODEL;
+}
+
+/**
+ * "-latest" is a Google-maintained alias that always points at the current stable flash
+ * model, so it survives the primary pinned model (GEMINI_MODEL) being deprecated/retired
+ * out from under us the way gemini-2.0-flash was.
+ */
+const DEFAULT_GEMINI_FALLBACK_MODEL = 'gemini-flash-latest';
+
+export function resolveGeminiFallbackModel(value: string | undefined): string {
+  return value ? value : DEFAULT_GEMINI_FALLBACK_MODEL;
 }
 
 const DEFAULT_CHAT_AUDIO_MAX_BYTES = 10 * 1024 * 1024;

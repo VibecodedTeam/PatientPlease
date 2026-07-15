@@ -320,11 +320,13 @@ describe('POST /api/v1/examinations', () => {
     const body = response.json<{
       gameSession: { money: number };
       caseExamination: { caseId: string; shopItemId: string; isSuccessful: boolean };
+      timeCostMs: number;
     }>();
     expect(body.caseExamination.isSuccessful).toBe(true);
     expect(body.caseExamination.caseId).toBe(gameCase.id);
     expect(body.caseExamination.shopItemId).toBe(shopItem.id);
     expect(body.gameSession.money).toBe(100);
+    expect(body.timeCostMs).toBe(60000);
 
     const updatedSession = await prisma.gameSession.findUniqueOrThrow({
       where: { id: gameSession.id },

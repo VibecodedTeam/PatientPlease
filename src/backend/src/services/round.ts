@@ -1,3 +1,5 @@
+import { computeEffectiveElapsedMs } from './dayElapsed.js';
+
 export type GameSessionStatusValue = 'ACTIVE' | 'PAUSED' | 'GAME_OVER' | 'COMPLETED';
 
 export interface GameSessionRecord {
@@ -37,6 +39,8 @@ export interface CaseDocumentRecord {
 export interface CaseRecord {
   id: string;
   difficulty: number;
+  featuredOrder: number | null;
+  correctDiagnosisId: string;
   moneyReward: number;
   moneyPenalty: number;
   patient: PatientRecord;
@@ -72,6 +76,9 @@ export interface GameDayLogResponse {
   penaltyApplied: boolean | null;
   startedAt: Date;
   endedAt: Date | null;
+  /** Effective elapsed time (wall-clock minus paused time, plus examination time costs) that the
+   * day reached — only endDay's response populates this (see services/game.ts). */
+  elapsedMs: number;
 }
 
 export interface ShopItemRecord {
@@ -130,11 +137,13 @@ export interface RoundPrismaClient {
     findFirst(args: {
       where: {
         isActive: boolean;
+        featuredOrder?: { not: null };
         diagnosisAttempts: { none: { gameDayLog: { gameSessionId: string } } };
       };
-      orderBy: { difficulty: 'asc' };
-      select: { difficulty: true };
-    }): Promise<{ difficulty: number } | null>;
+      orderBy: { difficulty: 'asc' } | { featuredOrder: 'asc' };
+      select?: { difficulty: true };
+      include?: { patient: true; documents: { orderBy: { sortOrder: 'asc' } } };
+    }): Promise<{ difficulty: number } | CaseRecord | null>;
     findMany(args: {
       where: {
         isActive: boolean;
@@ -177,6 +186,12 @@ export interface RoundPrismaClient {
       select: { shopItemId: true };
     }): Promise<{ shopItemId: string }[]>;
   };
+  caseDocumentReveal: {
+    findMany(args: {
+      where: { gameSessionId: string; caseId: string };
+      select: { caseDocumentId: true };
+    }): Promise<{ caseDocumentId: string }[]>;
+  };
 }
 
 export interface RoundResponse {
@@ -192,6 +207,12 @@ export interface RoundResponse {
   };
   diagnosisOptions: DiagnosisRecord[];
   treatmentOptions: TreatmentRecord[];
+  /** Lets the frontend's day timer resume from the true server-side elapsed
+   * time (see services/dayElapsed.ts) instead of restarting from zero on
+   * every page refresh / remount. `dayNumber` identifies which day this
+   * elapsed belongs to, so the frontend re-seeds the timer when a new day
+   * begins (returning from night) rather than only once per mount. */
+  dayLog: { elapsedMs: number; dayNumber: number };
 }
 
 export class NoCasesRemainingError extends Error {
@@ -252,14 +273,20 @@ export async function resolveGameSession(
     return updated;
   }
 
-  // A finished game is terminal: surface it as such instead of silently
-  // spawning a fresh money:0 session, which would wipe the player's money and
-  // replay every case (case selection is scoped by gameSessionId).
+  // COMPLETED (every case legitimately diagnosed) is a genuine terminal
+  // state — surface it as such rather than silently spawning a fresh
+  // money:0 session that would wipe progress and replay every case.
   if (latest.status === 'COMPLETED') {
     throw new GameCompletedError();
   }
+
+  // GAME_OVER is what POST /api/v1/game/reset sets specifically so the
+  // player can start over (see docs/api/game.md) — treat it exactly like
+  // "no session exists yet" rather than a dead end.
   if (latest.status === 'GAME_OVER') {
-    throw new GameOverError();
+    return prisma.gameSession.create({
+      data: { userId, ...NEW_SESSION_DEFAULTS, status: 'ACTIVE' },
+    });
   }
 
   return latest;
@@ -281,10 +308,58 @@ export function pickIndexForSeed(seed: string, length: number): number {
   return Math.abs(hash) % length;
 }
 
+const DIAGNOSIS_OPTION_DECOY_COUNT = 3;
+
+/**
+ * Narrows the full diagnosis catalog down to the correct diagnosis plus up to
+ * DIAGNOSIS_OPTION_DECOY_COUNT random decoys, so the diagnosis panel shows a handful of choices
+ * instead of the entire catalog. `random` is injectable (defaults to Math.random) so callers can
+ * get a deterministic sequence in tests; startRound calls this fresh on every /round request, so
+ * decoys reshuffle even when the same case is being resumed.
+ */
+export function selectDiagnosisOptions(
+  diagnoses: DiagnosisRecord[],
+  correctDiagnosisId: string,
+  random: () => number = Math.random,
+): DiagnosisRecord[] {
+  const correct = diagnoses.find((diagnosis) => diagnosis.id === correctDiagnosisId);
+  if (!correct) {
+    throw new Error(
+      `selectDiagnosisOptions: correctDiagnosisId ${correctDiagnosisId} not found in the diagnoses catalog`,
+    );
+  }
+  const remainingPool = diagnoses.filter((diagnosis) => diagnosis.id !== correctDiagnosisId);
+  const decoyCount = Math.min(DIAGNOSIS_OPTION_DECOY_COUNT, remainingPool.length);
+
+  const decoys: DiagnosisRecord[] = [];
+  for (let i = 0; i < decoyCount; i += 1) {
+    // random() is documented/injectable and only contractually promised to behave like
+    // Math.random ([0, 1)); clamp so a boundary value of exactly 1 can't push the index
+    // past the last valid entry and splice() out an undefined.
+    const index = Math.min(Math.floor(random() * remainingPool.length), remainingPool.length - 1);
+    decoys.push(remainingPool.splice(index, 1)[0]!);
+  }
+
+  return [correct, ...decoys].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export async function selectNextCase(
   prisma: RoundPrismaClient,
   gameSessionId: string,
 ): Promise<CaseRecord | null> {
+  const featured = await prisma.case.findFirst({
+    where: {
+      isActive: true,
+      featuredOrder: { not: null },
+      diagnosisAttempts: { none: { gameDayLog: { gameSessionId } } },
+    },
+    orderBy: { featuredOrder: 'asc' },
+    include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
+  });
+  if (featured) {
+    return featured as CaseRecord;
+  }
+
   const lowest = await prisma.case.findFirst({
     where: {
       isActive: true,
@@ -335,20 +410,36 @@ export async function resolveOpenGameDayLog(
   });
 }
 
+// Must stay identical to CASE_DOCUMENT_TYPES in
+// src/frontend/src/components/Notebook/internal/CaseDocumentsPage/CaseDocumentsPage.jsx —
+// there's no cross-package import to enforce this, so keep the two lists in sync by hand.
+const REVEAL_GATED_DOCUMENT_TYPES = new Set([
+  'DISEASE_HISTORY',
+  'UV_EXPOSURE_HISTORY',
+  'CLINICAL_SYMPTOMS',
+  'FAMILY_HISTORY',
+  'WEATHER_HISTORY',
+]);
+
 function isVisibleDocument(
   document: CaseDocumentRecord,
   visibleExaminationShopItemIds: Set<string>,
+  revealedDocumentIds: Set<string>,
 ): boolean {
-  if (document.type !== 'EXAMINATION_RESULTS') {
-    return true;
+  if (document.type === 'EXAMINATION_RESULTS') {
+    const shopItemId = (document.content as { shopItemId?: string } | null)?.shopItemId;
+    return shopItemId !== undefined && visibleExaminationShopItemIds.has(shopItemId);
   }
-  const shopItemId = (document.content as { shopItemId?: string } | null)?.shopItemId;
-  return shopItemId !== undefined && visibleExaminationShopItemIds.has(shopItemId);
+  if (REVEAL_GATED_DOCUMENT_TYPES.has(document.type)) {
+    return revealedDocumentIds.has(document.id);
+  }
+  return true;
 }
 
 function toCaseResponse(
   record: CaseRecord,
   visibleExaminationShopItemIds: Set<string>,
+  revealedDocumentIds: Set<string>,
 ): RoundResponse['case'] {
   return {
     id: record.id,
@@ -365,7 +456,9 @@ function toCaseResponse(
       bodyModelVariant: record.patient.bodyModelVariant,
     },
     documents: record.documents
-      .filter((document) => isVisibleDocument(document, visibleExaminationShopItemIds))
+      .filter((document) =>
+        isVisibleDocument(document, visibleExaminationShopItemIds, revealedDocumentIds),
+      )
       .map((document) => ({
         id: document.id,
         attentionPointRegion: document.attentionPointRegion,
@@ -432,30 +525,44 @@ export async function startRound(
     throw new NoCasesRemainingError();
   }
 
-  await resolveOpenGameDayLog(prisma, session.id, session.money);
+  const openDayLog = await resolveOpenGameDayLog(prisma, session.id, session.money);
+  const elapsedMs = computeEffectiveElapsedMs({
+    startedAt: openDayLog.startedAt,
+    totalPausedMs: openDayLog.totalPausedMs,
+    extraElapsedMs: openDayLog.extraElapsedMs,
+  });
 
-  const [ownedItems, diagnoses, treatments, successfulExaminations] = await Promise.all([
-    prisma.ownedItem.findMany({
-      where: { gameSessionId: session.id },
-      include: { shopItem: true },
-      orderBy: { purchasedAt: 'asc' },
-    }),
-    prisma.diagnosis.findMany({ orderBy: { name: 'asc' } }),
-    prisma.treatment.findMany({ orderBy: { name: 'asc' } }),
-    prisma.caseExamination.findMany({
-      where: { gameSessionId: session.id, caseId: nextCase.id, isSuccessful: true },
-      select: { shopItemId: true },
-    }),
-  ]);
+  const [ownedItems, diagnoses, treatments, successfulExaminations, documentReveals] =
+    await Promise.all([
+      prisma.ownedItem.findMany({
+        where: { gameSessionId: session.id },
+        include: { shopItem: true },
+        orderBy: { purchasedAt: 'asc' },
+      }),
+      prisma.diagnosis.findMany({ orderBy: { name: 'asc' } }),
+      prisma.treatment.findMany({ orderBy: { name: 'asc' } }),
+      prisma.caseExamination.findMany({
+        where: { gameSessionId: session.id, caseId: nextCase.id, isSuccessful: true },
+        select: { shopItemId: true },
+      }),
+      prisma.caseDocumentReveal.findMany({
+        where: { gameSessionId: session.id, caseId: nextCase.id },
+        select: { caseDocumentId: true },
+      }),
+    ]);
   const visibleExaminationShopItemIds = new Set(
     successfulExaminations.map((examination) => examination.shopItemId),
   );
+  const revealedDocumentIds = new Set(documentReveals.map((reveal) => reveal.caseDocumentId));
 
   return {
     gameSession: toGameSessionResponse(session),
     ownedItems: ownedItems.map(toOwnedItemResponse),
-    case: toCaseResponse(nextCase, visibleExaminationShopItemIds),
-    diagnosisOptions: diagnoses.map(toDiagnosisResponse),
+    case: toCaseResponse(nextCase, visibleExaminationShopItemIds, revealedDocumentIds),
+    diagnosisOptions: selectDiagnosisOptions(diagnoses, nextCase.correctDiagnosisId).map(
+      toDiagnosisResponse,
+    ),
     treatmentOptions: treatments.map(toTreatmentResponse),
+    dayLog: { elapsedMs, dayNumber: openDayLog.dayNumber },
   };
 }

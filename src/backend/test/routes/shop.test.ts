@@ -158,6 +158,45 @@ describe('shop routes', () => {
       const body = response.json<{ items: { sku: string }[] }>();
       expect(body.items.map((item) => item.sku)).toEqual(['active']);
     });
+
+    it('exposes timeCostMs for EXAMINATION items and null for non-EXAMINATION items', async () => {
+      app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+      await app.ready();
+      const { cookie } = await signIn(app);
+      await prisma.shopItem.create({
+        data: {
+          sku: 'exam-1',
+          name: 'Biopsy',
+          description: 'test',
+          itemType: 'EXAMINATION',
+          price: 20,
+          content: { timeCostMs: 60000 },
+        },
+      });
+      await prisma.shopItem.create({
+        data: {
+          sku: 'book-1',
+          name: 'Handbook',
+          description: 'test',
+          itemType: 'HANDBOOK',
+          price: 50,
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/shop',
+        headers: { cookie },
+      });
+
+      const body = response.json<{ items: { sku: string; timeCostMs: number | null }[] }>();
+      expect(body.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ sku: 'exam-1', timeCostMs: 60000 }),
+          expect.objectContaining({ sku: 'book-1', timeCostMs: null }),
+        ]),
+      );
+    });
   });
 
   describe('POST /api/v1/shop/purchase', () => {

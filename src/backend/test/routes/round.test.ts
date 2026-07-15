@@ -99,6 +99,7 @@ describe('POST /api/v1/round', () => {
     await prisma.gameDayLog.deleteMany({});
     await prisma.ownedItem.deleteMany({});
     await prisma.caseDocument.deleteMany({});
+    await prisma.caseHint.deleteMany({});
     await prisma.case.deleteMany({});
     await prisma.patient.deleteMany({});
     await prisma.gameSession.deleteMany({});
@@ -182,6 +183,40 @@ describe('POST /api/v1/round', () => {
     expect(body.case).not.toHaveProperty('correctTreatmentId');
     expect(body.case).not.toHaveProperty('resultExplanationText');
     expect(rawBody).not.toContain('attentionPoints');
+  });
+
+  it('narrows diagnosisOptions to 4 entries (correct + 3 decoys) when the catalog has more', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie } = await signIn(app);
+
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    await createCase(diagnosis.id, treatment.id);
+    await prisma.diagnosis.createMany({
+      data: [
+        { code: 'BCC', name: 'Basal Cell Carcinoma', description: 'test', category: 'MALIGNANT' },
+        { code: 'NEVUS', name: 'Nevus', description: 'test', category: 'BENIGN' },
+        { code: 'PSORIASIS', name: 'Psoriasis', description: 'test', category: 'INFLAMMATORY' },
+        { code: 'ECZEMA', name: 'Eczema', description: 'test', category: 'INFLAMMATORY' },
+        { code: 'WART', name: 'Wart', description: 'test', category: 'INFECTIOUS' },
+      ],
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/round',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{
+      diagnosisOptions: { id: string; code: string; name: string; category: string }[];
+    }>();
+    expect(body.diagnosisOptions).toHaveLength(4);
+    expect(body.diagnosisOptions.some((option) => option.id === diagnosis.id)).toBe(true);
+    const ids = body.diagnosisOptions.map((option) => option.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('resumes an open day log: calling twice returns the same case and does not duplicate the GameDayLog row', async () => {
@@ -287,12 +322,15 @@ describe('POST /api/v1/round', () => {
     expect(sessions[0]?.money).toBe(250);
   });
 
-  it('returns 409 game_over for a GAME_OVER session without spawning a new session', async () => {
+  it('starts a brand-new session and returns 200 when the latest session is GAME_OVER', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();
     const { cookie, userId } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    await createCase(diagnosis.id, treatment.id);
     await prisma.gameSession.create({
-      data: { userId, money: 0, status: 'GAME_OVER' },
+      data: { userId, money: 250, status: 'GAME_OVER' },
     });
 
     const response = await app.inject({
@@ -301,10 +339,43 @@ describe('POST /api/v1/round', () => {
       headers: { cookie },
     });
 
-    expect(response.statusCode).toBe(409);
-    expect(response.json()).toEqual({ error: 'game_over' });
+    expect(response.statusCode).toBe(200);
     const sessions = await prisma.gameSession.findMany({ where: { userId } });
-    expect(sessions).toHaveLength(1);
+    expect(sessions).toHaveLength(2);
+    const newSession = sessions.find((s) => s.status === 'ACTIVE');
+    expect(newSession).toBeDefined();
+    expect(newSession?.money).toBe(0);
+  });
+
+  it('returns dayLog.elapsedMs reflecting real wall-clock time already spent on the still-open day, so a refresh does not restart the timer at zero', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie } = await signIn(app);
+    const diagnosis = await createDiagnosis();
+    const treatment = await createTreatment();
+    await createCase(diagnosis.id, treatment.id);
+
+    const first = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+    const firstBody = first.json<{ gameSession: { id: string } }>();
+    const openDayLog = await prisma.gameDayLog.findFirstOrThrow({
+      where: { gameSessionId: firstBody.gameSession.id },
+    });
+    // Simulate the day having genuinely started 10s ago, as a real page
+    // refresh mid-day would see.
+    await prisma.gameDayLog.update({
+      where: { id: openDayLog.id },
+      data: { startedAt: new Date(Date.now() - 10_000) },
+    });
+
+    const second = await app.inject({ method: 'POST', url: '/api/v1/round', headers: { cookie } });
+
+    expect(second.statusCode).toBe(200);
+    const secondBody = second.json<{ dayLog: { elapsedMs: number; dayNumber: number } }>();
+    expect(secondBody.dayLog.elapsedMs).toBeGreaterThanOrEqual(9_800);
+    // dayNumber lets the frontend timer re-seed per day (not just once per
+    // mount), so returning for the next day starts the timer at 0 instead of
+    // latching the previous day's elapsed — see GameSessionProvider.
+    expect(secondBody.dayLog.dayNumber).toBe(openDayLog.dayNumber);
   });
 
   it('hides an EXAMINATION_RESULTS document until a successful CaseExamination exists for it', async () => {

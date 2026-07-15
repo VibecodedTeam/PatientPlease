@@ -1,68 +1,157 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ApiProvider } from '../../../providers/Api';
+import { RoundProvider } from '../../../providers/Round';
 import { NightView } from '../../../views/NightView';
 
-const CATALOG = {
-  money: 100,
+const SHOP_BEFORE_BUY = {
   items: [
-    { id: 'a', sku: 'A', name: 'Atlas of Dermoscopy', description: 'ref', itemType: 'HANDBOOK', price: 40, unlockDay: null, iconImageUrl: null, owned: false },
-    { id: 'b', sku: 'B', name: 'UV Meter', description: 'tool', itemType: 'EQUIPMENT', price: 70, unlockDay: null, iconImageUrl: null, owned: false },
+    {
+      id: 'i1',
+      sku: 's1',
+      name: 'Atlas of Dermatology',
+      description: 'A high-resolution reference for reading pigment networks.',
+      itemType: 'HANDBOOK',
+      price: 45,
+      owned: false,
+      timeCostMs: null,
+    },
+    {
+      id: 'i2',
+      sku: 's2',
+      name: 'Dermatoscope',
+      description: 'A magnifying tool for close examination of lesions.',
+      itemType: 'EQUIPMENT',
+      price: 60,
+      owned: true,
+      timeCostMs: null,
+    },
   ],
+  money: 120,
+  isNightPhase: true,
+  upcomingDayNumber: 2,
+  inventoryCapacity: 1,
 };
+
+const SHOP_AFTER_BUY = {
+  ...SHOP_BEFORE_BUY,
+  items: [
+    { ...SHOP_BEFORE_BUY.items[0], owned: true },
+    SHOP_BEFORE_BUY.items[1],
+  ],
+  money: 75,
+};
+
+function jsonResponse(body, status = 200) {
+  return Promise.resolve(new Response(JSON.stringify(body), { status }));
+}
+
+function mockFetch({ shopResponses = [SHOP_BEFORE_BUY] } = {}) {
+  let shopCallCount = 0;
+  global.fetch = jest.fn().mockImplementation((request) => {
+    const pathname = new URL(request.url).pathname;
+    if (pathname === '/api/v1/round') {
+      return jsonResponse({ gameSession: { id: 'g1', money: SHOP_BEFORE_BUY.money, status: 'ACTIVE' } });
+    }
+    if (pathname === '/api/v1/shop' && request.method === 'GET') {
+      const body = shopResponses[Math.min(shopCallCount, shopResponses.length - 1)];
+      shopCallCount += 1;
+      return jsonResponse(body);
+    }
+    if (pathname === '/api/v1/shop/purchase' && request.method === 'POST') {
+      return jsonResponse({
+        gameSession: { id: 'g1', money: 75, status: 'ACTIVE' },
+        ownedItem: { id: 'owned-1' },
+      });
+    }
+    return jsonResponse({}, 404);
+  });
+}
 
 function renderNightView() {
   return render(
     <ApiProvider baseUrl="http://api.test">
-      <NightView />
+      <RoundProvider>
+        <MemoryRouter initialEntries={['/game/night']}>
+          <Routes>
+            <Route path="/game/night" element={<NightView />} />
+            <Route path="/game/main" element={<div>Main View Stub</div>} />
+          </Routes>
+        </MemoryRouter>
+      </RoundProvider>
     </ApiProvider>,
   );
 }
 
 describe('NightView', () => {
-  it('renders items and the real balance from the backend', async () => {
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve(new Response(JSON.stringify(CATALOG), { status: 200 })));
+  it('renders the shop heading and balance from the backend', async () => {
+    mockFetch();
     renderNightView();
 
-    await waitFor(() => expect(screen.getByText('Atlas of Dermoscopy')).toBeInTheDocument());
     expect(screen.getByRole('heading', { name: 'Shop for Items' })).toBeInTheDocument();
-    expect(screen.getByText('$40')).toBeInTheDocument();
-    expect(screen.getByText('100')).toBeInTheDocument(); // real money in the balance chip
-    expect(screen.getByText('Handbook')).toBeInTheDocument(); // itemType label
+    expect(screen.getByText('End of shift')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('120')).toBeInTheDocument());
   });
 
-  it('selecting an item updates the cart total and clamps to the balance', async () => {
-    const user = userEvent.setup();
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve(new Response(JSON.stringify(CATALOG), { status: 200 })));
+  it('renders the catalog and marks owned items with no select control', async () => {
+    mockFetch();
     renderNightView();
-    await waitFor(() => screen.getByText('UV Meter'));
 
-    await user.click(screen.getByRole('button', { name: /select UV Meter/i }));
-    expect(screen.getByText(/1 item selected/i)).toBeInTheDocument();
-    // Atlas (40) no longer fits in remaining 30 → its toggle is disabled
-    expect(screen.getByRole('button', { name: /select Atlas of Dermoscopy/i })).toBeDisabled();
+    await waitFor(() => expect(screen.getByText('Atlas of Dermatology')).toBeInTheDocument());
+    expect(screen.getByText('$45')).toBeInTheDocument();
+    expect(screen.getByText('Dermatoscope')).toBeInTheDocument();
+    expect(screen.getByText('$60')).toBeInTheDocument();
+    expect(screen.getByText('In library')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /select dermatoscope/i })).not.toBeInTheDocument();
   });
 
-  it('Buy commits the selection via POST and refreshes', async () => {
-    const user = userEvent.setup();
-    const posted = [];
-    global.fetch = jest.fn().mockImplementation((input, init) => {
-      const url = typeof input === 'string' ? input : input.url;
-      const method = String(init?.method ?? (typeof input === 'object' ? input.method : 'GET') ?? 'GET').toUpperCase();
-      if (url.endsWith('/api/v1/shop/purchase')) {
-        posted.push({ url, method });
-        return Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 60 }, ownedItem: { id: 'x' } }), { status: 200 }));
-      }
-      return Promise.resolve(new Response(JSON.stringify(CATALOG), { status: 200 }));
-    });
+  it('starts with nothing selected and a Skip action', async () => {
+    mockFetch();
     renderNightView();
-    await waitFor(() => screen.getByText('Atlas of Dermoscopy'));
 
-    await user.click(screen.getByRole('button', { name: /select Atlas of Dermoscopy/i }));
-    await user.click(screen.getByRole('button', { name: /^buy/i }));
-    await waitFor(() => expect(posted.length).toBe(1));
+    await waitFor(() => expect(screen.getByText('No items selected')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Skip' })).toBeInTheDocument();
+  });
+
+  it('selecting an item updates the cart total and the action button', async () => {
+    mockFetch();
+    const user = userEvent.setup();
+    renderNightView();
+
+    await waitFor(() => expect(screen.getByText('Atlas of Dermatology')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /select atlas of dermatology/i }));
+
+    expect(screen.getByText('1 item selected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Buy · $45' })).toBeInTheDocument();
+  });
+
+  it('buying purchases the selection, refreshes the catalog, and redirects to /game/main', async () => {
+    mockFetch({ shopResponses: [SHOP_BEFORE_BUY, SHOP_AFTER_BUY] });
+    const user = userEvent.setup();
+    renderNightView();
+
+    await waitFor(() => expect(screen.getByText('Atlas of Dermatology')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /select atlas of dermatology/i }));
+    await user.click(screen.getByRole('button', { name: 'Buy · $45' }));
+
+    await waitFor(() => expect(screen.getByText('Main View Stub')).toBeInTheDocument());
+    const purchaseRequest = global.fetch.mock.calls
+      .map(([request]) => request)
+      .find((request) => new URL(request.url).pathname === '/api/v1/shop/purchase');
+    expect(purchaseRequest).toBeDefined();
+    expect(purchaseRequest.method).toBe('POST');
+  });
+
+  it('skipping (nothing selected) redirects to /game/main', async () => {
+    mockFetch();
+    const user = userEvent.setup();
+    renderNightView();
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Skip' })).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Skip' }));
+
+    expect(screen.getByText('Main View Stub')).toBeInTheDocument();
   });
 });

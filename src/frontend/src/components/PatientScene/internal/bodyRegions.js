@@ -16,6 +16,7 @@ export const BodyRegion = Object.freeze({
   RIGHT_HAND: 'RIGHT_HAND',
   LEFT_FOOT: 'LEFT_FOOT',
   RIGHT_FOOT: 'RIGHT_FOOT',
+  OTHER: 'OTHER',
 });
 
 /**
@@ -38,4 +39,6 @@ export const BODY_REGION_COORDINATES = {
   [BodyRegion.RIGHT_HAND]: { x: 5, y: 12, z: 0 },
   [BodyRegion.LEFT_FOOT]: { x: -1, y: 0.5, z: 1 },
   [BodyRegion.RIGHT_FOOT]: { x: 1, y: 0.5, z: 1 },
+  // No specific body part - placed at a neutral, central point on the torso.
+  [BodyRegion.OTHER]: { x: 0, y: 10, z: 0 },
 };

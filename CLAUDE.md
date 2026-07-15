@@ -92,7 +92,11 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 │   │       │   │   ├── MainView.module.css
 │   │       │   │   └── providers/         # domains consumed only inside MainView's own subtree
 │   │       │   │       └── Round/
-│   │       │   └── NightView/
+│   │       │   ├── NightView/              # night/shop phase
+│   │       │   │   ├── index.js
+│   │       │   │   ├── NightView.jsx
+│   │       │   │   └── NightView.module.css
+│   │       │   └── StartView/              # pre-game splash screen, routed at / (public; PLAY signs in via Google, then enters /game/*)
 │   │       │       ├── index.js
 │   │       │       ├── NightView.jsx
 │   │       │       └── NightView.module.css
@@ -142,9 +146,9 @@ This is a content-and-logic-heavy simulation game, not an action game — correc
 Rules tied to this structure:
 - `src/frontend` and `src/backend` are **owned modules**. Frontend code never imports anything from `src/backend/**` and vice versa. The only contract is the HTTP API described in `docs/api/`.
 - `src/frontend/src/` is the entire frontend, full stop: the React entry tree (`main.jsx`, `App.jsx`, the app-root `providers/`, `views/`, `components/`, `styles/`), plus `lib/`, `tests/`, and `e2e/`. Only build/tooling config (`package.json`, `Dockerfile`, `vite.config.js`, `index.html`, `jest.config.js`, `playwright.config.js`) stays at `src/frontend/`'s top level, outside `src/`.
-- `src/frontend/src/App.jsx` is composition-only: it wires `views/` to routes via `react-router-dom`, it does not contain view business logic or its own state. It also composes the small set of app-wide providers (`Api`, `Auth`) — those live next to it, in `src/frontend/src/providers/`.
+- `src/frontend/src/App.jsx` is composition-only: it wires `views/` to routes via `react-router-dom`, it does not contain view business logic or its own state. It also composes the small set of app-wide providers (`Api`, `Auth`) — those live next to it, in `src/frontend/src/providers/`. An app-root domain that depends on another app-root domain's state already being resolved (e.g. an auth-gated session) is instead composed in `AppRoutes.jsx`, not `App.jsx`, but still lives in `src/frontend/src/providers/<Domain>/`.
 - `src/frontend/src/lib/` is allowed but scoped to pure, framework-free, stateless helpers only (Section 1, constraint 10) — currently just `lib/Api/`, the shared axios client factory every provider that talks HTTP builds its client from. Living inside `src/` doesn't relax this scope — it still holds no React code, state, or JSX.
-- There is no top-level `providers/` folder outside `src/frontend/src/providers/`. A provider used only within one view's or component's own subtree lives co-located inside that folder, in its own `providers/<Domain>/` subfolder (e.g. `views/MainView/providers/Round/`, `components/Table/providers/DocumentTable/`, both under `src/frontend/src/`) — see Section 5 for the full rule.
+- There is no top-level `providers/` folder outside `src/frontend/src/providers/`. A provider used only within one view's or component's own subtree lives co-located inside that folder, in its own `providers/<Domain>/` subfolder (e.g. `views/MainView/providers/GameSession/`, `components/Table/providers/DocumentTable/`, both under `src/frontend/src/`) — see Section 5 for the full rule.
 - `src/frontend/src/views/` holds one folder per top-level screen/route wired to its own path in `App.jsx`'s route table — currently `MainView` (day phase), `NightView` (night/shop phase), and `StartView` (pre-game skin-cancer-awareness landing page). Adding a new top-level screen means adding its `views/<Name>/` entry here and in Section 6's naming list — it is not a `features/` folder and this list is not meant to stay capped at any fixed number. Every other screen element (patient scene, documents, diagnosis panel, chat, shop, inventory, popups, info board) is a `src/frontend/src/components/` entry composed inside one of those views, not its own view.
 
 ---
@@ -153,15 +157,16 @@ Rules tied to this structure:
 
 **Rule**: Every cross-cutting domain of state gets **exactly one Provider + exactly one custom hook**, and that pair is the *only* legal way for anything outside that domain to read or mutate its state. **Where a domain's provider lives depends on its reach, not a fixed top-level folder:**
 
-- A domain consumed only within one view's or component's own subtree lives **co-located inside that owning folder**, in its own `providers/<Domain>/` subfolder — e.g. `views/MainView/providers/Round/`, `components/Table/providers/DocumentTable/`.
-- A domain composed once at the app root and consumed across multiple, otherwise-unrelated views (currently `Api` and `Auth`) lives next to `src/frontend/src/App.jsx`, in `src/frontend/src/providers/<Domain>/` — co-located with the one file that composes it.
+- A domain consumed only within one view's or component's own subtree lives **co-located inside that owning folder**, in its own `providers/<Domain>/` subfolder — e.g. `views/MainView/providers/GameSession/`, `components/Table/providers/DocumentTable/`.
+- A domain composed once at the app root and consumed across multiple, otherwise-unrelated views (currently `Api`, `Auth`, and `Round`) lives next to `src/frontend/src/App.jsx`, in `src/frontend/src/providers/<Domain>/` — co-located with the one file that composes it. If composing the domain at `App.jsx` would require a dependency `App.jsx` can't express (e.g. requiring an authenticated session), it is composed in `AppRoutes.jsx` instead — still in `src/frontend/src/providers/<Domain>/`, just wired one level down, inside the relevant auth gate.
 - Either way the pattern inside the `<Domain>/` folder is identical (naming is mandatory, not a suggestion): `<Domain>Provider.jsx` (component) + `use<Domain>.js` (hook) + `index.js` (barrel exporting only the public Provider + hook). Nesting a provider inside a view/component folder does not make it "internal" to that folder — it still gets its own barrel and is importable by anything that legitimately needs that domain, the same as a top-level provider would be.
 
 Current domains:
 
-- `Round` → `views/MainView/providers/Round/RoundProvider.jsx` + `useRound.js`. Owns: the full round payload (game session, owned items, active case, diagnosis/treatment catalogs). Consumed only within `MainView`.
+- `Round` → `providers/Round/RoundProvider.jsx` + `useRound.js`. Owns: the full round payload (game session, owned items, active case, diagnosis/treatment catalogs) plus every gameplay action that mutates it (`pauseGame`, `resetDay`, `resetGame`, `endDay`, `loadShopCatalog`, `purchaseShopItem`) — the only provider besides `Auth` that calls `useApi()`. Composed once in `AppRoutes.jsx` inside `AuthGate`; consumed by `MainView` and `NightView`.
+- `GameSession` → `views/MainView/providers/GameSession/GameSessionProvider.jsx` + `useGameSession.js`. Owns: the day timer (`elapsedSeconds`, `isPaused`, `isDayOver`) and thin wrappers around `Round`'s `pauseGame`/`resetDay`/`resetGame`/`endDay`. Consumed only within `MainView`.
 - `DocumentTable` → `components/Table/providers/DocumentTable/DocumentTableProvider.jsx` + `useDocumentTable.js`. Owns: the desk documents narrowed from `Round`'s payload. Consumed only within `Table`.
-- `Api` → `providers/Api/ApiProvider.jsx` + `useApi.js`. Owns: the HTTP client to the backend API (base URL, credentials, JSON parsing, error normalization), built via `lib/Api`'s `createHttpClient`. This is the only place frontend code builds an HTTP client directly — every other provider/component that needs the backend consumes `useApi()`.
+- `Api` → `providers/Api/ApiProvider.jsx` + `useApi.js`. Owns: the HTTP client to the backend API (base URL, credentials, JSON parsing, error normalization), built via `lib/Api`'s `createHttpClient`. This is the only place frontend code builds an HTTP client directly — every other provider/component that needs the backend consumes `useApi()` (or, for gameplay data specifically, `useRound()` — see the `Round` domain above).
 - `Auth` → `providers/Auth/AuthProvider.jsx` + `useAuth.js`. Owns: the signed-in user, auth status, login/logout. Consumes `useApi()` like any other domain would.
 - Future domains (`PatientSession`, `Diagnosis`, `Inventory`, `DayNight`, `Chat`, etc.) follow the identical `<Domain>Provider.jsx` + `use<Domain>.js` + `index.js` naming; whether each ends up co-located or app-root depends on its actual reach once it's built, not decided in advance here.
 

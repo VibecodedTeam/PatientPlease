@@ -1,14 +1,15 @@
 import { jest } from '@jest/globals';
 import {
   GameCompletedError,
-  GameOverError,
   NoCasesRemainingError,
   pickIndexForSeed,
   resolveGameSession,
   resolveOpenGameDayLog,
+  selectDiagnosisOptions,
   selectNextCase,
   startRound,
   type CaseRecord,
+  type DiagnosisRecord,
   type GameDayLogRecord,
   type GameSessionRecord,
   type RoundPrismaClient,
@@ -42,6 +43,9 @@ function createMockPrisma() {
     caseExamination: {
       findMany: jest.fn<RoundPrismaClient['caseExamination']['findMany']>(),
     },
+    caseDocumentReveal: {
+      findMany: jest.fn<RoundPrismaClient['caseDocumentReveal']['findMany']>(),
+    },
   };
 }
 
@@ -62,6 +66,8 @@ function makeCase(overrides: Partial<CaseRecord> = {}): CaseRecord {
   return {
     id: 'case-uuid',
     difficulty: 1,
+    featuredOrder: null,
+    correctDiagnosisId: 'diagnosis-uuid',
     moneyReward: 50,
     moneyPenalty: 20,
     patient: {
@@ -218,13 +224,17 @@ describe('resolveGameSession', () => {
     expect(prisma.gameSession.update).not.toHaveBeenCalled();
   });
 
-  it('throws GameOverError and creates no new session when the latest is GAME_OVER', async () => {
+  it('creates a brand-new session when the latest is GAME_OVER, per docs/api/game.md', async () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findFirst.mockResolvedValue(makeSession({ status: 'GAME_OVER' }));
+    prisma.gameSession.create.mockResolvedValue(makeSession({ status: 'ACTIVE', money: 0 }));
 
-    await expect(resolveGameSession(prisma, 'user-uuid')).rejects.toThrow(GameOverError);
-    expect(prisma.gameSession.create).not.toHaveBeenCalled();
-    expect(prisma.gameSession.update).not.toHaveBeenCalled();
+    const result = await resolveGameSession(prisma, 'user-uuid');
+
+    expect(prisma.gameSession.create).toHaveBeenCalledWith({
+      data: { userId: 'user-uuid', money: 0, consecutiveBadDiagnosisCount: 0, status: 'ACTIVE' },
+    });
+    expect(result.status).toBe('ACTIVE');
   });
 });
 
@@ -259,9 +269,29 @@ describe('pickIndexForSeed', () => {
 });
 
 describe('selectNextCase', () => {
+  it('returns the lowest-featuredOrder unattempted case before the difficulty fallback', async () => {
+    const prisma = createMockPrisma();
+    const featuredCase = makeCase({ id: 'featured-1', featuredOrder: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(featuredCase);
+
+    const result = await selectNextCase(prisma, 'session-uuid');
+
+    expect(result).toBe(featuredCase);
+    expect(prisma.case.findFirst).toHaveBeenCalledWith({
+      where: {
+        isActive: true,
+        featuredOrder: { not: null },
+        diagnosisAttempts: { none: { gameDayLog: { gameSessionId: 'session-uuid' } } },
+      },
+      orderBy: { featuredOrder: 'asc' },
+      include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
+    });
+    expect(prisma.case.findMany).not.toHaveBeenCalled();
+  });
+
   it('queries the minimum difficulty among active, un-attempted cases', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 2 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 2 });
     prisma.case.findMany.mockResolvedValue([makeCase({ difficulty: 2 })]);
 
     await selectNextCase(prisma, 'session-uuid');
@@ -278,7 +308,7 @@ describe('selectNextCase', () => {
 
   it('fetches every active, un-attempted case at that minimum difficulty', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 2 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 2 });
     prisma.case.findMany.mockResolvedValue([makeCase({ difficulty: 2 })]);
 
     await selectNextCase(prisma, 'session-uuid');
@@ -296,7 +326,7 @@ describe('selectNextCase', () => {
 
   it('deterministically picks among tied candidates based on the game session id', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 1 });
     const candidates = [
       makeCase({ id: 'case-a' }),
       makeCase({ id: 'case-b' }),
@@ -312,7 +342,10 @@ describe('selectNextCase', () => {
 
   it('returns the same case across repeated calls for the same session and candidate set', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    // Called twice below, so use an implementation: no featured case, difficulty 1 otherwise.
+    prisma.case.findFirst.mockImplementation((args) =>
+      Promise.resolve('featuredOrder' in args.where ? null : { difficulty: 1 }),
+    );
     const candidates = [
       makeCase({ id: 'case-a' }),
       makeCase({ id: 'case-b' }),
@@ -328,7 +361,7 @@ describe('selectNextCase', () => {
 
   it('returns the sole candidate when only one case ties at the lowest difficulty', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 1 });
     const onlyCase = makeCase({ id: 'case-only' });
     prisma.case.findMany.mockResolvedValue([onlyCase]);
 
@@ -343,6 +376,79 @@ describe('selectNextCase', () => {
 
     expect(result).toBeNull();
     expect(prisma.case.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe('selectDiagnosisOptions', () => {
+  const catalog: DiagnosisRecord[] = [
+    { id: 'd1', code: 'melanoma', name: 'Melanoma', category: 'MALIGNANT' },
+    { id: 'd2', code: 'bcc', name: 'Basal Cell Carcinoma', category: 'MALIGNANT' },
+    { id: 'd3', code: 'nevus', name: 'Nevus', category: 'BENIGN' },
+    { id: 'd4', code: 'psoriasis', name: 'Psoriasis', category: 'INFLAMMATORY' },
+    { id: 'd5', code: 'eczema', name: 'Eczema', category: 'INFLAMMATORY' },
+    { id: 'd6', code: 'wart', name: 'Wart', category: 'INFECTIOUS' },
+  ];
+
+  it('returns exactly 4 diagnoses when the catalog has at least 4', () => {
+    const result = selectDiagnosisOptions(catalog, 'd1');
+
+    expect(result).toHaveLength(4);
+  });
+
+  it('always includes the correct diagnosis', () => {
+    const result = selectDiagnosisOptions(catalog, 'd3');
+
+    expect(result.some((diagnosis) => diagnosis.id === 'd3')).toBe(true);
+  });
+
+  it('never returns duplicate diagnoses', () => {
+    const result = selectDiagnosisOptions(catalog, 'd1');
+    const ids = result.map((diagnosis) => diagnosis.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('falls back to the full catalog when fewer than 4 diagnoses exist', () => {
+    const smallCatalog = catalog.slice(0, 2);
+
+    const result = selectDiagnosisOptions(smallCatalog, 'd1');
+
+    expect(result).toHaveLength(2);
+    expect(result.map((diagnosis) => diagnosis.id).sort()).toEqual(['d1', 'd2']);
+  });
+
+  it('sorts the returned options by name', () => {
+    const result = selectDiagnosisOptions(catalog, 'd1', () => 0);
+    const names = result.map((diagnosis) => diagnosis.name);
+
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
+  it('picks different decoys when given a different random sequence, so repeat calls can reshuffle', () => {
+    const alwaysFirst = () => 0;
+    const alwaysLast = () => 0.999;
+
+    const resultA = selectDiagnosisOptions(catalog, 'd1', alwaysFirst);
+    const resultB = selectDiagnosisOptions(catalog, 'd1', alwaysLast);
+
+    expect(resultA.map((diagnosis) => diagnosis.id).sort()).not.toEqual(
+      resultB.map((diagnosis) => diagnosis.id).sort(),
+    );
+  });
+
+  it('throws a clear error when correctDiagnosisId is not present in the diagnoses catalog', () => {
+    expect(() => selectDiagnosisOptions(catalog, 'not-a-real-id')).toThrow(/not-a-real-id/);
+  });
+
+  it('never produces an undefined decoy when the injected random returns the upper boundary value 1', () => {
+    const alwaysOne = () => 1;
+
+    const result = selectDiagnosisOptions(catalog, 'd1', alwaysOne);
+
+    expect(result).toHaveLength(4);
+    expect(result.every((diagnosis) => diagnosis !== undefined)).toBe(true);
+    const ids = result.map((diagnosis) => diagnosis.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 
@@ -409,7 +515,7 @@ describe('resolveOpenGameDayLog', () => {
 describe('startRound', () => {
   function primeHappyPath(prisma: ReturnType<typeof createMockPrisma>) {
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 1 });
     prisma.case.findMany.mockResolvedValue([makeCase()]);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog());
     prisma.ownedItem.findMany.mockResolvedValue([
@@ -436,6 +542,7 @@ describe('startRound', () => {
       { id: 'treatment-uuid', code: 'REFER_ONCO', name: 'Refer to oncology', kind: 'REFERRAL' },
     ]);
     prisma.caseExamination.findMany.mockResolvedValue([]);
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
   }
 
   it('shapes the full happy-path response', async () => {
@@ -454,6 +561,7 @@ describe('startRound', () => {
         createdAt: new Date('2026-07-01T00:00:00.000Z'),
         updatedAt: new Date('2026-07-01T00:00:00.000Z'),
       },
+      dayLog: { dayNumber: 1, elapsedMs: expect.any(Number) as number },
       ownedItems: [
         {
           id: 'owned-item-uuid',
@@ -507,10 +615,11 @@ describe('startRound', () => {
       treatmentOptions: [
         { id: 'treatment-uuid', code: 'REFER_ONCO', name: 'Refer to oncology', kind: 'REFERRAL' },
       ],
+      dayLog: { elapsedMs: expect.any(Number) as number, dayNumber: 1 },
     });
   });
 
-  it('never leaks answer-key fields present on the raw Case record', async () => {
+  it('never leaks correctDiagnosisId/correctTreatmentId/resultExplanationText', async () => {
     const prisma = createMockPrisma();
     primeHappyPath(prisma);
     prisma.case.findMany.mockResolvedValue([
@@ -648,13 +757,131 @@ describe('startRound', () => {
     ]);
   });
 
-  it('never filters non-EXAMINATION_RESULTS document types', async () => {
+  it('omits a reveal-gated document (e.g. DISEASE_HISTORY) when no CaseDocumentReveal row exists for it', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.case.findMany.mockResolvedValue([
+      makeCase({
+        documents: [
+          ...makeCase().documents,
+          {
+            id: 'history-doc-uuid',
+            attentionPointRegion: null,
+            type: 'DISEASE_HISTORY',
+            title: 'Disease history',
+            documentDate: null,
+            sortOrder: 2,
+            imageUrl: null,
+            imageWidthPx: null,
+            imageHeightPx: null,
+            imageAltText: null,
+            content: { pastDiagnoses: 'None' },
+          },
+        ],
+      }),
+    ]);
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(prisma.caseDocumentReveal.findMany).toHaveBeenCalledWith({
+      where: { gameSessionId: 'session-uuid', caseId: 'case-uuid' },
+      select: { caseDocumentId: true },
+    });
+    expect(result.case.documents.map((document) => document.id)).toEqual(['document-uuid']);
+  });
+
+  it('includes a reveal-gated document once a CaseDocumentReveal row exists for it', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.case.findMany.mockResolvedValue([
+      makeCase({
+        documents: [
+          ...makeCase().documents,
+          {
+            id: 'history-doc-uuid',
+            attentionPointRegion: null,
+            type: 'DISEASE_HISTORY',
+            title: 'Disease history',
+            documentDate: null,
+            sortOrder: 2,
+            imageUrl: null,
+            imageWidthPx: null,
+            imageHeightPx: null,
+            imageAltText: null,
+            content: { pastDiagnoses: 'None' },
+          },
+        ],
+      }),
+    ]);
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([{ caseDocumentId: 'history-doc-uuid' }]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(result.case.documents.map((document) => document.id)).toEqual([
+      'document-uuid',
+      'history-doc-uuid',
+    ]);
+  });
+
+  it('narrows diagnosisOptions to 4 entries (correct + 3 decoys) when the catalog has more', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    prisma.diagnosis.findMany.mockResolvedValue([
+      { id: 'diagnosis-uuid', code: 'MELANOMA', name: 'Melanoma', category: 'MALIGNANT' },
+      { id: 'd2', code: 'bcc', name: 'Basal Cell Carcinoma', category: 'MALIGNANT' },
+      { id: 'd3', code: 'nevus', name: 'Nevus', category: 'BENIGN' },
+      { id: 'd4', code: 'psoriasis', name: 'Psoriasis', category: 'INFLAMMATORY' },
+      { id: 'd5', code: 'eczema', name: 'Eczema', category: 'INFLAMMATORY' },
+      { id: 'd6', code: 'wart', name: 'Wart', category: 'INFECTIOUS' },
+    ]);
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    expect(result.diagnosisOptions).toHaveLength(4);
+    expect(result.diagnosisOptions.some((diagnosis) => diagnosis.id === 'diagnosis-uuid')).toBe(
+      true,
+    );
+    const ids = result.diagnosisOptions.map((diagnosis) => diagnosis.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('always includes a SKIN_IMAGE document regardless of CaseDocumentReveal rows', async () => {
     const prisma = createMockPrisma();
     primeHappyPath(prisma);
     prisma.caseExamination.findMany.mockResolvedValue([]);
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
 
     const result = await startRound(prisma, 'user-uuid');
 
     expect(result.case.documents.map((document) => document.id)).toEqual(['document-uuid']);
+  });
+
+  it('includes dayLog.elapsedMs computed from the open GameDayLog, so a page refresh does not lose progress', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+    const now = Date.now();
+    prisma.gameDayLog.findFirst.mockResolvedValue(
+      makeGameDayLog({
+        startedAt: new Date(now - 10_000),
+        totalPausedMs: 2_000,
+        extraElapsedMs: 500,
+      }),
+    );
+
+    const result = await startRound(prisma, 'user-uuid');
+
+    // ~10s wall clock - 2s paused + 0.5s extra = ~8.5s; allow scheduling slack.
+    expect(result.dayLog.elapsedMs).toBeGreaterThanOrEqual(8_400);
+    expect(result.dayLog.elapsedMs).toBeLessThan(8_800);
+  });
+
+  it('does not create a new GameDayLog to compute dayLog.elapsedMs (resume path)', async () => {
+    const prisma = createMockPrisma();
+    primeHappyPath(prisma);
+
+    await startRound(prisma, 'user-uuid');
+
+    expect(prisma.gameDayLog.create).not.toHaveBeenCalled();
   });
 });

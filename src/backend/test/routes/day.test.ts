@@ -228,14 +228,14 @@ describe('POST /api/v1/day/reset', () => {
     expect(body.gameSession.status).toBe('ACTIVE');
   });
 
-  it('accumulates totalPausedMs from a stamped pausedAt before clearing it', async () => {
+  it('resets totalPausedMs to 0 and clears pausedAt, even when a pause was already in progress', async () => {
     app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
     await app.ready();
     const { cookie, userId } = await signIn(app);
     const { gameDayLog } = await createActiveSessionWithOpenDay(userId);
     await prisma.gameDayLog.update({
       where: { id: gameDayLog.id },
-      data: { pausedAt: new Date(Date.now() - 5000) },
+      data: { pausedAt: new Date(Date.now() - 5000), totalPausedMs: 1000 },
     });
 
     const response = await app.inject({
@@ -249,8 +249,33 @@ describe('POST /api/v1/day/reset', () => {
       where: { id: gameDayLog.id },
     });
     expect(updatedDayLog.pausedAt).toBeNull();
-    expect(updatedDayLog.totalPausedMs).toBeGreaterThanOrEqual(5000);
-    expect(updatedDayLog.totalPausedMs).toBeLessThan(6000);
+    expect(updatedDayLog.totalPausedMs).toBe(0);
+  });
+
+  it('resets startedAt to now and extraElapsedMs to 0, going back in time to the start of day', async () => {
+    app = buildApp({ googleClient: createGoogleClient(VALID_PAYLOAD) });
+    await app.ready();
+    const { cookie, userId } = await signIn(app);
+    const oldStartedAt = new Date(Date.now() - 60 * 60 * 1000);
+    const { gameDayLog } = await createActiveSessionWithOpenDay(userId, 100, oldStartedAt);
+    await prisma.gameDayLog.update({
+      where: { id: gameDayLog.id },
+      data: { extraElapsedMs: 45_000 },
+    });
+
+    const before = Date.now();
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/day/reset',
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const updatedDayLog = await prisma.gameDayLog.findUniqueOrThrow({
+      where: { id: gameDayLog.id },
+    });
+    expect(updatedDayLog.extraElapsedMs).toBe(0);
+    expect(updatedDayLog.startedAt.getTime()).toBeGreaterThanOrEqual(before);
   });
 });
 
@@ -362,12 +387,15 @@ describe('POST /api/v1/day/end', () => {
         startingMoney: number;
         endingMoney: number;
         endedAt: string;
+        elapsedMs: number;
       };
     }>();
     expect(body.gameSession.status).toBe('ACTIVE');
     expect(body.dayLog.id).toBe(gameDayLog.id);
     expect(body.dayLog.endingMoney).toBe(80);
     expect(body.dayLog.endedAt).not.toBeNull();
+    expect(typeof body.dayLog.elapsedMs).toBe('number');
+    expect(body.dayLog.elapsedMs).toBeGreaterThanOrEqual(MIN_DAY_DURATION_MS);
     expect(rawBody).not.toContain('gameSessionId');
 
     const updated = await prisma.gameDayLog.findUniqueOrThrow({ where: { id: gameDayLog.id } });
