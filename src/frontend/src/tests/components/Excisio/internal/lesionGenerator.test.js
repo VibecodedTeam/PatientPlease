@@ -53,7 +53,7 @@ describe('generateLesions', () => {
         const b = lesions[j];
         const aRadius = a === mel ? a.maxR : a.r;
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
-        expect(distance).toBeGreaterThanOrEqual(aRadius + b.r + 52 - 1e-6);
+        expect(distance).toBeGreaterThanOrEqual(aRadius + b.r + 75 - 1e-6);
       }
     }
   });

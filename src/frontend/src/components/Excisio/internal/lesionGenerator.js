@@ -62,16 +62,18 @@ export function generateLesions({ config, axis, random = Math.random }) {
   let made = 0;
   while (lesions.length < decoyCount + 1 && tries < 500) {
     tries++;
-    // the higher the level, the more decoys are near-melanoma "hard" lookalikes
+    // the higher the level, the more decoys are near-melanoma "hard" lookalikes - but always
+    // staying a distinctly smaller, plainer mole, never ballooning up toward the melanoma's
+    // own size the way it used to at high levels.
     const hardFraction = 0.25 + menace * 0.6;
     const isHard = made < Math.round(decoyCount * hardFraction);
     const k = isHard ? menace : menace * 0.35;
-    const br = 10 + random() * 6 + k * (r * 0.62); // grows toward melanoma size
+    const br = clamp(9 + random() * 5 + k * (r * 0.35), 8, r * 0.8);
     const x = 175 + random() * 550;
     const y = 150 + random() * 330;
     let ok = true;
     for (const lesion of lesions) {
-      const need = (lesion === mel ? lesion.maxR : lesion.r) + br + 52;
+      const need = (lesion === mel ? lesion.maxR : lesion.r) + br + 75;
       if (Math.hypot(x - lesion.x, y - lesion.y) < need) {
         ok = false;
         break;
@@ -79,10 +81,10 @@ export function generateLesions({ config, axis, random = Math.random }) {
     }
     if (!ok) continue;
     made++;
-    const irregularity = (isHard ? 0.07 : 0.05) + k * 0.14; // more ragged edges
+    const irregularity = (isHard ? 0.05 : 0.03) + k * 0.08; // mild edge waviness, still round overall
+    const uneven = isHard && menace > 0.6;
     const darkness = isHard ? 0.45 + random() * 0.25 + k * 0.4 : 0.22 + random() * 0.18; // darker
     const base = Math.round(clamp(96 - darkness * 70, 18, 96));
-    const uneven = isHard && menace > 0.4;
     lesions.push({
       type: 'benign',
       x,

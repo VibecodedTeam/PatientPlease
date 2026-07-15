@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { OverlayPortal } from '../OverlayPortal';
 import { useExcisio } from './useExcisio';
 import { formatZloty } from './internal/geometry';
+import { DRAW_COLORS, DRAW_THICKNESSES } from './internal/plasterMotifs';
 import styles from './Excisio.module.css';
 
 const PREP_TOOLS = [
@@ -88,7 +89,9 @@ function buildBreakdown(result) {
     return {
       rows: [{ key: 'exc', name: 'Wycięcie (nieudane)', pct: result.excise || 0, weight: 100, pts: (result.excise || 0).toFixed(1), tone: '#ff6b6b' }],
       wrong: true,
-      note: 'Czerniak nie został usunięty w całości — zabieg uznano za nieudany, więc liczy się tylko ocena wycięcia; pozostałe etapy przepadają.',
+      note: result.oversized
+        ? 'Wycięto zdecydowanie za duży obszar zdrowej skóry — zabieg uznano za nieudany, więc liczy się tylko ocena wycięcia; pozostałe etapy przepadają.'
+        : 'Czerniak nie został usunięty w całości — zabieg uznano za nieudany, więc liczy się tylko ocena wycięcia; pozostałe etapy przepadają.',
     };
   }
   const fmt = (n) => n.toFixed(1);
@@ -156,13 +159,6 @@ export function Excisio() {
         >
           <div className={styles.stageGrid}>
             <canvas ref={refs.canvasRef} className={styles.canvasLayer} />
-            <canvas ref={refs.confettiRef} className={styles.canvasLayer} />
-
-            {ui.cheer && (
-              <div className={styles.cheerLayer}>
-                <div className={styles.cheerEmoji}>🤩</div>
-              </div>
-            )}
 
             {ui.redFlash && (
               <div className={styles.redFlashLayer}>
@@ -210,51 +206,146 @@ export function Excisio() {
               <div className={styles.plasterTrayLayer} onPointerDown={handlers.stopPropagation}>
                 <div className={styles.plasterTray}>
                   <div className={styles.plasterTrayHeader}>
-                    <div className={styles.plasterIconBox}>
-                      <PlasterTrayIcon />
-                    </div>
-                    <div>
-                      <div className={styles.trayEyebrow}>Tacka z plasterkami</div>
-                      <div className={styles.trayTitle}>Wybierz plasterek na ranę</div>
-                    </div>
-                  </div>
-                  <div className={styles.plasterBody}>
-                    <div className={styles.plasterScroll} ref={refs.plasterScrollRef}>
-                      <div className={styles.plasterGrid}>
-                        {plasterCards.map((card) => (
-                          <button
-                            key={card.id}
-                            type="button"
-                            title={card.name}
-                            className={styles.plasterCardButton}
-                            onClick={() => handlers.pickPlaster(card.id)}
-                          >
-                            {/* eslint-disable-next-line react/no-danger */}
-                            <span className={styles.plasterCardImage} dangerouslySetInnerHTML={{ __html: card.svgMarkup }} />
-                          </button>
-                        ))}
+                    <div className={styles.plasterTrayHeaderMain}>
+                      <div className={styles.plasterIconBox}>
+                        <PlasterTrayIcon />
+                      </div>
+                      <div>
+                        <div className={styles.trayEyebrow}>Tacka z plasterkami</div>
+                        <div className={styles.trayTitle}>
+                          {ui.showCustomDraw ? 'Narysuj własny plasterek' : 'Wybierz plasterek na ranę'}
+                        </div>
                       </div>
                     </div>
-                    <div className={styles.plasterScrollNav}>
+                    {ui.showCustomDraw ? (
+                      <button type="button" className={styles.customDrawBackButton} onClick={handlers.cancelCustomDraw}>
+                        ← Wróć do tacki
+                      </button>
+                    ) : (
                       <button
                         type="button"
-                        className={styles.plasterNavButton}
-                        onClick={handlers.scrollPlastersUp}
-                        aria-label="Przewiń w górę"
+                        className={styles.customDrawButton}
+                        onClick={handlers.openCustomDraw}
+                        title="Narysuj własny plasterek"
+                        aria-label="Narysuj własny plasterek"
                       >
-                        ▲
+                        <PlusIcon />
                       </button>
-                      <div className={styles.plasterNavTrack} />
-                      <button
-                        type="button"
-                        className={styles.plasterNavButton}
-                        onClick={handlers.scrollPlastersDown}
-                        aria-label="Przewiń w dół"
-                      >
-                        ▼
-                      </button>
-                    </div>
+                    )}
                   </div>
+
+                  {ui.showCustomDraw ? (
+                    <div className={styles.customDrawPanel}>
+                      <div className={styles.customDrawCanvasStack}>
+                        <canvas ref={refs.drawBgCanvasRef} width={448} height={200} className={styles.customDrawCanvas} />
+                        <canvas
+                          ref={refs.drawCanvasRef}
+                          width={448}
+                          height={200}
+                          className={styles.customDrawCanvas}
+                          onPointerDown={handlers.onDrawPointerDown}
+                          onPointerMove={handlers.onDrawPointerMove}
+                          onPointerUp={handlers.onDrawPointerUp}
+                          onPointerLeave={handlers.onDrawPointerUp}
+                        />
+                      </div>
+                      <div className={styles.customDrawPaletteRow}>
+                        <span className={styles.customDrawPaletteLabel}>Kolor plasterka</span>
+                        <div className={styles.customDrawPalette}>
+                          {DRAW_COLORS.map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              className={ui.plasterColor === color ? styles.drawSwatchActive : styles.drawSwatch}
+                              style={{ '--swatch': color }}
+                              onClick={() => handlers.setPlasterColor(color)}
+                              aria-label={`Kolor plasterka ${color}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className={styles.customDrawPaletteRow}>
+                        <span className={styles.customDrawPaletteLabel}>Kolor pisaka</span>
+                        <div className={styles.customDrawPalette}>
+                          {DRAW_COLORS.map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              className={ui.drawColor === color ? styles.drawSwatchActive : styles.drawSwatch}
+                              style={{ '--swatch': color }}
+                              onClick={() => handlers.setDrawColor(color)}
+                              aria-label={`Kolor pisaka ${color}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className={styles.customDrawPaletteRow}>
+                        <span className={styles.customDrawPaletteLabel}>Grubość pisaka</span>
+                        <div className={styles.customDrawPalette}>
+                          {DRAW_THICKNESSES.map((width) => (
+                            <button
+                              key={width}
+                              type="button"
+                              className={ui.drawThickness === width ? styles.drawThicknessButtonActive : styles.drawThicknessButton}
+                              onClick={() => handlers.setDrawThickness(width)}
+                              aria-label={`Grubość pisaka ${width}px`}
+                            >
+                              <span
+                                className={styles.drawThicknessDot}
+                                style={{ width, height: width, '--dot-color': ui.drawColor }}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className={styles.customDrawActions}>
+                        <button type="button" className={styles.retryButton} onClick={handlers.clearDrawing}>
+                          Wyczyść
+                        </button>
+                        <button type="button" className={styles.nextButton} onClick={handlers.finishCustomDraw}>
+                          Gotowe — przyklej
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={styles.plasterBody}>
+                      <div className={styles.plasterScroll} ref={refs.plasterScrollRef}>
+                        <div className={styles.plasterGrid}>
+                          {plasterCards.map((card) => (
+                            <button
+                              key={card.id}
+                              type="button"
+                              title={card.name}
+                              className={styles.plasterCardButton}
+                              onClick={() => handlers.pickPlaster(card.id)}
+                            >
+                              {/* eslint-disable-next-line react/no-danger */}
+                              <span className={styles.plasterCardImage} dangerouslySetInnerHTML={{ __html: card.svgMarkup }} />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className={styles.plasterScrollNav}>
+                        <button
+                          type="button"
+                          className={styles.plasterNavButton}
+                          onClick={handlers.scrollPlastersUp}
+                          aria-label="Przewiń w górę"
+                        >
+                          ▲
+                        </button>
+                        <div className={styles.plasterNavTrack} />
+                        <button
+                          type="button"
+                          className={styles.plasterNavButton}
+                          onClick={handlers.scrollPlastersDown}
+                          aria-label="Przewiń w dół"
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -375,6 +466,19 @@ export function Excisio() {
               <button type="button" className={styles.retryButton} onClick={handlers.retry}>Powtórz poziom</button>
               <button type="button" className={styles.nextButton} onClick={handlers.nextLevel}>Następny poziom →</button>
             </div>
+          </div>
+        </OverlayPortal>
+      )}
+
+      {ui.cheer && (
+        // overlay-portal: the >=90% celebration must cover the whole screen. It mounts fresh
+        // together with (and after, in source order) the result popup above, so both portals
+        // land in #overlay-root in the same commit and this one stacks on top per DOM order -
+        // an always-mounted portal would keep an earlier DOM position and stay hidden behind it.
+        <OverlayPortal onDismiss={undefined} dismissOnBackdropClick={false} overlayClassName={styles.cheerOverlay}>
+          <div className={styles.cheerStack}>
+            <canvas ref={refs.confettiRef} className={styles.confettiCanvas} />
+            <div className={styles.cheerEmoji}>🤩</div>
           </div>
         </OverlayPortal>
       )}
@@ -505,6 +609,13 @@ function PlasterTrayIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="7" width="18" height="10" rx="4" transform="rotate(-30 12 12)" />
       <circle cx="12" cy="12" r="1.4" />
+    </svg>
+  );
+}
+function PlusIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4v16M4 12h16" />
     </svg>
   );
 }
