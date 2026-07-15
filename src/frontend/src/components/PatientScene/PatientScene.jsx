@@ -94,6 +94,11 @@ export function PatientScene({ documents = [] }) {
       if (!containerRef.current) return;
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
+      // The pane is hidden (display:none, e.g. the player is on the Chat tab)
+      // rather than actually resized to nothing — skip so a resize event firing
+      // while hidden can't zero out the camera/renderer, leaving them stuck at
+      // 0x0 (NaN aspect) with no later event to ever correct it.
+      if (width === 0 || height === 0) return;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);

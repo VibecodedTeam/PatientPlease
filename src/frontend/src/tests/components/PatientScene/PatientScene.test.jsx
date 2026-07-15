@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import * as THREE_MOCKED from 'three';
 import { PatientSceneContext } from '../../../components/PatientScene/PatientSceneProvider';
 import { PatientScene } from '../../../components/PatientScene';
 import { pickDot } from '../../../components/PatientScene/internal/pickDot';
@@ -309,5 +310,56 @@ describe('PatientScene', () => {
     pickDot.mockReturnValue(chestDot);
     fireEvent.click(canvas, { clientX: 150, clientY: 75 });
     expect(screen.getByRole('img').getAttribute('src')).toMatch(/^\/melanoma\/.+\.jpg$/);
+  });
+
+  // MainView.jsx keeps PatientScene mounted and toggles `display: none` on
+  // its wrapper (via styles.paneHidden) instead of unmounting it when the
+  // player switches to Chat. A native `resize` event firing on `window`
+  // while the pane is hidden (e.g. the player maximizes/resizes the browser
+  // while on the Chat tab) must not be allowed to zero out the renderer via
+  // handleResize (PatientScene.jsx:93-102) — the hidden container's
+  // clientWidth/clientHeight are both 0, and nothing would otherwise
+  // re-trigger a resize when the player switches back to the 3D tab
+  // (MainView only swaps the CSS class), leaving the canvas in the DOM but
+  // rendering nothing.
+  it('keeps the renderer at its last real size when a resize fires while the pane is hidden', () => {
+    const clientWidthDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'clientWidth');
+    const clientHeightDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'clientHeight');
+    const size = { width: 800, height: 600 };
+    Object.defineProperty(Element.prototype, 'clientWidth', {
+      configurable: true,
+      get: () => size.width,
+    });
+    Object.defineProperty(Element.prototype, 'clientHeight', {
+      configurable: true,
+      get: () => size.height,
+    });
+
+    try {
+      renderWithSceneContext({ model: null, status: 'loading', error: null });
+
+      const rendererInstance = THREE_MOCKED.WebGLRenderer.mock.results[0].value;
+      expect(rendererInstance.setSize).toHaveBeenLastCalledWith(800, 600);
+
+      // Player switches to Chat: MainView applies display:none to this pane
+      // (no unmount), and the browser fires a native resize while it's hidden.
+      size.width = 0;
+      size.height = 0;
+      window.dispatchEvent(new Event('resize'));
+      // The 0x0 reading must be ignored — setSize keeps its last real value.
+      expect(rendererInstance.setSize).toHaveBeenLastCalledWith(800, 600);
+      expect(rendererInstance.setSize).toHaveBeenCalledTimes(1);
+
+      // Player switches back to the 3D tab: pane becomes visible again with
+      // real dimensions restored. Nothing needed to recompute — it was never
+      // corrupted in the first place.
+      size.width = 800;
+      size.height = 600;
+
+      expect(rendererInstance.setSize).toHaveBeenLastCalledWith(800, 600);
+    } finally {
+      Object.defineProperty(Element.prototype, 'clientWidth', clientWidthDescriptor);
+      Object.defineProperty(Element.prototype, 'clientHeight', clientHeightDescriptor);
+    }
   });
 });
