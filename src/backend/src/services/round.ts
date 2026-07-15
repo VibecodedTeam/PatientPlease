@@ -436,6 +436,14 @@ function isVisibleDocument(
   return true;
 }
 
+function toDisplayContent(document: CaseDocumentRecord): CaseDocumentRecord['content'] {
+  if (document.type === 'EXAMINATION_RESULTS') {
+    const findings = (document.content as { findings?: string } | null)?.findings;
+    return findings !== undefined ? { findings } : document.content;
+  }
+  return document.content;
+}
+
 function toCaseResponse(
   record: CaseRecord,
   visibleExaminationShopItemIds: Set<string>,
@@ -470,7 +478,7 @@ function toCaseResponse(
         imageWidthPx: document.imageWidthPx,
         imageHeightPx: document.imageHeightPx,
         imageAltText: document.imageAltText,
-        content: document.content,
+        content: toDisplayContent(document),
       })),
   };
 }
