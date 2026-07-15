@@ -43,4 +43,31 @@ describe('createHttpClient', () => {
     const request = global.fetch.mock.calls[0][0];
     expect(request.credentials).toBe('omit');
   });
+
+  it('declares a JSON content-type on a POST with no explicit body', async () => {
+    global.fetch = jest.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+
+    const client = createHttpClient('http://api.test');
+    await client.post('/things');
+
+    // axios forces Content-Type: application/x-www-form-urlencoded onto any
+    // POST/PUT/PATCH with an undefined body, and this backend has no parser
+    // registered for that content type, so a truly bodyless request gets
+    // rejected (415) — every no-body POST in this app (round.start,
+    // game.pause/reset, day.reset/end, auth.logout) would hit this in real
+    // use. Defaulting the body to `{}` (see httpClient.js) sends a valid,
+    // non-empty JSON payload instead, which Fastify parses fine.
+    const request = global.fetch.mock.calls[0][0];
+    expect(request.headers.get('content-type')).toBe('application/json');
+  });
+
+  it('still declares a JSON content-type on a POST that does send a body', async () => {
+    global.fetch = jest.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+
+    const client = createHttpClient('http://api.test');
+    await client.post('/things', { a: 1 });
+
+    const request = global.fetch.mock.calls[0][0];
+    expect(request.headers.get('content-type')).toBe('application/json');
+  });
 });

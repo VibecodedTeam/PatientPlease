@@ -1,10 +1,10 @@
 .slot {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  flex: 0 0 240px;
+  flex: 240 1 0;
+  min-width: 0;
+  max-height: 100%;
   box-sizing: border-box;
-  height: 100%;
 }
 
 .card {
@@ -12,6 +12,8 @@
   flex-direction: column;
   align-items: stretch;
   width: 100%;
+  flex: 0 1 auto;
+  min-height: 0;
   box-sizing: border-box;
   background-color: #f2efe9;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
@@ -36,6 +38,9 @@
   gap: 8px;
   padding: 16px;
   box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .option {
@@ -74,4 +79,10 @@
 .submitButton:disabled {
   background-color: #a3a3a3;
   cursor: not-allowed;
+}
+
+.errorMessage {
+  margin: 0 20px 20px;
+  font-size: 0.85rem;
+  color: #8a1f1f;
 }

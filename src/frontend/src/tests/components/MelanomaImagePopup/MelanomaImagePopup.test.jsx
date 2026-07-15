@@ -7,11 +7,27 @@ describe('MelanomaImagePopup', () => {
     document.body.innerHTML = '<div id="root"></div><div id="overlay-root"></div>';
   });
 
-  it('renders a random melanoma image', () => {
+  it('renders a random melanoma image when no document is given', () => {
     render(<MelanomaImagePopup onClose={() => {}} />);
 
     const image = screen.getByRole('img');
     expect(image.getAttribute('src')).toMatch(/^\/melanoma\/.+\.jpg$/);
+  });
+
+  it("renders the given document's real image instead of a random one", () => {
+    render(
+      <MelanomaImagePopup
+        caseDocument={{
+          imageUrl: 'https://cdn.example.test/real-lesion.png',
+          imageAltText: 'Real lesion close-up',
+        }}
+        onClose={() => {}}
+      />,
+    );
+
+    const image = screen.getByRole('img');
+    expect(image.getAttribute('src')).toBe('https://cdn.example.test/real-lesion.png');
+    expect(image.getAttribute('alt')).toBe('Real lesion close-up');
   });
 
   it('calls onClose when the close button is clicked', () => {

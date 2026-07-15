@@ -2,6 +2,7 @@ import { jest } from '@jest/globals';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../src/app.js';
 import { prisma } from '../../src/db/prisma.js';
+import { truncateDatabase } from '../setup/truncate.js';
 import type { GoogleIdTokenVerifier } from '../../src/services/auth.js';
 import { GeminiError, type GeminiClient } from '../../src/services/llm.js';
 import { TranscriptionError, type TranscriptionClient } from '../../src/services/transcription.js';
@@ -113,16 +114,10 @@ describe('POST /api/v1/chat', () => {
   let app: FastifyInstance;
 
   afterEach(async () => {
-    await prisma.chatMessage.deleteMany({});
-    await prisma.caseDocumentReveal.deleteMany({});
-    await prisma.caseDocument.deleteMany({});
-    await prisma.case.deleteMany({});
-    await prisma.patient.deleteMany({});
-    await prisma.gameSession.deleteMany({});
-    await prisma.userSession.deleteMany({});
-    await prisma.user.deleteMany({});
-    await prisma.diagnosis.deleteMany({});
-    await prisma.treatment.deleteMany({});
+    // TRUNCATE ... CASCADE via the shared helper — robust to the schema's growing
+    // set of tables/FKs (CaseHint, examinations, diagnosis attempts, reveals, …)
+    // that a hand-ordered deleteMany chain would trip over.
+    await truncateDatabase();
     await app.close();
   });
 

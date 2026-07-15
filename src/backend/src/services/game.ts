@@ -34,6 +34,8 @@ export interface GamePrismaClient {
       data: {
         pausedAt?: Date | null;
         totalPausedMs?: number;
+        extraElapsedMs?: number;
+        startedAt?: Date;
         endedAt?: Date;
         endingMoney?: number;
         casesAttempted?: number;
@@ -67,6 +69,13 @@ export class NoOpenDayError extends Error {
   }
 }
 
+export class NotPausedError extends Error {
+  constructor(message = 'GameSession is not PAUSED') {
+    super(message);
+    this.name = 'NotPausedError';
+  }
+}
+
 export class DayNotElapsedError extends Error {
   constructor(public readonly remainingMs: number) {
     super('Minimum day duration has not elapsed yet');
@@ -89,6 +98,19 @@ async function requireActiveGameSession(
 
   if (!session || session.status !== 'ACTIVE') {
     throw new NoActiveGameError();
+  }
+
+  return session;
+}
+
+async function requirePausedGameSession(
+  prisma: GamePrismaClient,
+  userId: string,
+): Promise<GameSessionRecord> {
+  const session = await findLatestGameSession(prisma, userId);
+
+  if (!session || session.status !== 'PAUSED') {
+    throw new NotPausedError();
   }
 
   return session;
@@ -119,7 +141,7 @@ function toGameSessionResponse(record: GameSessionRecord): GameSessionRecord {
   };
 }
 
-function toGameDayLogResponse(record: GameDayLogRecord): GameDayLogResponse {
+function toGameDayLogResponse(record: GameDayLogRecord): Omit<GameDayLogResponse, 'elapsedMs'> {
   return {
     id: record.id,
     dayNumber: record.dayNumber,
@@ -164,6 +186,30 @@ export async function pauseGame(
   const updated = await prisma.gameSession.update({
     where: { id: session.id },
     data: { status: 'PAUSED' },
+  });
+  return toGameSessionResponse(updated);
+}
+
+export async function resumeGame(
+  prisma: GamePrismaClient,
+  userId: string,
+): Promise<GameSessionRecord> {
+  const session = await requirePausedGameSession(prisma, userId);
+  const openDayLog = await requireOpenGameDayLog(prisma, session.id);
+
+  if (openDayLog.pausedAt) {
+    await prisma.gameDayLog.update({
+      where: { id: openDayLog.id },
+      data: {
+        pausedAt: null,
+        totalPausedMs: openDayLog.totalPausedMs + (Date.now() - openDayLog.pausedAt.getTime()),
+      },
+    });
+  }
+
+  const updated = await prisma.gameSession.update({
+    where: { id: session.id },
+    data: { status: 'ACTIVE' },
   });
   return toGameSessionResponse(updated);
 }
@@ -213,7 +259,10 @@ export async function resetDay(
     },
   });
 
-  const pausedMs = openDayLog.pausedAt ? Date.now() - openDayLog.pausedAt.getTime() : 0;
+  // Reverting the day means going back in time to its start: the elapsed-time
+  // clock (see services/dayElapsed.ts) restarts at zero right along with the
+  // counters, rather than carrying over whatever pause/examination time had
+  // already accrued.
   await prisma.gameDayLog.update({
     where: { id: openDayLog.id },
     data: {
@@ -222,7 +271,9 @@ export async function resetDay(
       thresholdMet: null,
       penaltyApplied: false,
       pausedAt: null,
-      totalPausedMs: openDayLog.totalPausedMs + pausedMs,
+      totalPausedMs: 0,
+      extraElapsedMs: 0,
+      startedAt: new Date(),
     },
   });
 
@@ -283,6 +334,6 @@ export async function endDay(
 
   return {
     gameSession: toGameSessionResponse(updatedSession),
-    dayLog: toGameDayLogResponse(updatedDayLog),
+    dayLog: { ...toGameDayLogResponse(updatedDayLog), elapsedMs },
   };
 }

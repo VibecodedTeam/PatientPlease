@@ -1,7 +1,12 @@
-import type { Prisma } from '@prisma/client';
+import 'dotenv/config';
+import { pathToFileURL } from 'node:url';
+import { Prisma } from '@prisma/client';
 import { prisma } from './prisma.js';
+import { REAL_CASES, type Sex } from './data/realCases.js';
+import { FICTIONAL_CASES } from './data/fictionalCases.js';
+import { resolveCaseSeedRefs } from './caseSeedRefs.js';
 
-const DIAGNOSES: Prisma.DiagnosisCreateManyInput[] = [
+export const DIAGNOSES: Prisma.DiagnosisCreateManyInput[] = [
   {
     code: 'melanoma',
     name: 'Melanoma',
@@ -165,7 +170,7 @@ const DIAGNOSES: Prisma.DiagnosisCreateManyInput[] = [
   },
 ];
 
-const TREATMENTS: Prisma.TreatmentCreateManyInput[] = [
+export const TREATMENTS: Prisma.TreatmentCreateManyInput[] = [
   {
     code: 'topical-corticosteroid',
     name: 'Topical Corticosteroid',
@@ -324,7 +329,7 @@ const TREATMENTS: Prisma.TreatmentCreateManyInput[] = [
   },
 ];
 
-const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
+export const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
   {
     sku: 'equip-dermatoscope',
     name: 'Dermatoscope',
@@ -543,93 +548,45 @@ const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
   },
 ];
 
-const PATIENT_NAMES = [
-  'Jan Kowalski',
-  'Anna Nowak',
-  'Piotr Wiśniewski',
-  'Maria Lewandowska',
-  'Tomasz Wójcik',
-  'Katarzyna Kamińska',
-  'Marek Zieliński',
-  'Agnieszka Szymańska',
-  'Krzysztof Woźniak',
-  'Magdalena Dąbrowska',
-  'Andrzej Kozłowski',
-  'Ewa Jankowska',
-  'Grzegorz Mazur',
-  'Joanna Kwiatkowska',
-  'Michał Krawczyk',
-  'Barbara Piotrowska',
-  'Paweł Grabowski',
-  'Monika Nowakowska',
-  'Rafał Pawłowski',
-  'Aleksandra Michalska',
-  'Dariusz Adamczyk',
-  'Beata Dudek',
-  'Wojciech Zając',
-  'Elżbieta Wieczorek',
-  'Sławomir Jabłoński',
-];
-
-const OCCUPATIONS = [
-  'Roofer',
-  'Teacher',
-  'Farmer',
-  'Office Clerk',
-  'Lifeguard',
-  'Construction Worker',
-  'Fisherman',
-  'Nurse',
-  'Truck Driver',
-  'Gardener',
-  'Retired',
-  'Student',
-  'Chef',
-  'Mechanic',
-  'Postal Worker',
-  'Beekeeper',
-  'Ski Instructor',
-  'Painter',
-  'Barista',
-  'Electrician',
-  'Sailor',
-  'Landscaper',
-  'Photographer',
-  'Warehouse Worker',
-  'Delivery Courier',
-];
-
 const BODY_MODEL_VARIANTS = [
   'male_average_01',
   'female_average_01',
   'male_slim_01',
   'female_slim_01',
 ] as const;
-const SEXES = ['MALE', 'FEMALE', 'OTHER'] as const;
-const BODY_REGIONS = [
-  'HEAD',
-  'NECK',
-  'CHEST',
-  'BACK',
-  'ABDOMEN',
-  'LEFT_ARM',
-  'RIGHT_ARM',
-  'LEFT_LEG',
-  'RIGHT_LEG',
-  'LEFT_HAND',
-  'RIGHT_HAND',
-  'LEFT_FOOT',
-  'RIGHT_FOOT',
-] as const;
-const SUPPORTING_DOCUMENT_TYPES = [
-  'DISEASE_HISTORY',
-  'UV_EXPOSURE_HISTORY',
-  'CLINICAL_SYMPTOMS',
-  'FAMILY_HISTORY',
-  'WEATHER_HISTORY',
+
+function pickBodyModelVariant(sex: Sex, index: number): (typeof BODY_MODEL_VARIANTS)[number] {
+  if (sex === 'MALE') {
+    return index % 2 === 0 ? 'male_average_01' : 'male_slim_01';
+  }
+  if (sex === 'FEMALE') {
+    return index % 2 === 0 ? 'female_average_01' : 'female_slim_01';
+  }
+  return BODY_MODEL_VARIANTS[index % BODY_MODEL_VARIANTS.length]!;
+}
+
+const FALLBACK_PORTRAIT_FILES = [
+  '001_45-year-old-male-stern-square-jaw-recedi_20260709-152719.png',
+  '002_elderly-woman-soft-round-face-smile-line_20260709-152810.png',
+  '003_45-year-old-male-square-jaw-with-light-s_20260709-152832.png',
+  '004_middle-aged-female-sharp-cheekbones-hook_20260709-152854.png',
+  '005_middle-aged-male-strong-jawline-and-slig_20260709-152914.png',
+  '006_elderly-male-wrinkled-forehead-and-bushy_20260709-152928.png',
+  '007_elderly-female-high-cheekbones-and-thin-_20260709-152944.png',
+  '008_80-year-old-woman-high-cheekbones-thin-l_20260709-153010.png',
+  '009_45-year-old-male-strong-jawline-faint-cr_20260709-153107.png',
+  '010_middle-aged-female-rounded-cheeks-should_20260709-153146.png',
 ] as const;
 
-const CASE_COUNT = PATIENT_NAMES.length;
+/** The first 15 cases (case-01..case-15) get a dedicated mock portrait; every other
+ * patient cycles through the existing generic portrait set. */
+function pickPortraitImageUrl(imageFile: string, index: number): string {
+  const caseNumber = Number(imageFile.match(/^case-(\d+)\.png$/)?.[1]);
+  if (caseNumber >= 1 && caseNumber <= 15) {
+    return `/portraits/portrait-${String(caseNumber).padStart(2, '0')}.png`;
+  }
+  return `/patient-portraits/${FALLBACK_PORTRAIT_FILES[index % FALLBACK_PORTRAIT_FILES.length]}`;
+}
 
 export async function seed(options: { force?: boolean } = {}): Promise<void> {
   const alreadySeeded = (await prisma.diagnosis.count()) > 0;
@@ -657,33 +614,39 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
   const diagnoses = await prisma.diagnosis.findMany({ orderBy: { code: 'asc' } });
   const treatments = await prisma.treatment.findMany({ orderBy: { code: 'asc' } });
   const shopItems = await prisma.shopItem.findMany({ orderBy: { sku: 'asc' } });
-  const examinationItems = shopItems.filter((item) => item.itemType === 'EXAMINATION');
 
-  for (let i = 0; i < CASE_COUNT; i++) {
-    const diagnosis = diagnoses[i % diagnoses.length]!;
-    const treatment = treatments[i % treatments.length]!;
-    const difficulty = (i % 3) + 1;
+  const ALL_CASES = [...REAL_CASES, ...FICTIONAL_CASES];
+
+  for (let i = 0; i < ALL_CASES.length; i++) {
+    const realCase = ALL_CASES[i]!;
+    const { diagnosisId, treatmentId, examinationShopItemId } = resolveCaseSeedRefs(realCase, {
+      diagnoses,
+      treatments,
+      shopItems,
+    });
+    const diagnosis = diagnoses.find((d) => d.id === diagnosisId)!;
 
     const patient = await prisma.patient.create({
       data: {
-        name: PATIENT_NAMES[i]!,
-        age: 8 + ((i * 7) % 70),
-        sex: SEXES[i % SEXES.length]!,
-        occupation: OCCUPATIONS[i]!,
-        portraitImageUrl: `https://cdn.example.test/patients/patient-${String(i + 1).padStart(2, '0')}.png`,
-        bodyModelVariant: BODY_MODEL_VARIANTS[i % BODY_MODEL_VARIANTS.length]!,
+        name: realCase.patientName,
+        age: realCase.age,
+        sex: realCase.sex,
+        occupation: realCase.occupation,
+        portraitImageUrl: pickPortraitImageUrl(realCase.imageFile, i),
+        bodyModelVariant: pickBodyModelVariant(realCase.sex, i),
       },
     });
 
     const caseRecord = await prisma.case.create({
       data: {
         patientId: patient.id,
-        difficulty,
-        correctDiagnosisId: diagnosis.id,
-        correctTreatmentId: treatment.id,
-        moneyReward: 50 + difficulty * 25,
-        moneyPenalty: 20 + difficulty * 10,
-        resultExplanationText: `${diagnosis.name} confirmed on review; correct treatment was ${treatment.name}.`,
+        difficulty: realCase.difficulty,
+        featuredOrder: realCase.featuredOrder ?? null,
+        correctDiagnosisId: diagnosisId,
+        correctTreatmentId: treatmentId,
+        moneyReward: 50 + realCase.difficulty * 25,
+        moneyPenalty: 20 + realCase.difficulty * 10,
+        resultExplanationText: realCase.resultExplanationText,
       },
     });
 
@@ -691,39 +654,37 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
       data: {
         caseId: caseRecord.id,
         type: 'SKIN_IMAGE',
-        attentionPointRegion: BODY_REGIONS[i % BODY_REGIONS.length]!,
+        attentionPointRegion: realCase.bodyRegion,
         title: 'Lesion close-up',
         sortOrder: 0,
-        imageUrl: `https://cdn.example.test/cases/case-${String(i + 1).padStart(2, '0')}-lesion.png`,
+        imageUrl: `/cases/${realCase.imageFile}`,
         imageWidthPx: 1024,
         imageHeightPx: 768,
         imageAltText: `Close-up photo of lesion on ${patient.name}`,
       },
     });
 
-    await prisma.caseDocument.create({
-      data: {
-        caseId: caseRecord.id,
-        type: SUPPORTING_DOCUMENT_TYPES[i % SUPPORTING_DOCUMENT_TYPES.length]!,
-        title: 'Patient history',
-        sortOrder: 1,
-        content: { note: `Relevant history for ${patient.name}'s case.` },
-      },
-    });
+    for (const [index, document] of realCase.documents.entries()) {
+      await prisma.caseDocument.create({
+        data: {
+          caseId: caseRecord.id,
+          type: document.type,
+          title: document.title,
+          sortOrder: index + 1,
+          content: (document.content as Prisma.InputJsonValue | null) ?? Prisma.DbNull,
+        },
+      });
+    }
 
-    // The one examination that "pays off" for this case: ordering it in the day
-    // phase succeeds and reveals this document. `content.shopItemId` is the link
-    // orderExamination checks; any other examination on this case fails.
-    const examinationItem = examinationItems[i % examinationItems.length]!;
     await prisma.caseDocument.create({
       data: {
         caseId: caseRecord.id,
         type: 'EXAMINATION_RESULTS',
-        title: `${examinationItem.name} results`,
-        sortOrder: 2,
+        title: 'Examination results',
+        sortOrder: realCase.documents.length + 1,
         content: {
-          shopItemId: examinationItem.id,
-          findings: `${examinationItem.name} for ${patient.name}: findings consistent with ${diagnosis.name}.`,
+          shopItemId: examinationShopItemId,
+          findings: realCase.examinationFindings,
         },
       },
     });
@@ -731,17 +692,17 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
     await prisma.caseHint.create({
       data: {
         caseId: caseRecord.id,
-        content: `Consider ${diagnosis.name} given the presentation.`,
+        content: `Consider ${diagnosis.name} given this presentation.`,
         sortOrder: 0,
-        unlockAfterDay: i % 5 === 0 ? null : (i % 3) + 1,
-        requiredShopItemId: i % 3 === 0 ? shopItems[i % shopItems.length]!.id : null,
+        unlockAfterDay: 1,
+        requiredShopItemId: null,
       },
     });
   }
 }
 
 const isMainModule =
-  process.argv[1] !== undefined && import.meta.url === `file://${process.argv[1]}`;
+  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isMainModule) {
   const force = process.argv.includes('--force');

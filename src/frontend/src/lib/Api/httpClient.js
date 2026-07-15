@@ -28,7 +28,6 @@ export function createHttpClient(baseUrl = DEFAULT_BASE_URL, { withCredentials =
     baseURL: baseUrl,
     withCredentials,
     adapter: 'fetch',
-    headers: { 'Content-Type': 'application/json' },
   });
 
   function unwrap(response) {
@@ -39,15 +38,24 @@ export function createHttpClient(baseUrl = DEFAULT_BASE_URL, { withCredentials =
     return unwrap(await instance.get(path, config));
   }
 
-  async function post(path, body, config = {}) {
+  // Defaulting to {} rather than leaving the body undefined: axios forces
+  // some Content-Type onto every POST/PUT/PATCH once it reaches its
+  // dispatch step (application/x-www-form-urlencoded, unconditionally,
+  // regardless of axios.create() config), and this backend has no parser
+  // registered for that content type, so a truly bodyless request gets
+  // rejected (415). Sending a real {} body makes axios's own
+  // transformRequest correctly set Content-Type: application/json with a
+  // valid, non-empty "{}" payload beforehand, which wins over the forced
+  // default and which Fastify parses fine.
+  async function post(path, body = {}, config = {}) {
     return unwrap(await instance.post(path, body, config));
   }
 
-  async function put(path, body, config = {}) {
+  async function put(path, body = {}, config = {}) {
     return unwrap(await instance.put(path, body, config));
   }
 
-  async function patch(path, body, config = {}) {
+  async function patch(path, body = {}, config = {}) {
     return unwrap(await instance.patch(path, body, config));
   }
 

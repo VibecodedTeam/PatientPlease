@@ -7,14 +7,18 @@ import styles from './MelanomaImagePopup.module.css';
 
 /**
  * A 340x340 popup, fixed 170px from the left edge and vertically centered, showing
- * a random melanoma reference image cropped to fill the box (center preserved).
- * Picks its image once per mount - callers that want a fresh image on reopen should
- * unmount/remount this component (e.g. via a `key` tied to which dot is active).
+ * the clicked attention point's real document image, or a random melanoma reference
+ * image (cropped to fill the box, center preserved) when no document was found for
+ * that region. The random fallback is picked once per mount - callers that want a
+ * fresh one on reopen should unmount/remount this component (e.g. via a `key` tied
+ * to which dot is active).
  * Closes via its own close button or a click on the backdrop outside the box.
- * @param {{ onClose: () => void }} props
+ * @param {{ caseDocument?: { imageUrl?: string, imageAltText?: string } | null, onClose: () => void }} props
  */
-export function MelanomaImagePopup({ onClose }) {
-  const [imageUrl] = useState(() => pickRandomImage(MELANOMA_IMAGES));
+export function MelanomaImagePopup({ caseDocument, onClose }) {
+  const [fallbackImageUrl] = useState(() => pickRandomImage(MELANOMA_IMAGES));
+  const imageUrl = caseDocument?.imageUrl ?? fallbackImageUrl;
+  const altText = caseDocument?.imageAltText ?? 'Lesion close-up';
 
   return (
     // overlay-portal: popup must render above the 3D canvas and the rest of the page layout
@@ -29,7 +33,7 @@ export function MelanomaImagePopup({ onClose }) {
             ×
           </button>
           <div className={styles.imageWrapper}>
-            <img className={styles.image} src={imageUrl} alt="Lesion close-up" />
+            <img className={styles.image} src={imageUrl} alt={altText} />
           </div>
         </div>
       </div>
@@ -38,5 +42,9 @@ export function MelanomaImagePopup({ onClose }) {
 }
 
 MelanomaImagePopup.propTypes = {
+  caseDocument: PropTypes.shape({
+    imageUrl: PropTypes.string,
+    imageAltText: PropTypes.string,
+  }),
   onClose: PropTypes.func.isRequired,
 };

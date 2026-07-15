@@ -5,7 +5,7 @@ import { Login } from '../Login';
 import styles from './AuthGate.module.css';
 
 export function AuthGate({ googleClientId, children }) {
-  const { status, user, login, logout } = useAuth();
+  const { status, login } = useAuth();
 
   if (status === 'loading') {
     return <div className={styles.loading}>Loading…</div>;
@@ -24,12 +24,6 @@ export function AuthGate({ googleClientId, children }) {
 
   return (
     <div className={styles.gate}>
-      <header className={styles.header}>
-        <span>{user.name}</span>
-        <button type="button" onClick={() => logout()}>
-          Logout
-        </button>
-      </header>
       <div className={styles.content}>{children}</div>
     </div>
   );

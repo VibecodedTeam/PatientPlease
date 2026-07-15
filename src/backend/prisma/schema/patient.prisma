@@ -24,6 +24,8 @@ model Case {
   patientId          String     @unique @db.Uuid
   patient            Patient    @relation(fields: [patientId], references: [id])
   difficulty         Int        @db.SmallInt
+  /// Pins this case to a fixed position (1-based) among the first cases a new session sees, ascending. Null means no pinned position — falls back to the existing difficulty-tiered random selection.
+  featuredOrder      Int?       @db.SmallInt
   correctDiagnosisId String     @db.Uuid
   correctDiagnosis   Diagnosis  @relation(fields: [correctDiagnosisId], references: [id])
   correctTreatmentId String?    @db.Uuid
@@ -46,4 +48,5 @@ model Case {
   @@index([correctDiagnosisId])
   @@index([correctTreatmentId])
   @@index([isActive])
+  @@index([featuredOrder])
 }

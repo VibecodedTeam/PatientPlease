@@ -6,9 +6,14 @@ Backend action letting the frontend undo just the caller's currently open day. S
 ## `POST /api/v1/day/reset`
 
 Reverts the caller's currently open day: deletes today's `DiagnosisAttempt` rows, refunds
-money back to the day's `startingMoney`, and resets the day's counters. `dayNumber`,
-`startingMoney`, and `startedAt` are untouched — this is the same day starting over, not a
-new day. If the session was `PAUSED`, it's flipped back to `ACTIVE`.
+money back to the day's `startingMoney`, and resets the day's counters. `dayNumber` and
+`startingMoney` are untouched — this is the same day starting over, not a new day — but the
+day's **effective elapsed time** (see `POST /api/v1/day/end` below) is reset to zero: `startedAt`
+is stamped to now, and `pausedAt`/`totalPausedMs`/`extraElapsedMs` are all cleared. This is a
+genuine "go back in time to the start of the day," not just a counters reset — a page refresh
+(or an end-of-day check) right after a reset sees a freshly-started day, not one that's secretly
+still carrying the pause/examination time it accrued before the reset. If the session was
+`PAUSED`, it's flipped back to `ACTIVE`.
 
 A session that is `GAME_OVER` or `COMPLETED` (i.e. already ended via `POST /api/v1/game/reset`
 or by exhausting every case) cannot have its day reset, even if it has a stray open
@@ -47,13 +52,19 @@ diagnosed correctly (including a zero-attempt day), and otherwise increases by t
 of incorrect diagnoses. None of this yet feeds back into `POST /api/v1/round` or otherwise gates
 play — see `docs/superpowers/specs/2026-07-08-day-statistics-design.md`.
 
-The day must have reached at least `MIN_DAY_DURATION_MS` (10 minutes;
-`src/backend/src/constants.ts`) of **effective elapsed time** before it can be ended — a
-server-side anti-cheat check, independent of whatever timer the frontend displays. This is a
-hard minimum, not a forced maximum: the frontend is expected to run its own ~10-minute countdown
-and call this endpoint once it elapses (after letting the player finish whatever patient they
-were already examining), but the backend only ever verifies "has enough time passed," never
-"has too much."
+The day must have reached at least `MIN_DAY_DURATION_MS` of **effective elapsed time** before it
+can be ended — a server-side anti-cheat check, independent of whatever timer the frontend
+displays. `MIN_DAY_DURATION_MS` (`src/backend/src/constants.ts`) is `DAY_DURATION_SECONDS * 1000`,
+where `DAY_DURATION_SECONDS` is read from the `DAY_DURATION_SECONDS` env var (defaults to 60
+seconds if unset) via `resolveDayDurationSeconds` (`src/backend/src/config.ts`). The frontend's
+own day timer (`DAY_DURATION_SECONDS`, `src/frontend/src/views/MainView/providers/GameSession`)
+reads the same value at build time via `VITE_DAY_DURATION_SECONDS` — one setting for both sides
+instead of two constants that can drift apart. `docker/.env`'s `DAY_DURATION_SECONDS` feeds both
+(see `docker/docker-compose.yml`); running either half outside Docker sets its own `.env`
+(`src/backend/.env.example` / `src/frontend/.env.example`) to the same value instead. This is a
+hard minimum, not a forced maximum: the frontend is expected to run its own countdown and call
+this endpoint once it elapses (after letting the player finish whatever patient they were already
+examining), but the backend only ever verifies "has enough time passed," never "has too much."
 
 Effective elapsed time is not simply `Date.now() - GameDayLog.startedAt` — it accounts for time
 spent paused and time added by in-game actions:
@@ -88,7 +99,15 @@ No request body.
 | No `GameSession`, or latest one is not `ACTIVE`      | 409    | `{ "error": "no_active_game" }`                                                                                                                                  |
 | Session is `ACTIVE` but has no open `GameDayLog`     | 409    | `{ "error": "no_open_day" }`                                                                                                                                     |
 | Open `GameDayLog` has been open less than `MIN_DAY_DURATION_MS` | 409 | `{ "error": "day_not_elapsed", "remainingMs": 342000 }` |
-| Success                                              | 200    | `{ "gameSession": { ..., "consecutiveBadDiagnosisCount" }, "dayLog": { "id", "dayNumber", "startingMoney", "endingMoney", "casesAttempted", "casesCorrect", "thresholdMet", "penaltyApplied", "startedAt", "endedAt" } }` |
+| Success                                              | 200    | `{ "gameSession": { ..., "consecutiveBadDiagnosisCount" }, "dayLog": { "id", "dayNumber", "startingMoney", "endingMoney", "casesAttempted", "casesCorrect", "thresholdMet", "penaltyApplied", "startedAt", "endedAt", "elapsedMs" } }` |
+
+`dayLog.elapsedMs` is the day's final **effective elapsed time** in milliseconds — the same
+`effectiveElapsedMs` value computed above and checked against `MIN_DAY_DURATION_MS`, returned so
+the frontend's day-statistics popup can show the real elapsed time rather than recomputing it
+from its own (possibly drifted) countdown timer. `POST /api/v1/round` (see `docs/api/round.md`)
+separately returns the same computation as `dayLog.elapsedMs` for the still-open day, so the
+frontend's timer can resume from the true server-side value after a page refresh instead of
+restarting at zero.
 
 Calling this twice in a row is safe: the second call finds no open day log and returns
 `409 no_open_day`, which doubles as an "you're already at night" signal.

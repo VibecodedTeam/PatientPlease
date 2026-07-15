@@ -3,7 +3,8 @@
 Backend endpoint the frontend calls to start (or resume) a game round for the current day
 phase. It returns everything `MainView` needs to render a fresh appointment in one call: the
 player's `GameSession`, their owned shop items, the next unattempted `Case` (patient,
-documents), and the full diagnosis/treatment option catalogs.
+documents), a narrowed set of diagnosis options for that case, and the full treatment option
+catalog.
 
 ## `POST /api/v1/round`
 
@@ -90,21 +91,49 @@ existing open round looks identical to a client as starting a new one.
   ],
   "treatmentOptions": [
     { "id": "uuid", "code": "REFER_ONCO", "name": "Refer to oncology", "kind": "REFERRAL" }
-  ]
+  ],
+  "dayLog": {
+    "elapsedMs": 12345,
+    "dayNumber": 1
+  }
 }
 ```
 
-`case.correctDiagnosisId`, `case.correctTreatmentId`, and `case.resultExplanationText`
-(the answer key) are never included in the response. There is no `case.attentionPoints` —
-each document instead carries `attentionPointRegion`, the coarse body region it's about (or
-`null`), and the frontend's `PatientScene` maps that region to a 3D hotspot position/zoom
-preset itself.
+`dayLog.elapsedMs` is the effective elapsed time (wall-clock time since the open `GameDayLog`'s
+`startedAt`, minus accumulated paused time, plus any time added by actions like ordering an
+examination — see `computeEffectiveElapsedMs` in `src/backend/src/services/dayElapsed.ts`) already
+spent on the still-open day. `dayLog.dayNumber` is the 1-based number of that open day. The
+frontend's day timer (`GameSessionProvider`) seeds its local clock from `elapsedMs` and re-seeds
+whenever `dayNumber` changes, so refreshing the page resumes the timer mid-day, while returning
+for a new day (a higher `dayNumber`) restarts it from zero instead of latching the previous day's
+elapsed time.
+
+`diagnosisOptions` is **not** the full `Diagnosis` catalog — it's `case.correctDiagnosisId`'s
+diagnosis plus up to 3 randomly-selected decoys from the rest of the catalog (fewer than 4 total
+if the catalog itself has fewer than 4 diagnoses), sorted by `name`. Decoys are chosen fresh on
+every call to this endpoint, including when resuming an already-open round, so the wrong options
+shown for a given case can differ between calls. `treatmentOptions` is unaffected — it's still the
+full `Treatment` catalog.
+
+`case.correctDiagnosisId`, `case.correctTreatmentId`, and `case.resultExplanationText` are never
+included in the response — grading now happens server-side via `POST /api/v1/diagnoses` (see
+`docs/api/diagnoses.md`), so the client has no need to see the answer key. There is no
+`case.attentionPoints` — each document instead carries `attentionPointRegion`, the coarse body
+region it's about (or `null`), and the frontend's `PatientScene` maps that region to a 3D hotspot
+position/zoom preset itself.
 
 A `documents` entry of `type: "EXAMINATION_RESULTS"` is only included once the player has
 successfully ordered the matching examination for this case — i.e. a `CaseExamination` row
 exists for `(this session, this case, content.shopItemId)` with `isSuccessful: true`. Until
 then it's omitted entirely, not returned with placeholder/redacted content. See
 `docs/api/examinations.md` for how examinations are ordered.
+
+A `documents` entry of type `DISEASE_HISTORY`, `UV_EXPOSURE_HISTORY`, `CLINICAL_SYMPTOMS`,
+`FAMILY_HISTORY`, or `WEATHER_HISTORY` is only included once a `CaseDocumentReveal` row exists
+for `(this session, this case, this document)` — written by `POST /api/v1/chat` when its
+document-selection step decides that document is relevant to the conversation. `SKIN_IMAGE`
+remains always visible regardless of reveal state, since `PatientScene`'s 3D-model attention
+points consume it directly as part of the physical exam, not as something Chat reveals.
 
 ## Orchestration
 
@@ -122,8 +151,8 @@ On each call, the backend:
    idempotent (see below) while still varying across sessions and once a tied case is
    diagnosed and drops out of the candidate set.
 3. Reuses the session's currently open `GameDayLog` (`endedAt: null`), or opens a new one.
-4. Returns the session's owned shop items plus the full `Diagnosis`/`Treatment` catalogs
-   (unfiltered — every player sees the same menu).
+4. Returns the session's owned shop items, a narrowed `diagnosisOptions` list for the case
+   (see the `diagnosisOptions` note above), and the full `Treatment` catalog.
 
 Calling this endpoint again while a `GameDayLog` is still open (i.e. before the current case
 is resolved) returns the same case and does not create a duplicate `GameDayLog`.

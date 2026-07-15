@@ -53,6 +53,13 @@
   gap: 0.4rem;
 }
 
+.moleCheckBoardSlot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex: 1;
+}
+
 .board {
   max-width: 65%;
   background-color: #d9c9a3;
@@ -188,24 +195,28 @@
 
 .settingsButton {
   flex-shrink: 0;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 3.5rem;
+  height: 3.5rem;
   border-radius: 50%;
-  border: 2px solid #b3862f;
-  background: #3a2f27;
-  color: #e8ddc7;
-  font-size: 1.05rem;
+  border: 2px solid #4a9eff;
+  background: #1d4e7a;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  box-shadow: 0 0 0 0 rgba(74, 158, 255, 0.5);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.2s ease;
 }
 
 .settingsButton:hover {
-  background: #4a3a2e;
-  transform: scale(1.08) rotate(20deg);
+  background: #2a6bab;
+  transform: scale(1.08);
+  box-shadow: 0 0 14px 2px rgba(74, 158, 255, 0.55);
 }
 
 .settingsButton:focus-visible {
-  outline: 2px solid #f1e6cc;
+  outline: 2px solid #cfe4ff;
   outline-offset: 2px;
 }
 
@@ -662,63 +673,6 @@
 
 .bookPopup .closeButton {
   margin-top: 0.75rem;
-}
-
-.settingsPopup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  width: min(20rem, 90vw);
-  max-height: 85vh;
-  overflow-y: auto;
-  padding: 1.25rem;
-  background: #2b2320;
-  color: #e8ddc7;
-  border: 3px solid #b3862f;
-  border-radius: 4px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-  animation: popupIn 0.15s ease-out;
-}
-
-.settingsTitle {
-  margin-bottom: 0.25rem;
-  letter-spacing: 0.03em;
-  border-bottom: 1px solid #4a3a2e;
-  padding-bottom: 0.5rem;
-}
-
-.settingsField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  accent-color: #b3862f;
-}
-
-.logoutField {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid #4a3a2e;
-}
-
-.logoutButton {
-  padding: 0.35rem 0.9rem;
-  background: transparent;
-  color: #a3271f;
-  border: 1px solid #7a3a34;
-  cursor: not-allowed;
-  font-weight: 600;
-}
-
-.logoutButton:disabled {
-  opacity: 0.6;
-}
-
-.comingSoonLabel {
-  font-size: 0.7rem;
-  font-style: italic;
-  color: #8a7a63;
 }
 
 .closeButton {

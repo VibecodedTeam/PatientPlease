@@ -34,11 +34,32 @@ export class GeminiError extends Error {
 export interface CreateGeminiClientOptions {
   apiKey: string;
   model: string;
+  fallbackModel?: string;
   fetchImpl?: FetchLike;
+}
+
+/** Runs `attempt` against each model in order, returning the first success; throws the last model's error if every model fails. */
+async function withModelFallback<T>(
+  models: string[],
+  attempt: (model: string) => Promise<T>,
+): Promise<T> {
+  let lastError: unknown;
+  for (const model of models) {
+    try {
+      return await attempt(model);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
 }
 
 export function createGeminiClient(options: CreateGeminiClientOptions): GeminiClient {
   const fetchImpl = options.fetchImpl ?? fetch;
+  const models =
+    options.fallbackModel && options.fallbackModel !== options.model
+      ? [options.model, options.fallbackModel]
+      : [options.model];
 
   return {
     async generateReply({ systemInstruction, contents }: GenerateReplyInput): Promise<string> {
@@ -46,37 +67,39 @@ export function createGeminiClient(options: CreateGeminiClientOptions): GeminiCl
         throw new GeminiError('Cannot generate a reply with no conversation contents');
       }
 
-      let response: { ok: boolean; status: number; json(): Promise<unknown> };
-      try {
-        response = await fetchImpl(
-          `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${options.apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: systemInstruction }] },
-              contents,
-            }),
-          },
-        );
-      } catch (error) {
-        throw new GeminiError('Failed to reach Gemini', { cause: error });
-      }
+      return withModelFallback(models, async (model) => {
+        let response: { ok: boolean; status: number; json(): Promise<unknown> };
+        try {
+          response = await fetchImpl(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${options.apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                contents,
+              }),
+            },
+          );
+        } catch (error) {
+          throw new GeminiError('Failed to reach Gemini', { cause: error });
+        }
 
-      if (!response.ok) {
-        throw new GeminiError(`Gemini returned ${response.status}`);
-      }
+        if (!response.ok) {
+          throw new GeminiError(`Gemini returned ${response.status}`);
+        }
 
-      const body = (await response.json()) as {
-        candidates?: { content?: { parts?: { text?: string }[] } }[];
-      };
+        const body = (await response.json()) as {
+          candidates?: { content?: { parts?: { text?: string }[] } }[];
+        };
 
-      const text = body.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (!text) {
-        throw new GeminiError('Gemini returned an empty reply');
-      }
+        const text = body.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) {
+          throw new GeminiError('Gemini returned an empty reply');
+        }
 
-      return text;
+        return text;
+      });
     },
 
     async selectRelevantDocumentIds({
@@ -87,52 +110,54 @@ export function createGeminiClient(options: CreateGeminiClientOptions): GeminiCl
         return [];
       }
 
-      let response: { ok: boolean; status: number; json(): Promise<unknown> };
-      try {
-        response = await fetchImpl(
-          `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${options.apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: systemInstruction }] },
-              contents,
-              generationConfig: {
-                responseMimeType: 'application/json',
-                responseSchema: { type: 'ARRAY', items: { type: 'STRING' } },
-              },
-            }),
-          },
-        );
-      } catch (error) {
-        throw new GeminiError('Failed to reach Gemini for document selection', { cause: error });
-      }
+      return withModelFallback(models, async (model) => {
+        let response: { ok: boolean; status: number; json(): Promise<unknown> };
+        try {
+          response = await fetchImpl(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${options.apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                contents,
+                generationConfig: {
+                  responseMimeType: 'application/json',
+                  responseSchema: { type: 'ARRAY', items: { type: 'STRING' } },
+                },
+              }),
+            },
+          );
+        } catch (error) {
+          throw new GeminiError('Failed to reach Gemini for document selection', { cause: error });
+        }
 
-      if (!response.ok) {
-        throw new GeminiError(`Gemini returned ${response.status}`);
-      }
+        if (!response.ok) {
+          throw new GeminiError(`Gemini returned ${response.status}`);
+        }
 
-      const body = (await response.json()) as {
-        candidates?: { content?: { parts?: { text?: string }[] } }[];
-      };
+        const body = (await response.json()) as {
+          candidates?: { content?: { parts?: { text?: string }[] } }[];
+        };
 
-      const text = body.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (!text) {
-        return [];
-      }
+        const text = body.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) {
+          return [];
+        }
 
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(text);
-      } catch (error) {
-        throw new GeminiError('Gemini returned non-JSON document selection', { cause: error });
-      }
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch (error) {
+          throw new GeminiError('Gemini returned non-JSON document selection', { cause: error });
+        }
 
-      if (!Array.isArray(parsed) || !parsed.every((id) => typeof id === 'string')) {
-        throw new GeminiError('Gemini document selection was not an array of strings');
-      }
+        if (!Array.isArray(parsed) || !parsed.every((id) => typeof id === 'string')) {
+          throw new GeminiError('Gemini document selection was not an array of strings');
+        }
 
-      return parsed;
+        return parsed;
+      });
     },
   };
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Diagnose } from '../../../../../components/Table/internal/Diagnose/Diagnose';
 
@@ -30,5 +30,59 @@ describe('Diagnose', () => {
     await user.click(screen.getByText('Submit Diagnosis'));
 
     expect(handleSubmit).toHaveBeenCalledWith({ id: 'no-condition', label: 'No Skin Condition' });
+  });
+
+  it('disables the submit button while onSubmit is pending, to prevent double submission', async () => {
+    const user = userEvent.setup();
+    let resolveSubmit;
+    const handleSubmit = jest.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveSubmit = resolve;
+        }),
+    );
+    render(<Diagnose onSubmit={handleSubmit} />);
+
+    await user.click(screen.getByText('No Skin Condition'));
+    await user.click(screen.getByText('Submit Diagnosis'));
+
+    expect(handleSubmit).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Submit Diagnosis')).toBeDisabled();
+
+    resolveSubmit();
+    await waitFor(() => expect(screen.getByText('Submit Diagnosis')).not.toBeDisabled());
+    expect(handleSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders errorMessage when provided', () => {
+    render(<Diagnose errorMessage="Could not submit diagnosis. Please try again." />);
+    expect(
+      screen.getByText('Could not submit diagnosis. Please try again.'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders no error message by default', () => {
+    render(<Diagnose />);
+    expect(screen.queryByText(/could not submit/i)).not.toBeInTheDocument();
+  });
+
+  it('disables the submit button when disabled is true, even with an option selected', async () => {
+    const user = userEvent.setup();
+    render(<Diagnose disabled />);
+
+    await user.click(screen.getByText('Skin Cancer'));
+
+    expect(screen.getByText('Submit Diagnosis')).toBeDisabled();
+  });
+
+  it('does not call onSubmit when disabled is true', async () => {
+    const user = userEvent.setup();
+    const handleSubmit = jest.fn();
+    render(<Diagnose onSubmit={handleSubmit} disabled />);
+
+    await user.click(screen.getByText('Skin Cancer'));
+    await user.click(screen.getByText('Submit Diagnosis'));
+
+    expect(handleSubmit).not.toHaveBeenCalled();
   });
 });

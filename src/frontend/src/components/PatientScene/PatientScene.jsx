@@ -1,17 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { usePatientScene } from './usePatientScene';
 import { screenToNdc } from './internal/screenToNdc';
 import { pickDot } from './internal/pickDot';
 import { dodajKropkeDlaRegionu } from './internal/dodajKropkeDlaRegionu';
-import { BodyRegion } from './internal/bodyRegions';
+import { deriveAttentionRegions } from './internal/deriveAttentionRegions';
 import { MelanomaImagePopup } from '../MelanomaImagePopup';
 import styles from './PatientScene.module.css';
 
 const DOT_COLOR = 0xffff00;
 
-export function PatientScene() {
+export function PatientScene({ documents = [] }) {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -20,7 +21,21 @@ export function PatientScene() {
   const modelRef = useRef(null);
   const dotsRef = useRef([]);
   const activeDotRef = useRef(null);
+  // Keyed by BodyRegion, so the click handler below (set up once, in the effect
+  // with no dependencies) always reads the latest documents without going stale.
+  const documentsByRegionRef = useRef({});
+  // Tracks which model instance has already been fit-to-frame, so the effect
+  // below can re-run safely for a new `documents` reference (to update dots)
+  // without re-measuring and re-fitting a model it already fit. Without this,
+  // `documents` receiving a new-but-equal array reference (e.g. RoundProvider's
+  // duplicate mount-effect fetch resolving twice with identical case data)
+  // would re-measure the model's ALREADY-fitted world-space box and treat it
+  // as raw geometry needing scaling — undoing the fit instead of being a
+  // no-op, and leaving the model's local origin sitting wherever OrbitControls'
+  // fixed target happens to be (e.g. a humanoid rig's feet).
+  const fittedModelRef = useRef(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [activeDocument, setActiveDocument] = useState(null);
   const { model, status } = usePatientScene();
 
   const closePopup = () => {
@@ -28,6 +43,7 @@ export function PatientScene() {
       activeDotRef.current.material.color.setHex(activeDotRef.current.userData.baseColor);
       activeDotRef.current = null;
     }
+    setActiveDocument(null);
     setIsPopupOpen(false);
   };
 
@@ -78,6 +94,11 @@ export function PatientScene() {
       if (!containerRef.current) return;
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
+      // The pane is hidden (display:none, e.g. the player is on the Chat tab)
+      // rather than actually resized to nothing — skip so a resize event firing
+      // while hidden can't zero out the camera/renderer, leaving them stuck at
+      // 0x0 (NaN aspect) with no later event to ever correct it.
+      if (width === 0 || height === 0) return;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
@@ -96,9 +117,8 @@ export function PatientScene() {
       }
       hit.material.color.set(0xff0000);
       activeDotRef.current = hit;
+      setActiveDocument(documentsByRegionRef.current[hit.userData.bodyRegion] ?? null);
       setIsPopupOpen(true);
-      // eslint-disable-next-line no-console
-      console.log(hit.userData.bodyRegion);
     };
     renderer.domElement.addEventListener('click', handleClick);
 
@@ -126,16 +146,19 @@ export function PatientScene() {
     const scene = sceneRef.current;
     if (!scene || status !== 'success' || !model) return undefined;
 
-    const box = new THREE.Box3().setFromObject(model);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
+    if (fittedModelRef.current !== model) {
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
 
-    const maxDimension = Math.max(size.x, size.y, size.z);
-    const scale = maxDimension > 0 ? 2 / maxDimension : 1;
-    model.scale.set(scale, scale, scale);
-    // Position is a translation in parent space, applied on top of (not scaled by)
-    // the object's own scale, so the centering offset must be pre-multiplied by it.
-    model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+      const maxDimension = Math.max(size.x, size.y, size.z);
+      const scale = maxDimension > 0 ? 2 / maxDimension : 1;
+      model.scale.set(scale, scale, scale);
+      // Position is a translation in parent space, applied on top of (not scaled by)
+      // the object's own scale, so the centering offset must be pre-multiplied by it.
+      model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+      fittedModelRef.current = model;
+    }
 
     model.traverse((child) => {
       if (child.isMesh && !child.material) {
@@ -150,17 +173,30 @@ export function PatientScene() {
       }
     });
 
-    // TEMPORARY until real case/attention-point data exists (see plan) - places one
-    // dot per BodyRegion so click detection can be tested immediately.
-    Object.values(BodyRegion).forEach((region) => {
+    deriveAttentionRegions(documents).forEach((region) => {
       dotsRef.current.push(dodajKropkeDlaRegionu(model, region, DOT_COLOR));
     });
+    documentsByRegionRef.current = Object.fromEntries(
+      documents
+        .filter((document) => document.attentionPointRegion != null)
+        .map((document) => [document.attentionPointRegion, document]),
+    );
 
     scene.add(model);
     modelRef.current = model;
 
     return () => {
       scene.remove(model);
+      // Dots are added as children of `model` (see dodajKropke), not the
+      // scene, so removing `model` from the scene doesn't detach them —
+      // without this, the next run's traverse would re-collect these same
+      // (disposed) dots alongside a freshly-created batch, accumulating
+      // duplicates every time this effect re-runs.
+      dotsRef.current.forEach((dot) => {
+        model.remove(dot);
+        dot.geometry?.dispose();
+        dot.material?.dispose();
+      });
       dotsRef.current = [];
       model.traverse((child) => {
         if (child.isMesh) {
@@ -173,12 +209,20 @@ export function PatientScene() {
         }
       });
     };
-  }, [model, status]);
+  }, [model, status, documents]);
 
   return (
     <>
       <div ref={containerRef} className={styles.container} data-testid="patient-scene-container" />
-      {isPopupOpen && <MelanomaImagePopup onClose={closePopup} />}
+      {isPopupOpen && <MelanomaImagePopup caseDocument={activeDocument} onClose={closePopup} />}
     </>
   );
 }
+
+PatientScene.propTypes = {
+  documents: PropTypes.arrayOf(
+    PropTypes.shape({
+      attentionPointRegion: PropTypes.string,
+    }),
+  ),
+};
