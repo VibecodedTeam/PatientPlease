@@ -1,3 +1,22 @@
+/** Pen colors offered when freehand-drawing a custom plaster: black, white, then the 7 rainbow colors. */
+export const DRAW_COLORS = [
+  '#1c1c1e',
+  '#ffffff',
+  '#ff3b30',
+  '#ff9500',
+  '#ffd60a',
+  '#34c759',
+  '#0a84ff',
+  '#5e5ce6',
+  '#af52de',
+];
+
+/** Neutral blank plaster used as the drawing surface for a custom design. */
+export const CUSTOM_DRAW_BASE = { body: '#e3c19a', pad: '#f7efe2', motif: null };
+
+/** Pen stroke widths (px) offered when freehand-drawing a custom plaster: thin to thick. */
+export const DRAW_THICKNESSES = [3, 6, 10, 16];
+
 /** Selectable plaster (adhesive bandage) designs shown on the closing tray. */
 export const PLASTER_DEFS = [
   { id: 'classic', name: 'Klasyczny', body: '#e3c19a', pad: '#f2e5d1', motif: null },

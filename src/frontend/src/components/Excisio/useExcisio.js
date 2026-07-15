@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MM, clamp, computeDifficulty, computeExcisionScore, formatZloty, isStitchValid, melanomaRadiusAt, scoreSutures, segmentIntersectionT, stitchGeometry } from './internal/geometry';
 import { FIELD_HEIGHT, FIELD_WIDTH, computeAxis, generateLesions } from './internal/lesionGenerator';
-import { PLASTER_DEFS, plasterSvg } from './internal/plasterMotifs';
+import { CUSTOM_DRAW_BASE, DRAW_COLORS, DRAW_THICKNESSES, PLASTER_DEFS, plasterSvg } from './internal/plasterMotifs';
 import {
   createConfettiBurst,
   renderBaseField,
@@ -68,6 +68,10 @@ const INITIAL_UI = {
   alarmY: 45,
   redFlash: false,
   showTray: false,
+  showCustomDraw: false,
+  drawColor: DRAW_COLORS[0],
+  drawThickness: DRAW_THICKNESSES[1],
+  plasterColor: CUSTOM_DRAW_BASE.body,
   cheer: false,
 };
 
@@ -102,6 +106,10 @@ function createEngine() {
     skinStitches: [],
     creamSwabs: [],
     creaming: false,
+    creamCellsComputed: false,
+    creamCellSize: 20,
+    creamTarget: null,
+    creamDone: null,
     stitchStart: null,
     stitchDrag: null,
     woundOpen: false,
@@ -120,6 +128,8 @@ function createEngine() {
     plasterImage: null,
     plasterAlpha: 0,
     plasterRAF: null,
+    penDrawing: false,
+    penLast: null,
     confetti: [],
     confRAF: null,
     warnToken: 0,
@@ -142,6 +152,8 @@ export function useExcisio() {
   const confettiRef = useRef(null);
   const viewRef = useRef(null);
   const plasterScrollRef = useRef(null);
+  const drawCanvasRef = useRef(null);
+  const drawBgCanvasRef = useRef(null);
   const audioContextRef = useRef(null);
   const engine = useRef(null);
   if (!engine.current) engine.current = createEngine();
@@ -441,7 +453,14 @@ export function useExcisio() {
     }
     const poly = [...e.points, { ...e.points[0] }];
     e.points = poly;
-    const res = computeExcisionScore({ poly, mel: e.mel, lesions: e.lesions, axis: e.axis });
+    const res = computeExcisionScore({
+      poly,
+      mel: e.mel,
+      lesions: e.lesions,
+      axis: e.axis,
+      fieldWidth: FIELD_WIDTH,
+      fieldHeight: FIELD_HEIGHT,
+    });
     res.exciseVal = res.score;
     if (res.ellipseA) e.ellipseA = res.ellipseA;
     if (res.ellipseB) e.ellipseB = res.ellipseB;
@@ -480,7 +499,11 @@ export function useExcisio() {
       playScarySting(audioContextRef);
       patchUi({
         alarm: true,
-        alarmText: res.wrong ? 'CZERNIAK ZOSTAŁ NA SKÓRZE!' : 'DODATNI MARGINES — NOWOTWÓR ROŚNIE DALEJ!',
+        alarmText: res.oversized
+          ? 'WYCIĘTO ZA DUŻO ZDROWEJ SKÓRY!'
+          : res.wrong
+          ? 'CZERNIAK ZOSTAŁ NA SKÓRZE!'
+          : 'DODATNI MARGINES — NOWOTWÓR ROŚNIE DALEJ!',
         alarmX: (mel.x / FIELD_WIDTH) * 100,
         alarmY: (mel.y / FIELD_HEIGHT) * 100,
       });
@@ -490,12 +513,14 @@ export function useExcisio() {
     if (e.revealTimer) clearTimeout(e.revealTimer);
     e.revealTimer = setTimeout(() => {
       e.revealTimer = null;
-      patchUi({ showResult: true });
+      patchUi({ showResult: true, revealing: false });
       if (res && !res.wrong && res.score >= 90) {
         playFanfare(audioContextRef);
         patchUi({ cheer: true });
         if (e.cheerTimer) clearTimeout(e.cheerTimer);
-        e.cheerTimer = setTimeout(() => patchUi({ cheer: false }), 2600);
+        // Outlives confetti's own ~3.6s self-limiting animation so the portal doesn't unmount
+        // (and cut the fade-out short) while confetti is still visibly falling.
+        e.cheerTimer = setTimeout(() => patchUi({ cheer: false }), 3800);
         requestAnimationFrame(() => startConfetti());
       }
     }, 1500);
@@ -615,6 +640,36 @@ export function useExcisio() {
   }
 
   // ---- cream ----
+  // Coverage is tracked the same way as the disinfect gauze (a grid of cells over the target
+  // area, marked done within the brush radius of each dab) instead of a flat per-dab count, so
+  // reaching 100% takes genuinely smearing across the whole wound rather than a couple of clicks.
+  const CREAM_BRUSH_RADIUS = 30;
+
+  function computeCreamCells() {
+    const e = engine.current;
+    const center = e.woundC;
+    if (!center) return;
+    const cellSize = 20;
+    const dir = e.woundDir;
+    const normal = e.woundN;
+    const a = e.ellipseA + 3 * MM;
+    const b = e.ellipseB + 3 * MM;
+    e.creamCellSize = cellSize;
+    e.creamTarget = new Set();
+    e.creamDone = new Set();
+    const halfSpan = Math.max(a, b) + cellSize;
+    for (let gx = Math.floor((center.x - halfSpan) / cellSize); gx <= Math.floor((center.x + halfSpan) / cellSize); gx++) {
+      for (let gy = Math.floor((center.y - halfSpan) / cellSize); gy <= Math.floor((center.y + halfSpan) / cellSize); gy++) {
+        const cx = (gx + 0.5) * cellSize;
+        const cy = (gy + 0.5) * cellSize;
+        const s = (cx - center.x) * dir.x + (cy - center.y) * dir.y;
+        const q = (cx - center.x) * normal.x + (cy - center.y) * normal.y;
+        if (Math.abs(s) <= a && Math.abs(q) <= b) e.creamTarget.add(`${gx},${gy}`);
+      }
+    }
+    e.creamCellsComputed = true;
+  }
+
   function addCream(p) {
     const e = engine.current;
     const center = e.woundC;
@@ -624,10 +679,19 @@ export function useExcisio() {
     const s = (p.x - center.x) * dir.x + (p.y - center.y) * dir.y;
     const q = (p.x - center.x) * normal.x + (p.y - center.y) * normal.y;
     if (Math.abs(s) > e.ellipseA + 3 * MM || Math.abs(q) > e.ellipseB + 3 * MM) return;
+    if (!e.creamCellsComputed) computeCreamCells();
     const last = e.creamSwabs[e.creamSwabs.length - 1];
     if (last && Math.hypot(p.x - last.x, p.y - last.y) < 6) return;
-    e.creamSwabs.push({ x: p.x, y: p.y, r: 15 + Math.random() * 5 });
-    const pct = Math.min(100, e.creamSwabs.length * 9);
+    e.creamSwabs.push({ x: p.x, y: p.y, r: CREAM_BRUSH_RADIUS + Math.random() * 6 });
+
+    const cellSize = e.creamCellSize;
+    for (let gx = Math.floor((p.x - CREAM_BRUSH_RADIUS) / cellSize); gx <= Math.floor((p.x + CREAM_BRUSH_RADIUS) / cellSize); gx++) {
+      for (let gy = Math.floor((p.y - CREAM_BRUSH_RADIUS) / cellSize); gy <= Math.floor((p.y + CREAM_BRUSH_RADIUS) / cellSize); gy++) {
+        const key = `${gx},${gy}`;
+        if (e.creamTarget.has(key)) e.creamDone.add(key);
+      }
+    }
+    const pct = Math.min(100, Math.round((e.creamDone.size / (e.creamTarget.size * 0.9)) * 100));
     if (pct !== uiRef.current.creamPct) patchUi({ creamPct: pct });
     else draw();
   }
@@ -697,6 +761,114 @@ export function useExcisio() {
     img.src = `data:image/svg+xml,${encodeURIComponent(plasterSvg(def))}`;
     patchUi({ showTray: false });
   }
+
+  function pickCustomPlaster(dataUrl) {
+    const e = engine.current;
+    e.plaster = { id: 'custom', name: 'Własny plasterek' };
+    e.plasterAlpha = 0;
+    const img = new Image();
+    img.onload = () => {
+      e.plasterImage = img;
+      animatePlasterIn();
+    };
+    img.src = dataUrl;
+    patchUi({ showTray: false, showCustomDraw: false });
+  }
+
+  // ---- custom plaster drawing ----
+  // The band color (background) and the pen strokes (foreground) are two stacked canvases so
+  // changing the plaster's own color never erases what the player already drew on top of it.
+  function paintCustomDrawBackground() {
+    const canvas = drawBgCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = `data:image/svg+xml,${encodeURIComponent(
+      plasterSvg({ body: ui.plasterColor, pad: CUSTOM_DRAW_BASE.pad, motif: null })
+    )}`;
+  }
+
+  function drawPointFromEvent(canvas, event) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((event.clientX - rect.left) * canvas.width) / rect.width,
+      y: ((event.clientY - rect.top) * canvas.height) / rect.height,
+    };
+  }
+
+  function onDrawPointerDown(event) {
+    const canvas = drawCanvasRef.current;
+    if (!canvas) return;
+    event.preventDefault();
+    canvas.setPointerCapture(event.pointerId);
+    const e = engine.current;
+    e.penDrawing = true;
+    const pt = drawPointFromEvent(canvas, event);
+    e.penLast = pt;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = uiRef.current.drawColor;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, uiRef.current.drawThickness / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function onDrawPointerMove(event) {
+    const e = engine.current;
+    if (!e.penDrawing) return;
+    const canvas = drawCanvasRef.current;
+    if (!canvas) return;
+    const pt = drawPointFromEvent(canvas, event);
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = uiRef.current.drawColor;
+    ctx.lineWidth = uiRef.current.drawThickness;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(e.penLast.x, e.penLast.y);
+    ctx.lineTo(pt.x, pt.y);
+    ctx.stroke();
+    e.penLast = pt;
+  }
+
+  function onDrawPointerUp(event) {
+    const e = engine.current;
+    e.penDrawing = false;
+    const canvas = drawCanvasRef.current;
+    if (canvas?.hasPointerCapture?.(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  }
+
+  const openCustomDraw = () => patchUi({ showCustomDraw: true });
+  const cancelCustomDraw = () => patchUi({ showCustomDraw: false });
+  const setDrawColor = (color) => patchUi({ drawColor: color });
+  const setDrawThickness = (width) => patchUi({ drawThickness: width });
+  const setPlasterColor = (color) => patchUi({ plasterColor: color });
+  const clearDrawing = () => {
+    const canvas = drawCanvasRef.current;
+    if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  };
+  const finishCustomDraw = () => {
+    const bg = drawBgCanvasRef.current;
+    const fg = drawCanvasRef.current;
+    if (!bg || !fg) return;
+    const combined = document.createElement('canvas');
+    combined.width = fg.width;
+    combined.height = fg.height;
+    const ctx = combined.getContext('2d');
+    ctx.drawImage(bg, 0, 0);
+    ctx.drawImage(fg, 0, 0);
+    pickCustomPlaster(combined.toDataURL('image/png'));
+  };
+
+  useEffect(() => {
+    if (ui.showCustomDraw) paintCustomDrawBackground();
+    // Repaint the band background on open and whenever its color changes; pen strokes live on
+    // the separate foreground canvas and are untouched by this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ui.showCustomDraw, ui.plasterColor]);
 
   // ---- confetti ----
   function startConfetti() {
@@ -857,7 +1029,7 @@ export function useExcisio() {
   function startGame() {
     patchUi({
       screen: 'play', phase: 'disinfect', equipped: null, disinfectPct: 0, deepCount: 0, skinCount: 0,
-      creamPct: 0, revealing: false, zoom: 1, hint: true, showTray: false, redFlash: false,
+      creamPct: 0, revealing: false, zoom: 1, hint: true, showTray: false, showCustomDraw: false, redFlash: false,
     });
   }
 
@@ -870,7 +1042,7 @@ export function useExcisio() {
     const level = ui.level;
     patchUi({
       showResult: false, revealing: false, result: null, zoom: 1, phase: 'disinfect', equipped: null,
-      injCount: 0, disinfectPct: 0, deepCount: 0, skinCount: 0, creamPct: 0, hint: true, showTray: false, redFlash: false,
+      injCount: 0, disinfectPct: 0, deepCount: 0, skinCount: 0, creamPct: 0, hint: true, showTray: false, showCustomDraw: false, redFlash: false,
     });
     setupLevel(level);
   }
@@ -885,7 +1057,7 @@ export function useExcisio() {
     const add = ui.result ? ui.result.moneyNum : 0;
     patchUi((s) => ({
       level, cash: s.cash + add, showResult: false, revealing: false, result: null, zoom: 1, phase: 'disinfect',
-      equipped: null, injCount: 0, disinfectPct: 0, deepCount: 0, skinCount: 0, creamPct: 0, hint: true, showTray: false, redFlash: false,
+      equipped: null, injCount: 0, disinfectPct: 0, deepCount: 0, skinCount: 0, creamPct: 0, hint: true, showTray: false, showCustomDraw: false, redFlash: false,
     }));
     setupLevel(level);
   }
@@ -918,6 +1090,7 @@ export function useExcisio() {
     }
     if (phase === 'cream') {
       e.creamSwabs = [];
+      if (e.creamDone) e.creamDone.clear();
       patchUi({ creamPct: 0 });
       draw();
     }
@@ -976,7 +1149,7 @@ export function useExcisio() {
 
   return {
     ui,
-    refs: { canvasRef, confettiRef, viewRef, plasterScrollRef },
+    refs: { canvasRef, confettiRef, viewRef, plasterScrollRef, drawCanvasRef, drawBgCanvasRef },
     DEEP_NEED,
     SKIN_NEED,
     plasterCards,
@@ -1002,6 +1175,16 @@ export function useExcisio() {
       retry,
       nextLevel,
       pickPlaster,
+      openCustomDraw,
+      cancelCustomDraw,
+      setDrawColor,
+      setDrawThickness,
+      setPlasterColor,
+      clearDrawing,
+      finishCustomDraw,
+      onDrawPointerDown,
+      onDrawPointerMove,
+      onDrawPointerUp,
     },
   };
 }

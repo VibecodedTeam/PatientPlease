@@ -163,6 +163,20 @@ describe('computeExcisionScore', () => {
     expect(res.tumorRays).toBeGreaterThan(0);
     expect(res.title).toBe('Dodatni margines');
   });
+
+  it('fails an absurdly oversized cut spanning most of the field, even though the lesion is enclosed', () => {
+    const hugePoly = ellipsePolygon(center, 400, 400, 0, 720);
+    const res = computeExcisionScore({ poly: hugePoly, mel, lesions: [mel], axis: 0, fieldWidth: 900, fieldHeight: 620 });
+    expect(res.wrong).toBe(true);
+    expect(res.oversized).toBe(true);
+    expect(res.score).toBeLessThan(10);
+  });
+
+  it('does not flag a normally generous (but not screen-spanning) margin as oversized', () => {
+    const wideButNormalPoly = ellipsePolygon(center, 200, 100, 0, 720);
+    const res = computeExcisionScore({ poly: wideButNormalPoly, mel, lesions: [mel], axis: 0, fieldWidth: 900, fieldHeight: 620 });
+    expect(res.oversized).toBeUndefined();
+  });
 });
 
 describe('stitchGeometry / isStitchValid / scoreSutures', () => {

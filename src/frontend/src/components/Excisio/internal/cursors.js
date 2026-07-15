@@ -10,7 +10,9 @@ const WIPE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34"
 
 const NEEDLE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#0b1215" stroke-width="4"><path d="M3 21 Q9 20 13 16"/><path d="M13 16 A6 6 0 1 1 20 9"/></g><g stroke="#fff" stroke-width="2"><path d="M3 21 Q9 20 13 16"/><path d="M13 16 A6 6 0 1 1 20 9"/></g></svg>`;
 
-const CREAM_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><g stroke="#0b1215" stroke-width="3" fill="none" stroke-linejoin="round"><rect x="6" y="9" width="12" height="11" rx="2"/><path d="M9 9V6h6v3M12 6V3"/></g><rect x="6" y="9" width="12" height="11" rx="2" fill="#eaf3ef" stroke="#0b1215" stroke-width="1.2"/><path d="M9 9V6h6v3" fill="none" stroke="#0b1215" stroke-width="1.2"/><rect x="10.6" y="2.6" width="2.8" height="3.6" rx="1" fill="#cdd9d6" stroke="#0b1215" stroke-width="1"/></svg>`;
+// Bigger than the other tool cursors on purpose: the dashed ring traces the actual radius the
+// cream brush smears per dab, so the player can see how much area a single stroke will cover.
+const CREAM_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="27" r="24" fill="rgba(255,240,244,0.22)" stroke="rgba(255,255,255,0.6)" stroke-width="1.4" stroke-dasharray="3 3"/><g transform="translate(15 15)"><g stroke="#0b1215" stroke-width="3" fill="none" stroke-linejoin="round"><rect x="6" y="9" width="12" height="11" rx="2"/><path d="M9 9V6h6v3M12 6V3"/></g><rect x="6" y="9" width="12" height="11" rx="2" fill="#eaf3ef" stroke="#0b1215" stroke-width="1.2"/><path d="M9 9V6h6v3" fill="none" stroke="#0b1215" stroke-width="1.2"/><rect x="10.6" y="2.6" width="2.8" height="3.6" rx="1" fill="#cdd9d6" stroke="#0b1215" stroke-width="1"/></g></svg>`;
 
 /** CSS `cursor` values for each tool, rendered as inline SVG data URIs so no asset files are needed. */
 export const TOOL_CURSORS = {
@@ -18,5 +20,5 @@ export const TOOL_CURSORS = {
   syringe: cursorUrl(SYRINGE_SVG, '3 21'),
   wipe: cursorUrl(WIPE_SVG, '17 17'),
   needle: cursorUrl(NEEDLE_SVG, '3 21'),
-  cream: cursorUrl(CREAM_SVG, '16 16'),
+  cream: cursorUrl(CREAM_SVG, '27 27'),
 };

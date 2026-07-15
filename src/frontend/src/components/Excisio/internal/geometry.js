@@ -112,7 +112,7 @@ export function computeDifficulty(level, parts) {
     tone: part.tone,
     marginMm: 2,
     menace,
-    benign: Math.min(2 + Math.floor(level / 1.5), 6),
+    benign: Math.min(2 + Math.floor(level / 2.5), 4),
     tremor: level >= 2 ? Math.min((level - 1) * 0.9, 4.2) : 0,
     melLobe: 0.15 - menace * 0.09,
     melDark: 1 - menace * 0.35,
@@ -129,8 +129,10 @@ export function computeDifficulty(level, parts) {
  * @param {{type: string, x: number, y: number}[]} params.lesions - all lesions on the field (mel + benign decoys)
  * @param {number} params.axis - limb axis, radians
  * @param {number} [params.marginMm]
+ * @param {number} [params.fieldWidth] - operating-field width, to catch a grossly oversized cut
+ * @param {number} [params.fieldHeight] - operating-field height, to catch a grossly oversized cut
  */
-export function computeExcisionScore({ poly, mel, lesions, axis, marginMm = 2 }) {
+export function computeExcisionScore({ poly, mel, lesions, axis, marginMm = 2, fieldWidth = 900, fieldHeight = 620 }) {
   const center = { x: mel.x, y: mel.y };
   const enclosed = pointInPolygon(center, poly);
   let benignEnclosed = 0;
@@ -154,6 +156,34 @@ export function computeExcisionScore({ poly, mel, lesions, axis, marginMm = 2 })
       title: benignEnclosed > 0 ? 'Wycięto zdrowy pieprzyk' : 'Chybione cięcie',
       msg:
         'Czerniak wciąż jest na skórze. To on jest większy, asymetryczny, o poszarpanych brzegach i niejednolitym kolorze — obrysuj właśnie tę zmianę.',
+    };
+  }
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const point of poly) {
+    minX = Math.min(minX, point.x);
+    maxX = Math.max(maxX, point.x);
+    minY = Math.min(minY, point.y);
+    maxY = Math.max(maxY, point.y);
+  }
+  if (maxX - minX > fieldWidth * 0.7 || maxY - minY > fieldHeight * 0.7) {
+    return {
+      score: 4,
+      wrong: true,
+      oversized: true,
+      benignEnclosed,
+      moneyNum: 2,
+      money: formatZloty(2),
+      clearance: 0,
+      marginAcc: 0,
+      conserv: 0,
+      tone: '#ff6b6b',
+      title: 'Wycięto zbyt dużo',
+      msg:
+        'Elipsa objęła niemal całą kończynę — usunięto ogromny obszar zdrowej skóry zamiast ciasnej elipsy z marginesem 1–3 mm wokół zmiany.',
     };
   }
 

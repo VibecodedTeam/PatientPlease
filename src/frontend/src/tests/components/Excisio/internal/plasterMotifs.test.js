@@ -1,4 +1,11 @@
-import { PLASTER_DEFS, motifSvg, plasterSvg } from '../../../../components/Excisio/internal/plasterMotifs';
+import {
+  CUSTOM_DRAW_BASE,
+  DRAW_COLORS,
+  DRAW_THICKNESSES,
+  PLASTER_DEFS,
+  motifSvg,
+  plasterSvg,
+} from '../../../../components/Excisio/internal/plasterMotifs';
 
 describe('PLASTER_DEFS', () => {
   it('has a unique id for every plaster design', () => {
@@ -39,6 +46,34 @@ describe('motifSvg', () => {
 describe('PLASTER_DEFS motif variety', () => {
   it.each(['sun', 'dog', 'bunny', 'frog', 'person'])('includes at least one %s design', (motif) => {
     expect(PLASTER_DEFS.some((d) => d.motif === motif)).toBe(true);
+  });
+});
+
+describe('DRAW_COLORS', () => {
+  it('offers black, white and 7 distinct rainbow colors for the pen', () => {
+    expect(new Set(DRAW_COLORS).size).toBe(DRAW_COLORS.length);
+    expect(DRAW_COLORS).toContain('#1c1c1e');
+    expect(DRAW_COLORS).toContain('#ffffff');
+    expect(DRAW_COLORS.length).toBe(9);
+    DRAW_COLORS.forEach((color) => expect(color).toMatch(/^#[0-9a-f]{6}$/));
+  });
+});
+
+describe('DRAW_THICKNESSES', () => {
+  it('offers distinct, ascending pen widths', () => {
+    expect(new Set(DRAW_THICKNESSES).size).toBe(DRAW_THICKNESSES.length);
+    DRAW_THICKNESSES.forEach((width) => expect(typeof width).toBe('number'));
+    const sorted = [...DRAW_THICKNESSES].sort((a, b) => a - b);
+    expect(DRAW_THICKNESSES).toEqual(sorted);
+  });
+});
+
+describe('CUSTOM_DRAW_BASE', () => {
+  it('is a blank plaster (no motif) usable as a drawing surface', () => {
+    expect(typeof CUSTOM_DRAW_BASE.body).toBe('string');
+    expect(typeof CUSTOM_DRAW_BASE.pad).toBe('string');
+    expect(CUSTOM_DRAW_BASE.motif).toBeFalsy();
+    expect(plasterSvg(CUSTOM_DRAW_BASE).startsWith('<svg')).toBe(true);
   });
 });
 

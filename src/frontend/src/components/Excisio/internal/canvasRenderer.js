@@ -517,27 +517,58 @@ function drawSkinStitches(ctx, skinStitches, isStitchValid) {
   ctx.restore();
 }
 
+// Dabs are first painted onto an offscreen mask with the 'lighten' blend mode, so overlapping
+// strokes cap out at the same brightness instead of stacking into blotchy hot spots - the result
+// reads as one smooth, evenly-spread layer of ointment rather than a trail of separate dots.
 function drawCream(ctx, creamSwabs, creamFade) {
   if (!creamSwabs.length) return;
   const fade = creamFade != null ? creamFade : 1;
   if (fade <= 0) return;
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const s of creamSwabs) {
+    minX = Math.min(minX, s.x - s.r);
+    minY = Math.min(minY, s.y - s.r);
+    maxX = Math.max(maxX, s.x + s.r);
+    maxY = Math.max(maxY, s.y + s.r);
+  }
+  const width = Math.max(1, Math.ceil(maxX - minX));
+  const height = Math.max(1, Math.ceil(maxY - minY));
+
+  const mask = document.createElement('canvas');
+  mask.width = width;
+  mask.height = height;
+  const mctx = mask.getContext('2d');
+  mctx.globalCompositeOperation = 'lighten';
+  for (const s of creamSwabs) {
+    const mx = s.x - minX;
+    const my = s.y - minY;
+    const g = mctx.createRadialGradient(mx, my, 1, mx, my, s.r);
+    g.addColorStop(0, 'rgba(255,238,242,0.85)');
+    g.addColorStop(0.6, 'rgba(253,233,237,0.5)');
+    g.addColorStop(1, 'rgba(253,233,237,0)');
+    mctx.fillStyle = g;
+    mctx.beginPath();
+    mctx.arc(mx, my, s.r, 0, Math.PI * 2);
+    mctx.fill();
+  }
+
   ctx.save();
   ctx.globalAlpha = fade;
-  for (const s of creamSwabs) {
-    const g = ctx.createRadialGradient(s.x, s.y, 1, s.x, s.y, s.r);
-    g.addColorStop(0, 'rgba(255,236,240,0.5)');
-    g.addColorStop(0.55, 'rgba(252,232,236,0.28)');
-    g.addColorStop(1, 'rgba(252,232,236,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r, 0, 7);
-    ctx.fill();
-    const shine = ctx.createRadialGradient(s.x - s.r * 0.3, s.y - s.r * 0.3, 1, s.x, s.y, s.r * 0.6);
-    shine.addColorStop(0, 'rgba(255,255,255,0.5)');
+  ctx.drawImage(mask, minX, minY);
+
+  // A single soft sheen near the most recent dabs reads as a wet highlight, without every
+  // historical dab adding its own overlapping shine on top of the others.
+  for (const s of creamSwabs.slice(-3)) {
+    const shine = ctx.createRadialGradient(s.x - s.r * 0.3, s.y - s.r * 0.3, 1, s.x, s.y, s.r * 0.55);
+    shine.addColorStop(0, 'rgba(255,255,255,0.35)');
     shine.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = shine;
     ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r * 0.6, 0, 7);
+    ctx.arc(s.x, s.y, s.r * 0.55, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
