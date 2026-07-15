@@ -7,6 +7,7 @@ import {
   resolveFrontendOrigin,
   resolveGeminiApiKey,
   resolveGeminiModel,
+  resolveGeminiFallbackModel,
   resolveGoogleClientId,
   resolvePort,
   resolveRateLimitMax,
@@ -266,11 +267,25 @@ describe('resolveGeminiModel', () => {
   });
 
   it('falls back to the default when GEMINI_MODEL is unset', () => {
-    expect(resolveGeminiModel(undefined)).toBe('gemini-2.0-flash');
+    expect(resolveGeminiModel(undefined)).toBe('gemini-2.5-flash');
   });
 
   it('falls back to the default when GEMINI_MODEL is an empty string', () => {
-    expect(resolveGeminiModel('')).toBe('gemini-2.0-flash');
+    expect(resolveGeminiModel('')).toBe('gemini-2.5-flash');
+  });
+});
+
+describe('resolveGeminiFallbackModel', () => {
+  it('returns the value when GEMINI_FALLBACK_MODEL is set', () => {
+    expect(resolveGeminiFallbackModel('gemini-1.5-pro')).toBe('gemini-1.5-pro');
+  });
+
+  it('falls back to the default when GEMINI_FALLBACK_MODEL is unset', () => {
+    expect(resolveGeminiFallbackModel(undefined)).toBe('gemini-flash-latest');
+  });
+
+  it('falls back to the default when GEMINI_FALLBACK_MODEL is an empty string', () => {
+    expect(resolveGeminiFallbackModel('')).toBe('gemini-flash-latest');
   });
 });
 
