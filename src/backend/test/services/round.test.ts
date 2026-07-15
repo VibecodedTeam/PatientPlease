@@ -274,17 +274,15 @@ describe('selectNextCase', () => {
     const result = await selectNextCase(prisma, 'session-uuid');
 
     expect(result).toBe(featuredCase);
-    expect(prisma.case.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          isActive: true,
-          featuredOrder: { not: null },
-          diagnosisAttempts: { none: { gameDayLog: { gameSessionId: 'session-uuid' } } },
-        }),
-        orderBy: { featuredOrder: 'asc' },
-        include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
-      }),
-    );
+    expect(prisma.case.findFirst).toHaveBeenCalledWith({
+      where: {
+        isActive: true,
+        featuredOrder: { not: null },
+        diagnosisAttempts: { none: { gameDayLog: { gameSessionId: 'session-uuid' } } },
+      },
+      orderBy: { featuredOrder: 'asc' },
+      include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
+    });
     expect(prisma.case.findMany).not.toHaveBeenCalled();
   });
 
