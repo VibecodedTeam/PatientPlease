@@ -136,4 +136,33 @@ describe('seed', () => {
     expect(skinImage.attentionPointRegion).toBe('CHEST');
     expect(skinImage.imageUrl).toBe('/cases/case-08.png');
   });
+
+  it('seeds real portrait URLs and featuredOrder for the first 15 cases', async () => {
+    await seed();
+
+    const featured = await prisma.case.findMany({
+      where: { featuredOrder: { not: null } },
+      orderBy: { featuredOrder: 'asc' },
+      include: { patient: true },
+    });
+    expect(featured).toHaveLength(15);
+    featured.forEach((caseRecord, idx) => {
+      expect(caseRecord.featuredOrder).toBe(idx + 1);
+      expect(caseRecord.patient.portraitImageUrl).toBe(
+        `/portraits/portrait-${String(idx + 1).padStart(2, '0')}.png`,
+      );
+    });
+
+    // No patient still points at the old placeholder CDN.
+    const stale = await prisma.patient.count({
+      where: { portraitImageUrl: { contains: 'cdn.example.test' } },
+    });
+    expect(stale).toBe(0);
+
+    // Non-featured patients fall back to a served /patient-portraits/ image.
+    const nonFeatured = await prisma.patient.findFirst({
+      where: { case: { featuredOrder: null } },
+    });
+    expect(nonFeatured?.portraitImageUrl).toMatch(/^\/patient-portraits\/.+\.png$/);
+  });
 });

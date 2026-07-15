@@ -39,6 +39,7 @@ export interface CaseDocumentRecord {
 export interface CaseRecord {
   id: string;
   difficulty: number;
+  featuredOrder: number | null;
   correctDiagnosisId: string;
   moneyReward: number;
   moneyPenalty: number;
@@ -136,11 +137,13 @@ export interface RoundPrismaClient {
     findFirst(args: {
       where: {
         isActive: boolean;
+        featuredOrder?: { not: null };
         diagnosisAttempts: { none: { gameDayLog: { gameSessionId: string } } };
       };
-      orderBy: { difficulty: 'asc' };
-      select: { difficulty: true };
-    }): Promise<{ difficulty: number } | null>;
+      orderBy: { difficulty: 'asc' } | { featuredOrder: 'asc' };
+      select?: { difficulty: true };
+      include?: { patient: true; documents: { orderBy: { sortOrder: 'asc' } } };
+    }): Promise<{ difficulty: number } | CaseRecord | null>;
     findMany(args: {
       where: {
         isActive: boolean;
@@ -344,6 +347,19 @@ export async function selectNextCase(
   prisma: RoundPrismaClient,
   gameSessionId: string,
 ): Promise<CaseRecord | null> {
+  const featured = await prisma.case.findFirst({
+    where: {
+      isActive: true,
+      featuredOrder: { not: null },
+      diagnosisAttempts: { none: { gameDayLog: { gameSessionId } } },
+    },
+    orderBy: { featuredOrder: 'asc' },
+    include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
+  });
+  if (featured) {
+    return featured as CaseRecord;
+  }
+
   const lowest = await prisma.case.findFirst({
     where: {
       isActive: true,

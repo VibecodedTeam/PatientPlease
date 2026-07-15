@@ -61,6 +61,18 @@ describe('REAL_CASES', () => {
     expect(hasNonMalignant).toBe(true);
   });
 
+  it('assigns featuredOrder 1..15 to exactly the first 15 cases, in order', () => {
+    const featured = REAL_CASES.filter((c) => c.featuredOrder != null);
+    expect(featured).toHaveLength(15);
+    expect(featured.map((c) => c.featuredOrder)).toEqual(
+      Array.from({ length: 15 }, (_, i) => i + 1),
+    );
+    expect(new Set(featured.map((c) => c.featuredOrder)).size).toBe(15);
+    // the featured cases are the first 15 entries of the array, in order
+    expect(REAL_CASES.slice(0, 15).every((c) => c.featuredOrder != null)).toBe(true);
+    expect(REAL_CASES.slice(15).every((c) => c.featuredOrder == null)).toBe(true);
+  });
+
   it('carries a sourceNote only for the 6 cases with a generated/inferred diagnosis, null for every other case', () => {
     const casesWithSourceNote = REAL_CASES.filter((c) => c.sourceNote !== null).map(
       (c) => c.patientName,

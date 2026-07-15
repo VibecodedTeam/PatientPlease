@@ -222,4 +222,43 @@ describe('game schema', () => {
       }),
     ).rejects.toThrow();
   });
+
+  it('persists an optional Case.featuredOrder and can query featured cases in order', async () => {
+    const diagnosis = await prisma.diagnosis.create({
+      data: {
+        code: 'test-featured-melanoma',
+        name: 'Melanoma',
+        description: 'test',
+        category: 'MALIGNANT',
+      },
+    });
+    const patient = await prisma.patient.create({
+      data: {
+        name: 'Featured Test Patient',
+        age: 50,
+        sex: 'OTHER',
+        portraitImageUrl: 'https://example.test/portrait.png',
+        bodyModelVariant: 'default',
+      },
+    });
+    const featuredCase = await prisma.case.create({
+      data: {
+        patientId: patient.id,
+        difficulty: 2,
+        featuredOrder: 3,
+        correctDiagnosisId: diagnosis.id,
+        moneyReward: 100,
+        moneyPenalty: 50,
+        resultExplanationText: 'Test explanation',
+      },
+    });
+    expect(featuredCase.featuredOrder).toBe(3);
+
+    const found = await prisma.case.findFirst({
+      where: { isActive: true, featuredOrder: { not: null } },
+      orderBy: { featuredOrder: 'asc' },
+    });
+    expect(found?.id).toBe(featuredCase.id);
+    expect(found?.featuredOrder).toBe(3);
+  });
 });
