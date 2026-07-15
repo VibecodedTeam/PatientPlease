@@ -513,23 +513,24 @@ export async function startRound(
     extraElapsedMs: openDayLog.extraElapsedMs,
   });
 
-  const [ownedItems, diagnoses, treatments, successfulExaminations, documentReveals] = await Promise.all([
-    prisma.ownedItem.findMany({
-      where: { gameSessionId: session.id },
-      include: { shopItem: true },
-      orderBy: { purchasedAt: 'asc' },
-    }),
-    prisma.diagnosis.findMany({ orderBy: { name: 'asc' } }),
-    prisma.treatment.findMany({ orderBy: { name: 'asc' } }),
-    prisma.caseExamination.findMany({
-      where: { gameSessionId: session.id, caseId: nextCase.id, isSuccessful: true },
-      select: { shopItemId: true },
-    }),
-    prisma.caseDocumentReveal.findMany({
-      where: { gameSessionId: session.id, caseId: nextCase.id },
-      select: { caseDocumentId: true },
-    }),
-  ]);
+  const [ownedItems, diagnoses, treatments, successfulExaminations, documentReveals] =
+    await Promise.all([
+      prisma.ownedItem.findMany({
+        where: { gameSessionId: session.id },
+        include: { shopItem: true },
+        orderBy: { purchasedAt: 'asc' },
+      }),
+      prisma.diagnosis.findMany({ orderBy: { name: 'asc' } }),
+      prisma.treatment.findMany({ orderBy: { name: 'asc' } }),
+      prisma.caseExamination.findMany({
+        where: { gameSessionId: session.id, caseId: nextCase.id, isSuccessful: true },
+        select: { shopItemId: true },
+      }),
+      prisma.caseDocumentReveal.findMany({
+        where: { gameSessionId: session.id, caseId: nextCase.id },
+        select: { caseDocumentId: true },
+      }),
+    ]);
   const visibleExaminationShopItemIds = new Set(
     successfulExaminations.map((examination) => examination.shopItemId),
   );
