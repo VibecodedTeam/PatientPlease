@@ -63,6 +63,7 @@ function makeCase(overrides: Partial<CaseRecord> = {}): CaseRecord {
   return {
     id: 'case-uuid',
     difficulty: 1,
+    featuredOrder: null,
     correctDiagnosisId: 'diagnosis-uuid',
     moneyReward: 50,
     moneyPenalty: 20,
@@ -265,9 +266,31 @@ describe('pickIndexForSeed', () => {
 });
 
 describe('selectNextCase', () => {
+  it('returns the lowest-featuredOrder unattempted case before the difficulty fallback', async () => {
+    const prisma = createMockPrisma();
+    const featuredCase = makeCase({ id: 'featured-1', featuredOrder: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(featuredCase);
+
+    const result = await selectNextCase(prisma, 'session-uuid');
+
+    expect(result).toBe(featuredCase);
+    expect(prisma.case.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          isActive: true,
+          featuredOrder: { not: null },
+          diagnosisAttempts: { none: { gameDayLog: { gameSessionId: 'session-uuid' } } },
+        }),
+        orderBy: { featuredOrder: 'asc' },
+        include: { patient: true, documents: { orderBy: { sortOrder: 'asc' } } },
+      }),
+    );
+    expect(prisma.case.findMany).not.toHaveBeenCalled();
+  });
+
   it('queries the minimum difficulty among active, un-attempted cases', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 2 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 2 });
     prisma.case.findMany.mockResolvedValue([makeCase({ difficulty: 2 })]);
 
     await selectNextCase(prisma, 'session-uuid');
@@ -284,7 +307,7 @@ describe('selectNextCase', () => {
 
   it('fetches every active, un-attempted case at that minimum difficulty', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 2 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 2 });
     prisma.case.findMany.mockResolvedValue([makeCase({ difficulty: 2 })]);
 
     await selectNextCase(prisma, 'session-uuid');
@@ -302,7 +325,7 @@ describe('selectNextCase', () => {
 
   it('deterministically picks among tied candidates based on the game session id', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 1 });
     const candidates = [
       makeCase({ id: 'case-a' }),
       makeCase({ id: 'case-b' }),
@@ -318,7 +341,10 @@ describe('selectNextCase', () => {
 
   it('returns the same case across repeated calls for the same session and candidate set', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    // Called twice below, so use an implementation: no featured case, difficulty 1 otherwise.
+    prisma.case.findFirst.mockImplementation((args) =>
+      Promise.resolve('featuredOrder' in args.where ? null : { difficulty: 1 }),
+    );
     const candidates = [
       makeCase({ id: 'case-a' }),
       makeCase({ id: 'case-b' }),
@@ -334,7 +360,7 @@ describe('selectNextCase', () => {
 
   it('returns the sole candidate when only one case ties at the lowest difficulty', async () => {
     const prisma = createMockPrisma();
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 1 });
     const onlyCase = makeCase({ id: 'case-only' });
     prisma.case.findMany.mockResolvedValue([onlyCase]);
 
@@ -488,7 +514,7 @@ describe('resolveOpenGameDayLog', () => {
 describe('startRound', () => {
   function primeHappyPath(prisma: ReturnType<typeof createMockPrisma>) {
     prisma.gameSession.findFirst.mockResolvedValue(makeSession());
-    prisma.case.findFirst.mockResolvedValue({ difficulty: 1 });
+    prisma.case.findFirst.mockResolvedValueOnce(null).mockResolvedValue({ difficulty: 1 });
     prisma.case.findMany.mockResolvedValue([makeCase()]);
     prisma.gameDayLog.findFirst.mockResolvedValue(makeGameDayLog());
     prisma.ownedItem.findMany.mockResolvedValue([
