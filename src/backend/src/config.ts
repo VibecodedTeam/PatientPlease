@@ -16,7 +16,7 @@ export function resolveFrontendOrigin(value: string | undefined): string {
   if (!value) {
     throw new Error('FRONTEND_ORIGIN environment variable is not set');
   }
-  return value;
+  return value.replace(/\/+$/, '');
 }
 
 const KNOWN_PLACEHOLDER_COOKIE_SECRETS = new Set([

@@ -109,6 +109,10 @@ describe('resolveFrontendOrigin', () => {
       'FRONTEND_ORIGIN environment variable is not set',
     );
   });
+
+  it('strips a trailing slash, since a browser Origin header never has one and CORS would otherwise reject every request', () => {
+    expect(resolveFrontendOrigin('http://localhost:4173/')).toBe('http://localhost:4173');
+  });
 });
 
 describe('resolveSessionTtlMs', () => {
