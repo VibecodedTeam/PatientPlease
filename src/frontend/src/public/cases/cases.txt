@@ -1,0 +1,491 @@
+15 FEATURED CASES
+=================
+
+These 15 cases are pinned to `featuredOrder` 1-15 in the `Case` model
+(src/backend/prisma/schema/patient.prisma) and are always served first to a
+new game session, in the exact order listed below, before the game falls
+back to its existing difficulty-tiered random selection
+(selectNextCase, src/backend/src/services/round.ts).
+
+Selection rule: featuredOrder N == realCases.ts case-0N.png, i.e. the first
+15 cases the player plays are exactly case-01.png through case-15.png from
+realCases.ts, in that exact sequential order (1→1, 2→2, ... 15→15). No
+fictionalCases.ts entries are featured. Each of these 15 patients also has a
+dedicated mock portrait at src/frontend/public/portraits/portrait-0N.png
+(a simple placeholder image showing the number N), wired through
+Patient.portraitImageUrl in src/backend/src/db/seed.ts and rendered in the
+Chat component via useRound().case.patient.portraitImageUrl. All other
+patients (the remaining realCases.ts entries and all fictionalCases.ts
+entries) fall back to cycling through the 10 generic AI-portrait files in
+src/frontend/public/patient-portraits/.
+
+15 entries, 4 unique diagnoses: melanoma (x12), dysplastic-nevus (x1),
+basal-cell-carcinoma (x1), squamous-cell-carcinoma (x1). Diversity is
+limited by design here — the first 15 cases must be real cases matching
+case-01..case-15 in strict image-number order, and melanoma dominates the
+early entries of realCases.ts.
+
+-------------------------------------------------------------------------
+
+#1 — featuredOrder 1 — difficulty 1 (easy)
+Image: case-01.png | Portrait: portrait-01.png
+Source: realCases.ts
+
+Patient: Irena Kwiat, 41, FEMALE, occupation: Fryzjerka (hairdresser)
+Body region: RIGHT_ARM
+Examination: exam-dermoscopy
+Examination findings: Dermoskopia wykazuje dwie małe, pigmentowane zmiany o
+symetrycznej strukturze i regularnej sieci barwnikowej — cechy uspokajające,
+przemawiające przeciwko złośliwości.
+
+Documents:
+  [UV_EXPOSURE_HISTORY] Historia ekspozycji na promieniowanie UV
+    Przez lata korzystała z solarium i rzadko stosowała krem z filtrem,
+    wierząc, że opalona skóra wygląda zdrowiej, jest bardziej atrakcyjna i
+    dodaje pewności siebie.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Dwa maleńkie, ciemne znamiona na ramieniu, jedno nie większe niż
+    ukłucie igłą. Nie wyglądają dramatycznie i nie bolą, ale oba są
+    symetryczne i wielobarwne.
+
+Diagnosis: dysplastic-nevus (Dysplastic Nevus)
+Treatment: watchful-waiting
+Result explanation: Symetryczne, równomiernie pigmentowane znamiona o
+łagodnym obrazie dermoskopowym — znamię dysplastyczne, leczone obserwacją i
+kontrolą po 3 miesiącach zamiast natychmiastowego wycięcia.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#2 — featuredOrder 2 — difficulty 3 (hard)
+Image: case-02.png | Portrait: portrait-02.png
+Source: realCases.ts
+
+Patient: Dariusz Wilk, 36, MALE, occupation: Księgowy (accountant)
+Body region: NECK
+Examination: exam-punch-biopsy
+Examination findings: Biopsja masy podżuchwowej potwierdza pierwotnego
+czerniaka — bardzo rzadką postać wywodzącą się z okolicy gruczołu
+podżuchwowego.
+
+Documents:
+  [DISEASE_HISTORY] Historia choroby
+    Brak istotnych problemów zdrowotnych w przeszłości.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Postępujące, niebolesne, twarde zgrubienie po lewej dolnej stronie
+    twarzy w okolicy żuchwy, stopniowo powiększające się przez kilka
+    tygodni. Brak dolegliwości podczas jedzenia czy mówienia, bez
+    wcześniejszego urazu lub infekcji w tej okolicy. Twarz stała się
+    widocznie asymetryczna z powodu obrzęku.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: surgical-excision
+Result explanation: Rzadki pierwotny czerniak okolicy gruczołu
+podżuchwowego, wymagający całkowitej resekcji chirurgicznej i rekonstrukcji
+żuchwy.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#3 — featuredOrder 3 — difficulty 2 (medium)
+Image: case-03.png (REAL PATIENT PHOTO) | Portrait: portrait-03.png
+Source: realCases.ts
+
+Patient: Robert Sadowski, 39, MALE, occupation: Pracownik magazynu (warehouse worker)
+Body region: BACK
+Examination: exam-punch-biopsy
+Examination findings: Biopsja potwierdza czerniaka; wykonano wycięcie z
+marginesem bezpieczeństwa i zlecono dalsze badania oceniające stopień
+zaawansowania.
+
+Documents:
+  [UV_EXPOSURE_HISTORY] Historia ekspozycji na promieniowanie UV
+    Rzadko stosuje krem z filtrem; przez lata pracował fizycznie na
+    zewnątrz bez ochrony przeciwsłonecznej.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Znamię na plecach zaczęło krwawić po prysznicu i wycieraniu się
+    ręcznikiem. Partnerka obejrzała je i stwierdziła, że jest pokryte
+    licznymi małymi pęcherzykami, wyraźnie większe od pozostałych znamion
+    pacjenta, z ciemnymi plamami. Znamię z czasem także się powiększało, a
+    ostatnio zaczęło swędzieć.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: surgical-excision
+Result explanation: Krwawiące, swędzące, wielobarwne znamię z niedawnym
+wzrostem — czerniak potwierdzony biopsją, leczony wycięciem z marginesem i
+diagnostyką stopnia zaawansowania.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#4 — featuredOrder 4 — difficulty 3 (hard)
+Image: case-04.png (REAL PATIENT PHOTO) | Portrait: portrait-04.png
+Source: realCases.ts
+
+Patient: Kamil Zych, 34, MALE, occupation: Tatuażysta (tattoo artist)
+Body region: LEFT_ARM
+Examination: exam-punch-biopsy
+Examination findings: Biopsja zmienionego pigmentu tatuażu potwierdza
+czerniaka rozwijającego się w obrębie wytatuowanej skóry — rzadkie, ale
+znane zjawisko.
+
+Documents:
+  [DISEASE_HISTORY] Historia choroby
+    Ogólnie zdrowy, bez istotnych chorób przewlekłych ani wcześniejszych
+    nowotworów skóry.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Fragment starego tatuażu na lewym ramieniu — wcześniej jednolity,
+    ciemny i wyraźnie odgraniczony — rozwinął nieregularną, ciemniejszą
+    plamę, w miejscu której pigment wydaje się rozprzestrzeniać. Obszar
+    stopniowo się powiększał i lekko uniósł, jakby coś gromadziło się pod
+    skórą. Bez bólu i swędzenia, ale obszar wyraźnie różni się wyglądem od
+    reszty tatuażu i wyraźnie się powiększa.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: — (none recorded)
+Result explanation: Czerniak rozwijający się w obrębie wytatuowanej skóry —
+rzadka, lecz udokumentowana postać, w której guz można pomylić ze zmianami
+pigmentu tatuażu.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#5 — featuredOrder 5 — difficulty 3 (hard)
+Image: case-05.png (REAL PATIENT PHOTO) | Portrait: portrait-05.png
+Source: realCases.ts
+
+Patient: Bogumiła Nowicka, 45, FEMALE, occupation: Krawcowa (seamstress)
+Body region: ABDOMEN
+Examination: exam-punch-biopsy
+Examination findings: Biopsja potwierdza czerniaka; powiększone węzły
+chłonne pachwinowe budzą obawy o rozprzestrzenienie regionalne.
+
+Documents:
+  [DISEASE_HISTORY] Historia choroby
+    Ma liczne znamiona odkąd pamięta, ale nigdy nie sprawiały problemów, a
+    poza tym zawsze była zdrowa.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Znamię o chropowatej powierzchni po prawej stronie brzucha, obecne od
+    dzieciństwa, po urlopie zmieniło się w półprzezroczysty guzek wypełniony
+    krwią i płynem. Wcześniej nigdy nie obserwowała żadnych zmian w swoich
+    znamionach. Węzły chłonne pachwinowe są powiększone.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: surgical-excision
+Result explanation: Znamię obecne od dzieciństwa przekształciło się w
+guzek wypełniony krwią, z powiększonymi węzłami chłonnymi pachwinowymi —
+potwierdzony czerniak, leczony resekcją.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#6 — featuredOrder 6 — difficulty 3 (hard)
+Image: case-06.png | Portrait: portrait-06.png
+Source: realCases.ts
+
+Patient: Wanda Kaczmarek, 79, FEMALE, occupation: Emerytka (retiree)
+Body region: HEAD
+Examination: exam-punch-biopsy
+Examination findings: Biopsja wykazuje komórki barwnikowe SOX-10 dodatnie;
+wynik potwierdza desmoplastycznego czerniaka błony śluzowej nosa — bardzo
+rzadką lokalizację czerniaka.
+
+Documents:
+  [DISEASE_HISTORY] Historia choroby
+    Nadciśnienie tętnicze oraz przebyty udar mózgu pięć lat wcześniej.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Zgłosiła się do laryngologa z powodu przewlekłego dyskomfortu w nosie i
+    wodnistej wydzieliny, początkowo uznawanych za zwykłe podrażnienie.
+    Lekarz zauważył niewielką zmianę w przedsionku nosa. Biopsja ujawniła
+    komórki barwnikowe dodatnie pod względem markera SOX-10. Po skierowaniu
+    do ośrodka specjalistycznego w miejscu wcześniejszej biopsji pojawiła
+    się niebieskawa plamka. Mimo braku innych objawów zmianę usunięto z
+    powodu stopniowego powiększania się i wynikającej z tego asymetrii nosa.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: — (none recorded)
+Result explanation: Rzadki desmoplastyczny czerniak błony śluzowej nosa,
+wykryty przypadkowo podczas diagnostyki przewlekłych objawów nosowych.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#7 — featuredOrder 7 — difficulty 3 (hard)
+Image: case-07.png | Portrait: portrait-07.png
+Source: realCases.ts
+
+Patient: Zenon Lis, 70, MALE, occupation: Emeryt (retiree)
+Body region: LEFT_ARM
+Examination: exam-punch-biopsy
+Examination findings: Biopsja ciemniejących znamion potwierdza czerniaka;
+melanuria i limfadenopatia pachowa sugerują chorobę rozsianą.
+
+Documents:
+  [DISEASE_HISTORY] Historia choroby
+    Długa historia cukrzycy typu II, nadciśnienia tętniczego i miażdżycy.
+    Powiększone węzły chłonne stwierdzono w lewej okolicy pachowej podczas
+    niezwiązanego z tym zabiegu chirurgicznego.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Po zabiegu kardiologicznym zauważył silne ciemnienie kilku znamion,
+    które z czasem zmieniły kształt i uzyskały nieregularne brzegi.
+    Zauważył także, że jego mocz stał się ciemniejszy (melanuria), a
+    badania krwi wykazały leukocytozę, podwyższone OB i podwyższony
+    cholesterol.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: — (none recorded)
+Result explanation: Liczne ciemniejące, zmieniające się znamiona wraz z
+melanurią i limfadenopatią pachową wskazują na czerniaka rozsianego.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#8 — featuredOrder 8 — difficulty 2 (medium)
+Image: case-08.png | Portrait: portrait-08.png
+Source: realCases.ts
+
+Patient: Barbara Sikora, 45, FEMALE, occupation: Kierowniczka ds. marketingu (marketing manager)
+Body region: CHEST
+Examination: exam-dermoscopy
+Examination findings: Dermoskopia budzi podejrzenie czerniaka w I stopniu
+zaawansowania o szacowanej grubości 1,2 mm; skierowano na biopsję celem
+potwierdzenia.
+
+Documents:
+  [UV_EXPOSURE_HISTORY] Historia ekspozycji na promieniowanie UV
+    Niedawny, intensywnie słoneczny urlop na Maderze poprzedził pojawienie
+    się zmiany.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Kilka miesięcy po powrocie z urlopu na Maderze zauważyła nietypową
+    zmianę skórną nad lewym obojczykiem. Jej brzegi były postrzępione,
+    kolor ciemniejszy niż w przypadku pozostałych znamion, a kształt lekko
+    uniesiony. Po miesiącu obserwacji zmiana wyraźnie ewoluowała —
+    powiększała się i stawała bardziej rozlana.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: — (none recorded)
+Result explanation: Nowa, postrzępiona, ciemna, ewoluująca zmiana nad
+obojczykiem po intensywnej ekspozycji na słońce — czerniak w I stopniu
+zaawansowania podejrzewany w dermoskopii.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#9 — featuredOrder 9 — difficulty 2 (medium)
+Image: case-09.png (REAL PATIENT PHOTO) | Portrait: portrait-09.png
+Source: realCases.ts
+
+Patient: Józef Baran, 55, MALE, occupation: Inżynier budownictwa (construction engineer)
+Body region: NECK
+Examination: exam-dermoscopy
+Examination findings: Dermoskopia i pełna ocena ABCDE silnie sugerują
+czerniaka, biorąc pod uwagę asymetrię, nieregularne brzegi, zróżnicowanie
+koloru, rozmiar i ewolucję zmiany.
+
+Documents:
+  [UV_EXPOSURE_HISTORY] Historia ekspozycji na promieniowanie UV
+    Rzadko stosuje krem z filtrem, tłumacząc to przyzwyczajeniem oraz
+    praktycznymi wymogami pracy budowlanej na zewnątrz. W dzieciństwie miał
+    liczne poważne oparzenia słoneczne. Ma wiele pigmentowanych znamion.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Znamię z tyłu szyi zmieniło kształt, powiększyło się i zmieniło kolor
+    w ciągu około 6 miesięcy. Badanie skóry wykazało zmianę o wymiarach
+    9 mm x 7 mm spełniającą kryteria ABCDE: asymetryczna, postrzępione
+    brzegi, niejednorodny kolor (brąz zmieszany z czerwono-różowym),
+    średnica ponad 9 mm oraz ewolucja trwająca ponad 6 miesięcy.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: — (none recorded)
+Result explanation: Zmieniające się znamię na szyi spełniające wszystkie
+pięć kryteriów ostrzegawczych ABCDE u długoletniego pracownika fizycznego
+pracującego na zewnątrz, z historią oparzeń słonecznych w dzieciństwie.
+Source note: Diagnosis reflects the ABCDE assessment described in the
+source; no explicit final diagnosis was stated.
+
+-------------------------------------------------------------------------
+
+#10 — featuredOrder 10 — difficulty 1 (easy)
+Image: case-10.png | Portrait: portrait-10.png
+Source: realCases.ts
+
+Patient: Marcin Krupa, 50, MALE, occupation: Robotnik budowlany (construction worker)
+Body region: HEAD
+Examination: exam-dermoscopy
+Examination findings: Dermoskopia i badanie kliniczne potwierdzają perłowy,
+teleangiektatyczny guzek typowy dla raka podstawnokomórkowego w I stopniu
+zaawansowania.
+
+Documents:
+  [UV_EXPOSURE_HISTORY] Historia ekspozycji na promieniowanie UV
+    Dobrze zbudowany, aktywny fizycznie robotnik budowlany o fototypie
+    skóry II.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Półprzezroczysta, perłowa zmiana o średnicy ponad 6 mm i owalnym
+    kształcie od lat obecna na prawym policzku. Wygląda błyszcząco, czasem
+    krwawi, ale nigdy go to nie niepokoiło. Ostatnio zaczęła się
+    powiększać i swędzieć, co skłoniło go do wizyty za namową córki.
+
+Diagnosis: basal-cell-carcinoma (Basal Cell Carcinoma)
+Treatment: mohs-surgery
+Result explanation: Klasyczny perłowy, błyszczący guzek na policzku — rak
+podstawnokomórkowy w I stopniu zaawansowania, leczony chirurgią
+mikrograficzną Mohsa ze względu na lokalizację na twarzy.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#11 — featuredOrder 11 — difficulty 3 (hard)
+Image: case-11.png | Portrait: portrait-11.png
+Source: realCases.ts
+
+Patient: Zofia Wrona, 68, FEMALE, occupation: Emerytka (retiree)
+Body region: NECK
+Examination: exam-punch-biopsy
+Examination findings: Biopsja potwierdza raka kolczystokomórkowego w III
+stopniu zaawansowania, z zajęciem regionalnych węzłów chłonnych i głębokim
+naciekaniem sąsiednich mięśni i tkanki nerwowej; badania obrazowe ujawniają
+także niewielki przerzut do płuc.
+
+Documents:
+  [DISEASE_HISTORY] Historia choroby
+    Wdowa, mieszka samotnie na działce ogrodniczej, pali papierosy.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Szorstkie, łuszczące się plamy oraz twarde guzki z owrzodzeniem
+    centralnym na szyi, obecne od lat. Z czasem zmiany zaczęły boleć pod
+    naciskiem, guzki się powiększyły, a pobliskie węzły chłonne szyi
+    uległy powiększeniu. W ostatnich miesiącach doświadczyła
+    niekontrolowanego spadku wagi i zaczęła utykać na prawą nogę.
+
+Diagnosis: squamous-cell-carcinoma (Squamous Cell Carcinoma)
+Treatment: referral-oncology
+Result explanation: Długotrwałe owrzodziałe, łuszczące się zmiany na szyi
+przekształciły się w raka kolczystokomórkowego w III stopniu zaawansowania
+z przerzutami do węzłów chłonnych i płuc, wymagające skierowania
+onkologicznego celem resekcji, usunięcia węzłów chłonnych i chemioterapii.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#12 — featuredOrder 12 — difficulty 3 (hard)
+Image: case-12.png | Portrait: portrait-12.png
+Source: realCases.ts
+
+Patient: Horacjusz Duda, 40, MALE, occupation: Kierowca autobusu (bus driver)
+Body region: HEAD
+Examination: exam-punch-biopsy
+Examination findings: Badanie histopatologiczne potwierdza pierwotnego
+czerniaka błony śluzowej dziąsła szczęki — rzadką lokalizację czerniaka.
+
+Documents:
+  [DISEASE_HISTORY] Historia choroby
+    Niepalący, bez istotnych chorób przewlekłych; regularnie odwiedza
+    dentystę.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Zauważył ciemną, pigmentowaną zmianę na górnej dziąśle. Początkowo
+    niebolesna i bezobjawowa, więc długo była ignorowana. Zmiana była
+    dobrze odgraniczona, ciemniejsza niż otaczająca błona śluzowa i
+    stopniowo się powiększała.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: surgical-excision
+Result explanation: Pigmentowana zmiana na dziąśle, długo ignorowana z
+powodu braku objawów, okazała się rzadkim pierwotnym czerniakiem błony
+śluzowej jamy ustnej.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#13 — featuredOrder 13 — difficulty 3 (hard)
+Image: case-13.png | Portrait: portrait-13.png
+Source: realCases.ts
+
+Patient: Hiacynta Górska, 69, FEMALE, occupation: Emerytka (retiree)
+Body region: CHEST
+Examination: exam-punch-biopsy
+Examination findings: Badanie histopatologiczne potwierdza czerniaka,
+najprawdopodobniej późny przerzut czerniaka wyciętego ponad 30 lat
+wcześniej.
+
+Documents:
+  [DISEASE_HISTORY] Historia choroby
+    Ponad 30 lat wcześniej chirurgicznie usunięto czerniaka z okolicy
+    lewego mięśnia piersiowego.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Od kilku miesięcy narastający ból w nadbrzuszu, rozwijająca się
+    niedokrwistość i niezamierzona utrata masy ciała. Badania obrazowe
+    ujawniły duży naciek w żołądku; podczas operacji stwierdzono ciemny,
+    naciekający guz obejmujący dno żołądka.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: referral-oncology
+Result explanation: Guz żołądka pojawiający się dekady po wcześniejszym
+wycięciu czerniaka okazał się późnym przerzutowym nawrotem tego
+pierwotnego czerniaka.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#14 — featuredOrder 14 — difficulty 2 (medium)
+Image: case-14.png | Portrait: portrait-14.png
+Source: realCases.ts
+
+Patient: Krystyna Sroka, 57, FEMALE, occupation: Agentka turystyczna (travel agent)
+Body region: RIGHT_ARM
+Examination: exam-punch-biopsy
+Examination findings: Dermoskopia i biopsja, wykonane z powodu istotnych
+czynników ryzyka, potwierdzają czerniaka.
+
+Documents:
+  [UV_EXPOSURE_HISTORY] Historia ekspozycji na promieniowanie UV
+    Przez wiele lat mieszkała na Bermudach, gdzie była silnie eksponowana
+    na promieniowanie UV, nie zdając sobie wówczas sprawy z wagi ochrony
+    przeciwsłonecznej. Od 20. roku życia jest bardziej ostrożna — stosuje
+    kremy z filtrem SPF i unika słońca w gorące, słoneczne dni.
+  [FAMILY_HISTORY] Historia rodzinna
+    Jej ojciec chorował na raka skóry, dlatego od kilku lat okresowo
+    kontroluje swoje znamiona.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Zauważyła maleńkie, ale ciemne znamię na prawym ramieniu. Nie
+    zaobserwowała wyraźnych zmian jego kształtu, ale dobrze zna swoje
+    znamiona i to jedno wygląda dla niej nietypowo.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: — (none recorded)
+Result explanation: Maleńkie, lecz nietypowo wyglądające znamię u
+pacjentki z istotnymi czynnikami ryzyka związanymi z ekspozycją na UV oraz
+historią rodzinną okazało się czerniakiem.
+Source note: —
+
+-------------------------------------------------------------------------
+
+#15 — featuredOrder 15 — difficulty 3 (hard)
+Image: case-15.png | Portrait: portrait-15.png
+Source: realCases.ts
+
+Patient: Tomasz Ryba, 38, MALE, occupation: Programista (software developer)
+Body region: BACK
+Examination: exam-punch-biopsy
+Examination findings: Badanie histopatologiczne potwierdza czerniaka
+guzkowego w II stopniu klinicznego zaawansowania, o grubości Breslowa
+powyżej 2 mm; wykonano biopsję węzła wartowniczego wraz z szerokim
+wycięciem.
+
+Documents:
+  [UV_EXPOSURE_HISTORY] Historia ekspozycji na promieniowanie UV
+    Zapalony wspinacz górski, spędzający urlopy na dużych wysokościach bez
+    odpowiedniej ochrony przed promieniowaniem UV.
+  [CLINICAL_SYMPTOMS] Objawy kliniczne
+    Zauważył nową, szybko rosnącą zmianę na plecach. W przeciwieństwie do
+    swoich typowych znamion, prezentowała się jako ciemnoniebieski,
+    twardy, wyraźnie uniesiony guzek. W ciągu zaledwie dwóch miesięcy
+    podwoiła rozmiar, zaczęła swędzieć i czasami krwawiła podczas
+    wycierania się ręcznikiem.
+
+Diagnosis: melanoma (Melanoma)
+Treatment: surgical-excision
+Result explanation: Szybko rosnący, ciemnoniebieski guzek na plecach —
+czerniak guzkowy w II stopniu zaawansowania, leczony szerokim wycięciem i
+biopsją węzła wartowniczego.
+Source note: —
+
+-------------------------------------------------------------------------
