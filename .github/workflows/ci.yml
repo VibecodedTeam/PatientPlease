@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches:
-      - main
-      - dev
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -14,6 +14,7 @@ jobs:
   test:
     name: Lint, test, build
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:16-alpine
@@ -28,21 +29,25 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+
     env:
       DATABASE_URL: postgresql://game:game@localhost:5432/skin_disease_game
+      PORT: 4000
+      GOOGLE_CLIENT_ID: test-client-id.apps.googleusercontent.com
+      COOKIE_SECRET: ci-only-insecure-secret-change-me
+      FRONTEND_ORIGIN: http://localhost:4173
+      GEMINI_API_KEY: ci-not-a-real-gemini-key
+      WHISPER_BASE_URL: http://localhost:8000/v1
+      WHISPER_MODEL: whisper-1
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
+      - uses: pnpm/action-setup@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -50,9 +55,6 @@ jobs:
 
       - name: Lint
         run: pnpm lint
-
-      - name: Generate Prisma client
-        run: pnpm --filter backend exec prisma generate
 
       - name: Test
         run: pnpm test
@@ -64,6 +66,11 @@ jobs:
     name: Docker Compose alive-check
     runs-on: ubuntu-latest
     needs: test
+    env:
+      # The image runs with NODE_ENV=production, which rejects known placeholder
+      # secrets (see src/backend/src/config.ts) — must not match docker-compose.yml's
+      # default or the app refuses to boot.
+      COOKIE_SECRET: docker-smoke-test-secret-not-for-production-use
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,11 +81,59 @@ jobs:
       - name: Verify database alive
         run: docker compose -p ci -f docker/docker-compose.yml exec -T postgres pg_isready -U game -d skin_disease_game
 
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install backend dependencies
+        run: pnpm install --frozen-lockfile --filter backend
+
+      - name: Seed database (CI verification only)
+        env:
+          DATABASE_URL: postgresql://game:game@localhost:5432/skin_disease_game
+        run: |
+          pnpm --filter backend exec prisma generate
+          pnpm --filter backend exec tsx src/db/seed.ts --force
+
+      - name: Verify seed data
+        run: |
+          check_count() {
+            table="$1"
+            count=$(docker compose -p ci -f docker/docker-compose.yml exec -T postgres \
+              psql -U game -d skin_disease_game -tAc "SELECT count(*) FROM \"$table\";" | tr -d '[:space:]')
+            echo "$table: $count rows"
+            if [ "$count" -lt 20 ]; then
+              echo "Expected at least 20 seeded rows in $table, got $count" >&2
+              exit 1
+            fi
+          }
+          check_count Diagnosis
+          check_count Treatment
+          check_count ShopItem
+          check_count Patient
+          check_count "Case"
+          check_count CaseDocument
+          check_count CaseHint
+
       - name: Verify backend alive
         run: curl --fail --silent --show-error http://localhost:4000/health
 
       - name: Verify frontend alive
         run: curl --fail --silent --show-error http://localhost:4173/
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile --filter frontend
+
+      - name: Install Playwright browsers
+        run: pnpm --filter frontend exec playwright install --with-deps chromium
+
+      - name: Run frontend e2e smoke test
+        env:
+          E2E_BASE_URL: http://localhost:4173
+        run: pnpm --filter frontend test:e2e
 
       - name: Show container logs on failure
         if: failure()

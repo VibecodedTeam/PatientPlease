@@ -1,0 +1,299 @@
+.page {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #212129;
+  background-image: radial-gradient(130% 120% at 50% -10%, #2a3242 0%, #1a1a20 100%);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  color: #ede9e5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 40px;
+}
+
+.header {
+  width: 100%;
+  max-width: 960px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.shiftChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #a89e96;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.shiftChipIcon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #384254;
+  align-items: center;
+  justify-content: center;
+}
+
+.titleBlock {
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-family: 'IBM Plex Serif', serif;
+  font-weight: 600;
+  font-size: 30px;
+  letter-spacing: -0.01em;
+  color: #ede9e5;
+}
+
+.subtitle {
+  margin: 5px 0 0;
+  font-size: 13px;
+  color: #a89e96;
+  letter-spacing: 0.01em;
+}
+
+.balance {
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  background: #193447;
+  border: 1px solid #384254;
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.balanceLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8c8279;
+}
+
+.balanceValue {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 22px;
+  font-weight: 600;
+  color: #ede9e5;
+}
+
+.catalog {
+  width: 100%;
+  max-width: 960px;
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: #193447;
+  border: 1px solid #384254;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, opacity 0.15s;
+}
+
+.cardSelected {
+  border-color: #a89e96;
+  box-shadow: 0 0 0 3px rgba(168, 158, 150, 0.23), 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.cardOwned {
+  background: #16232f;
+  opacity: 0.72;
+}
+
+.cardCover {
+  flex: 0 0 auto;
+  width: 70px;
+  height: 94px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  background: #234152;
+}
+
+.cardBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardHeading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ede9e5;
+}
+
+.cardCategory {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8c8279;
+}
+
+.cardFlavor {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #a89e96;
+  max-width: 52ch;
+}
+
+.cardTrailing {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.cardPrice {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ede9e5;
+  min-width: 56px;
+  text-align: right;
+}
+
+.selectDot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #4a5568;
+  background: #212129;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.selectDotSelected {
+  border-color: #a89e96;
+  background: #a89e96;
+}
+
+.ownedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ec4b9;
+  padding: 8px 12px;
+  background: #073b33;
+  border-radius: 999px;
+}
+
+.summary {
+  width: 100%;
+  max-width: 960px;
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #193447;
+  border: 1px solid #384254;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.summaryLabel {
+  font-size: 14px;
+  color: #a89e96;
+}
+
+.total {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.totalLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8c8279;
+}
+
+.totalValue {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 24px;
+  font-weight: 600;
+  color: #7f776f;
+}
+
+.action {
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: 76px;
+}
+
+.actionButton {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 14px 52px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid #4a5568;
+  background: #193447;
+  color: #cfc7bf;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.actionButton:disabled {
+  cursor: not-allowed;
+  border-color: #531516;
+  background: #2a1719;
+  color: #8a6d6a;
+  box-shadow: none;
+}
+
+.actionHint {
+  font-size: 12.5px;
+  font-weight: 500;
+  min-height: 16px;
+  color: #7f776f;
+}

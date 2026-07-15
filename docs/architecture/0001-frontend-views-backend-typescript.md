@@ -1,6 +1,6 @@
 # 0001: Frontend views/components/providers structure, backend TypeScript, no Next.js
 
-Status: Accepted
+Status: Accepted (path of `views/`/`components/` superseded by [0006](./0006-consolidate-frontend-under-src.md) — they now live under `src/frontend/src/`; "exactly two views" claim superseded by [0007](./0007-open-ended-views-list.md))
 
 ## Context
 

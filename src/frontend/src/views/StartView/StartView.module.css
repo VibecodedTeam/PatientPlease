@@ -1,0 +1,173 @@
+.stage {
+  display: grid;
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
+  overflow: hidden;
+  background: #193447;
+  color: #a89e96;
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+}
+
+.stage > * {
+  grid-area: 1 / 1;
+}
+
+.backdropGlow {
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(circle at 50% 30%, rgba(168, 158, 150, 0.16), rgba(168, 158, 150, 0) 55%);
+  pointer-events: none;
+}
+
+.backdropGrid {
+  width: 100%;
+  height: 100%;
+  opacity: 0.7;
+  pointer-events: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><g fill="none" stroke="%23A89E96" stroke-opacity="0.08" stroke-width="2" stroke-linecap="round"><path d="M22 15v14M15 22h14"/></g></svg>');
+}
+
+.ekg {
+  align-self: center;
+  width: 100%;
+  height: 26vh;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.ekgLine {
+  animation: pp-ekg 4s linear infinite;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #a89e96;
+  margin-bottom: 26px;
+}
+
+.chipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #531516;
+  box-shadow: 0 0 0 4px rgba(83, 21, 22, 0.28);
+  animation: pp-blip 1.4s ease-in-out infinite;
+}
+
+.title {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  font-size: clamp(62px, 15vw, 210px);
+  color: #cfc7c0;
+}
+
+.buttonStage {
+  display: grid;
+  margin-top: clamp(44px, 7vh, 80px);
+}
+
+.buttonStage > * {
+  grid-area: 1 / 1;
+}
+
+.ring {
+  border-radius: 999px;
+  background: #531516;
+  animation: pp-ring 2.2s ease-out infinite;
+  /* Decorative pulse only — must not intercept clicks meant for the PLAY
+     button it stacks over (its transform animation creates a stacking
+     context that would otherwise paint above the button). */
+  pointer-events: none;
+}
+
+.playButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  border: none;
+  cursor: pointer;
+  padding: 24px 56px 24px 48px;
+  border-radius: 999px;
+  background: #531516;
+  color: #f2ece7;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: clamp(26px, 4vw, 44px);
+  letter-spacing: 0.02em;
+  box-shadow: 0 12px 0 #340d0e, 0 24px 34px rgba(0, 0, 0, 0.4);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.playButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 0 #340d0e, 0 30px 40px rgba(0, 0, 0, 0.45);
+}
+
+.playButton:active {
+  transform: translateY(9px);
+  box-shadow: 0 3px 0 #340d0e, 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.playIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35em;
+  height: 1.35em;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.loginOverlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: clamp(44px, 7vh, 80px);
+}
+
+@keyframes pp-ekg {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pp-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  70% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pp-blip {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}

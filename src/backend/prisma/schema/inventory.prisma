@@ -1,0 +1,75 @@
+enum ShopItemType {
+  EQUIPMENT
+  HANDBOOK
+  PLOT_ITEM
+  EXAMINATION
+}
+
+/// Night-shop purchase catalog: equipment, handbooks, plot items, and examinations.
+/// `content` is only populated for EXAMINATION items: `{ timeCostMs: number }`.
+model ShopItem {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  sku          String       @unique
+  name         String
+  description  String
+  itemType     ShopItemType
+  price        Int
+  unlockDay    Int?
+  isActive     Boolean      @default(true)
+  iconImageUrl String?
+  content      Json?
+
+  ownedBy           OwnedItem[]
+  requiredHints     CaseHint[]
+  examinationOrders CaseExamination[]
+
+  @@index([itemType])
+}
+
+/// A purchase made by a GameSession — join between GameSession and ShopItem.
+model OwnedItem {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  gameSessionId  String      @db.Uuid
+  gameSession    GameSession @relation(fields: [gameSessionId], references: [id])
+  shopItemId     String      @db.Uuid
+  shopItem       ShopItem    @relation(fields: [shopItemId], references: [id])
+  purchasePrice  Int
+  purchasedOnDay Int
+  purchasedAt    DateTime    @default(now())
+  isEquipped     Boolean     @default(false)
+
+  @@unique([gameSessionId, shopItemId])
+  @@index([shopItemId])
+}
+
+/// A case-specific hint, unlockable by elapsed days and/or owning a ShopItem.
+model CaseHint {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  caseId             String    @db.Uuid
+  case               Case      @relation(fields: [caseId], references: [id])
+  content            String
+  sortOrder          Int
+  unlockAfterDay     Int?
+  requiredShopItemId String?   @db.Uuid
+  requiredShopItem   ShopItem? @relation(fields: [requiredShopItemId], references: [id])
+
+  @@index([caseId, sortOrder])
+  @@index([requiredShopItemId])
+}
+
+/// A player's order of an EXAMINATION ShopItem against a specific Case — durable across pause/unpause.
+model CaseExamination {
+  id            String      @id @default(uuid(7)) @db.Uuid
+  gameSessionId String      @db.Uuid
+  gameSession   GameSession @relation(fields: [gameSessionId], references: [id])
+  caseId        String      @db.Uuid
+  case          Case        @relation(fields: [caseId], references: [id])
+  shopItemId    String      @db.Uuid
+  shopItem      ShopItem    @relation(fields: [shopItemId], references: [id])
+  isSuccessful  Boolean
+  orderedAt     DateTime    @default(now())
+
+  @@unique([gameSessionId, caseId, shopItemId])
+  @@index([caseId])
+  @@index([shopItemId])
+}

@@ -1,3 +1,5 @@
+name: vibecoded-team
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -5,8 +7,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-game}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-game}
       POSTGRES_DB: ${POSTGRES_DB:-skin_disease_game}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+    expose:
+      - "5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -21,22 +23,54 @@ services:
       dockerfile: src/backend/Dockerfile
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-game}:${POSTGRES_PASSWORD:-game}@postgres:5432/${POSTGRES_DB:-skin_disease_game}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-test-client-id.apps.googleusercontent.com}
+      COOKIE_SECRET: ${COOKIE_SECRET:-dev-only-insecure-secret-change-me}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4173}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-docker-dev-not-a-real-gemini-key}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-flash-latest}
+      WHISPER_BASE_URL: ${WHISPER_BASE_URL:-http://localhost:8000/v1}
+      WHISPER_MODEL: ${WHISPER_MODEL:-whisper-1}
+      DAY_DURATION_SECONDS: ${DAY_DURATION_SECONDS:-60}
     ports:
       - "4000:4000"
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then((r) => r.json()).then((b) => process.exit(b.status === 'ok' ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 5s
 
+  # One-shot seeder. Not started by `up` — guarded behind the `seed` profile.
+  # Built from the Dockerfile `build` target so it ships a freshly generated
+  # Prisma client (generate runs at image build) plus tsx + src for the seed.
+  seed:
+    profiles: ["seed"]
+    build:
+      context: ..
+      dockerfile: src/backend/Dockerfile
+      target: build
+    working_dir: /app/src/backend
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-game}:${POSTGRES_PASSWORD:-game}@postgres:5432/${POSTGRES_DB:-skin_disease_game}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "pnpm exec prisma migrate deploy && pnpm run db:seed:reset"
+
   frontend:
     build:
       context: ..
       dockerfile: src/frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-test-client-id.apps.googleusercontent.com}
+        VITE_DAY_DURATION_SECONDS: ${DAY_DURATION_SECONDS:-60}
     ports:
       - "4173:4173"
     healthcheck:

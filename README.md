@@ -81,6 +81,18 @@ pnpm --filter backend dev
    pnpm docker:down
    ```
 
+### Seeding the database (Docker)
+
+With the stack (or at least Postgres) up, run:
+
+```bash
+pnpm docker:seed
+```
+
+This builds a one-shot seeder from the backend `build` image — it regenerates the
+Prisma client and applies migrations first, so the seed always matches the current
+schema. It reseeds with `--force` (wipes and repopulates gameplay tables).
+
 ## Testing & linting
 
 ```bash

@@ -1,0 +1,51 @@
+enum GameSessionStatus {
+  ACTIVE
+  PAUSED
+  GAME_OVER
+  COMPLETED
+}
+
+/// The single live/mutable save-state for a User: current day, money, and plotline pressure.
+model GameSession {
+  id                           String            @id @default(uuid(7)) @db.Uuid
+  userId                       String            @db.Uuid
+  user                         User              @relation(fields: [userId], references: [id])
+  money                        Int               @default(0)
+  studentLoanThreshold         Int?
+  consecutiveBadDiagnosisCount Int               @default(0)
+  status                       GameSessionStatus @default(ACTIVE)
+  createdAt                    DateTime          @default(now())
+  updatedAt                    DateTime          @updatedAt
+
+  ownedItems       OwnedItem[]
+  chatMessages     ChatMessage[]
+  gameplayLogs     GameplayLog[]
+  dayLogs          GameDayLog[]
+  documentReveals  CaseDocumentReveal[]
+  caseExaminations CaseExamination[]
+
+  @@index([userId, status])
+}
+
+/// Day-by-day log of a GameSession: money, cases attempted, and whether the threshold was met.
+model GameDayLog {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  gameSessionId  String      @db.Uuid
+  gameSession    GameSession @relation(fields: [gameSessionId], references: [id])
+  dayNumber      Int
+  startingMoney  Int
+  endingMoney    Int?
+  thresholdMet   Boolean?
+  casesAttempted Int         @default(0)
+  casesCorrect   Int         @default(0)
+  penaltyApplied Boolean?    @default(false)
+  startedAt      DateTime
+  pausedAt       DateTime?
+  totalPausedMs  Int         @default(0)
+  extraElapsedMs Int         @default(0)
+  endedAt        DateTime?
+
+  diagnosisAttempts DiagnosisAttempt[]
+
+  @@unique([gameSessionId, dayNumber])
+}

@@ -1,0 +1,52 @@
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+/// A patient's identity/presentation, shown on the day-phase desk and 3D scene.
+model Patient {
+  id               String   @id @default(uuid(7)) @db.Uuid
+  name             String
+  age              Int
+  sex              Sex
+  occupation       String?
+  portraitImageUrl String
+  bodyModelVariant String
+  createdAt        DateTime @default(now())
+
+  case Case?
+}
+
+/// The scoreable encounter for a Patient: answer key, economy, and everything documenting it.
+model Case {
+  id                 String     @id @default(uuid(7)) @db.Uuid
+  patientId          String     @unique @db.Uuid
+  patient            Patient    @relation(fields: [patientId], references: [id])
+  difficulty         Int        @db.SmallInt
+  /// Pins this case to a fixed position (1-based) among the first cases a new session sees, ascending. Null means no pinned position — falls back to the existing difficulty-tiered random selection.
+  featuredOrder      Int?       @db.SmallInt
+  correctDiagnosisId String     @db.Uuid
+  correctDiagnosis   Diagnosis  @relation(fields: [correctDiagnosisId], references: [id])
+  correctTreatmentId String?    @db.Uuid
+  correctTreatment   Treatment? @relation(fields: [correctTreatmentId], references: [id])
+
+  moneyReward           Int
+  moneyPenalty          Int
+  resultExplanationText String
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+
+  documents         CaseDocument[]
+  hints             CaseHint[]
+  diagnosisAttempts DiagnosisAttempt[]
+  chatMessages      ChatMessage[]
+  gameplayLogs      GameplayLog[]
+  documentReveals   CaseDocumentReveal[]
+  examinations      CaseExamination[]
+
+  @@index([correctDiagnosisId])
+  @@index([correctTreatmentId])
+  @@index([isActive])
+  @@index([featuredOrder])
+}

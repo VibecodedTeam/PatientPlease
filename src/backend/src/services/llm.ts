@@ -1,0 +1,183 @@
+export type GeminiRole = 'user' | 'model';
+
+export interface GeminiContentPart {
+  text: string;
+}
+
+export interface GeminiContent {
+  role: GeminiRole;
+  parts: GeminiContentPart[];
+}
+
+export type FetchLike = (
+  input: string,
+  init: { method: string; headers: Record<string, string>; body: string },
+) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
+
+export interface GenerateReplyInput {
+  systemInstruction: string;
+  contents: GeminiContent[];
+}
+
+export interface GeminiClient {
+  generateReply(input: GenerateReplyInput): Promise<string>;
+  selectRelevantDocumentIds(input: GenerateReplyInput): Promise<string[]>;
+}
+
+export class GeminiError extends Error {
+  constructor(message = 'Gemini request failed', options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'GeminiError';
+  }
+}
+
+export interface CreateGeminiClientOptions {
+  apiKey: string;
+  model: string;
+  fallbackModel?: string;
+  fetchImpl?: FetchLike;
+}
+
+/** Runs `attempt` against each model in order, returning the first success; throws the last model's error if every model fails. */
+async function withModelFallback<T>(
+  models: string[],
+  attempt: (model: string) => Promise<T>,
+): Promise<T> {
+  let lastError: unknown;
+  for (const model of models) {
+    try {
+      return await attempt(model);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
+export function createGeminiClient(options: CreateGeminiClientOptions): GeminiClient {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const models =
+    options.fallbackModel && options.fallbackModel !== options.model
+      ? [options.model, options.fallbackModel]
+      : [options.model];
+
+  return {
+    async generateReply({ systemInstruction, contents }: GenerateReplyInput): Promise<string> {
+      if (contents.length === 0) {
+        throw new GeminiError('Cannot generate a reply with no conversation contents');
+      }
+
+      return withModelFallback(models, async (model) => {
+        let response: { ok: boolean; status: number; json(): Promise<unknown> };
+        try {
+          response = await fetchImpl(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${options.apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                contents,
+              }),
+            },
+          );
+        } catch (error) {
+          throw new GeminiError('Failed to reach Gemini', { cause: error });
+        }
+
+        if (!response.ok) {
+          throw new GeminiError(`Gemini returned ${response.status}`);
+        }
+
+        const body = (await response.json()) as {
+          candidates?: { content?: { parts?: { text?: string }[] } }[];
+        };
+
+        const text = body.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) {
+          throw new GeminiError('Gemini returned an empty reply');
+        }
+
+        return text;
+      });
+    },
+
+    async selectRelevantDocumentIds({
+      systemInstruction,
+      contents,
+    }: GenerateReplyInput): Promise<string[]> {
+      if (contents.length === 0) {
+        return [];
+      }
+
+      return withModelFallback(models, async (model) => {
+        let response: { ok: boolean; status: number; json(): Promise<unknown> };
+        try {
+          response = await fetchImpl(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${options.apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                contents,
+                generationConfig: {
+                  responseMimeType: 'application/json',
+                  responseSchema: { type: 'ARRAY', items: { type: 'STRING' } },
+                },
+              }),
+            },
+          );
+        } catch (error) {
+          throw new GeminiError('Failed to reach Gemini for document selection', { cause: error });
+        }
+
+        if (!response.ok) {
+          throw new GeminiError(`Gemini returned ${response.status}`);
+        }
+
+        const body = (await response.json()) as {
+          candidates?: { content?: { parts?: { text?: string }[] } }[];
+        };
+
+        const text = body.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) {
+          return [];
+        }
+
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch (error) {
+          throw new GeminiError('Gemini returned non-JSON document selection', { cause: error });
+        }
+
+        if (!Array.isArray(parsed) || !parsed.every((id) => typeof id === 'string')) {
+          throw new GeminiError('Gemini document selection was not an array of strings');
+        }
+
+        return parsed;
+      });
+    },
+  };
+}
+
+const MOCK_PATIENT_REPLY = 'Nie jestem pewien, ale mogę powiedzieć, co zauważyłem.';
+
+/**
+ * Local/dev-only stand-in for the real Gemini client: returns a fixed patient-style
+ * reply and never makes a network call. Selected via CHAT_LLM_PROVIDER=mock so the
+ * chat UI/backend can still be exercised manually when the Gemini free-tier quota
+ * returns 429. Must never be selected in production — the default provider is Gemini.
+ */
+export function createMockGeminiClient(): GeminiClient {
+  return {
+    generateReply(): Promise<string> {
+      return Promise.resolve(MOCK_PATIENT_REPLY);
+    },
+
+    selectRelevantDocumentIds(): Promise<string[]> {
+      return Promise.resolve([]);
+    },
+  };
+}

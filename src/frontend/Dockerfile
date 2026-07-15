@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 RUN corepack enable
 
@@ -9,12 +9,20 @@ COPY src/frontend/package.json src/frontend/package.json
 RUN pnpm install --frozen-lockfile --prod=false
 
 FROM deps AS build
+ARG VITE_API_BASE_URL
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_DAY_DURATION_SECONDS
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+ENV VITE_DAY_DURATION_SECONDS=${VITE_DAY_DURATION_SECONDS}
 COPY src/frontend src/frontend
 RUN pnpm --filter frontend build
 
-FROM node:20-alpine AS run
+FROM node:22-alpine AS run
 WORKDIR /app/src/frontend
-RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+# Pin and activate pnpm at build time so the container never needs network access
+# at startup — corepack otherwise re-fetches the packageManager version on every run.
+RUN corepack enable && corepack prepare pnpm@11.10.0 --activate
 COPY --from=build /app /app
 ENV NODE_ENV=production
 EXPOSE 4173
