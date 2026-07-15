@@ -1,0 +1,39 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  box-sizing: border-box;
+  gap: 16px;
+  padding: 16px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #4a3f28;
+  letter-spacing: 0.02em;
+  padding-bottom: 6px;
+  border-bottom: 2px solid rgba(74, 63, 40, 0.25);
+}
+
+.entry {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #33362b;
+}
+
+.empty {
+  margin: 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #7a715c;
+}

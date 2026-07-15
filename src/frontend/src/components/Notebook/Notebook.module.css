@@ -1,0 +1,18 @@
+.notebook {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  flex: 408 1 0;
+  min-width: 0;
+  box-sizing: border-box;
+  background-color: #f7f3e8;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .notebook {
+    flex-direction: column;
+  }
+}
