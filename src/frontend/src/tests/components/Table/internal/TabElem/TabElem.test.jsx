@@ -13,7 +13,7 @@ function renderWithProviders(ui) {
 }
 
 describe('TabElem', () => {
-  it('renders its children alongside the Information cards', () => {
+  it('renders its children alongside Information_1 and the Notebook', () => {
     renderWithProviders(
       <TabElem>
         <span>Extra content</span>
@@ -21,8 +21,9 @@ describe('TabElem', () => {
     );
 
     expect(screen.getByText('Patient Information')).toBeInTheDocument();
-    expect(screen.getByText('General Patient Story')).toBeInTheDocument();
-    expect(screen.getByText('Clinical Symptoms')).toBeInTheDocument();
+    expect(screen.getByText('History')).toBeInTheDocument();
+    expect(screen.getByText('Symptoms')).toBeInTheDocument();
+    expect(screen.getByText('Exam Results')).toBeInTheDocument();
     expect(screen.getByText('Extra content')).toBeInTheDocument();
   });
 
