@@ -16,6 +16,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 90s
 
   backend:
     build:
@@ -71,6 +72,8 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-test-client-id.apps.googleusercontent.com}
         VITE_DAY_DURATION_SECONDS: ${DAY_DURATION_SECONDS:-60}
+    environment:
+      PREVIEW_ALLOWED_HOSTS: ${PREVIEW_ALLOWED_HOSTS:-}
     ports:
       - "4173:4173"
     healthcheck:
