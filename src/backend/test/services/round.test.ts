@@ -559,7 +559,7 @@ describe('startRound', () => {
         createdAt: new Date('2026-07-01T00:00:00.000Z'),
         updatedAt: new Date('2026-07-01T00:00:00.000Z'),
       },
-      dayLog: { elapsedMs: expect.any(Number) as number },
+      dayLog: { dayNumber: 1, elapsedMs: expect.any(Number) as number },
       ownedItems: [
         {
           id: 'owned-item-uuid',
