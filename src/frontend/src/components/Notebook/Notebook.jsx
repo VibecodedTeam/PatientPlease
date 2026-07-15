@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDocumentTable } from '../Table/providers/DocumentTable';
-import { HistoryPage } from './internal/HistoryPage/HistoryPage';
-import { SymptomsExamPage } from './internal/SymptomsExamPage/SymptomsExamPage';
+import { CaseDocumentsPage } from './internal/CaseDocumentsPage/CaseDocumentsPage';
+import { ExaminationsPage } from './internal/ExaminationsPage/ExaminationsPage';
 import styles from './Notebook.module.css';
 
 export function Notebook() {
@@ -9,8 +9,8 @@ export function Notebook() {
 
   return (
     <div className={styles.notebook}>
-      <HistoryPage documents={documents} />
-      <SymptomsExamPage documents={documents} />
+      <CaseDocumentsPage documents={documents} />
+      <ExaminationsPage documents={documents} />
     </div>
   );
 }
