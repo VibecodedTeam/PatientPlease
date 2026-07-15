@@ -17,3 +17,4 @@ package-lock.json
 yarn.lock
 
 src/backend/tmp/
+src/backend/.env.secrets
