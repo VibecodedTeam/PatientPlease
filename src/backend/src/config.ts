@@ -100,6 +100,17 @@ export function resolveGeminiModel(value: string | undefined): string {
   return value ? value : DEFAULT_GEMINI_MODEL;
 }
 
+/**
+ * "-latest" is a Google-maintained alias that always points at the current stable flash
+ * model, so it survives the primary pinned model (GEMINI_MODEL) being deprecated/retired
+ * out from under us the way gemini-2.0-flash was.
+ */
+const DEFAULT_GEMINI_FALLBACK_MODEL = 'gemini-flash-latest';
+
+export function resolveGeminiFallbackModel(value: string | undefined): string {
+  return value ? value : DEFAULT_GEMINI_FALLBACK_MODEL;
+}
+
 const DEFAULT_CHAT_AUDIO_MAX_BYTES = 10 * 1024 * 1024;
 
 export function resolveChatAudioMaxBytes(value: string | undefined): number {

@@ -30,6 +30,7 @@ services:
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-docker-dev-not-a-real-gemini-key}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-flash-latest}
       WHISPER_BASE_URL: ${WHISPER_BASE_URL:-http://localhost:8000/v1}
       WHISPER_MODEL: ${WHISPER_MODEL:-whisper-1}
       DAY_DURATION_SECONDS: ${DAY_DURATION_SECONDS:-60}

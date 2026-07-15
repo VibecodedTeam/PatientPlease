@@ -27,7 +27,7 @@ exist). The raw audio file is never stored; only its transcript is persisted.
 | `gameSessionId` does not exist or does not belong to the caller | 404 | `{ "error": "game_session_not_found" }` |
 | `caseId` does not exist | 404 | `{ "error": "case_not_found" }` |
 | Whisper transcription request failed | 502 | `{ "error": "transcription_failed" }` |
-| Gemini request failed | 502 | `{ "error": "llm_failed" }` |
+| Gemini request failed on both the primary and fallback model | 502 | `{ "error": "llm_failed" }` |
 | Success | 200 | see shape below |
 
 ```jsonc
@@ -77,7 +77,9 @@ into a non-200 response.
 7. Build a Gemini prompt from the patient's identity, the case's documents (disease history, UV
    exposure, symptoms, family history, weather history), and the full chat history including the
    just-persisted player message.
-8. Call Gemini for a reply (`502` on failure) and persist it as a new `ChatMessage`
+8. Call Gemini for a reply, retrying once against `GEMINI_FALLBACK_MODEL` if the primary
+   `GEMINI_MODEL` request fails (network error, non-2xx, or an empty/unparseable reply)
+   (`502` only if the fallback attempt also fails), and persist it as a new `ChatMessage`
    (`sender: PATIENT`).
 9. Best-effort document reveal: build a second, classifier-only Gemini prompt from the case's
    documents plus the just-generated patient reply, and ask it which document ids the reply

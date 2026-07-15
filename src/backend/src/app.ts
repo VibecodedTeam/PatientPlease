@@ -8,6 +8,7 @@ import {
   resolveFrontendOrigin,
   resolveGeminiApiKey,
   resolveGeminiModel,
+  resolveGeminiFallbackModel,
   resolveGoogleClientId,
   resolveRateLimitMax,
   resolveRateLimitWindowMs,
@@ -97,6 +98,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
         : createGeminiClient({
             apiKey: resolveGeminiApiKey(process.env['GEMINI_API_KEY']),
             model: resolveGeminiModel(process.env['GEMINI_MODEL']),
+            fallbackModel: resolveGeminiFallbackModel(process.env['GEMINI_FALLBACK_MODEL']),
           })),
   });
   app.register(shopRoutes);
