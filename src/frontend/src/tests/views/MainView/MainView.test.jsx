@@ -707,4 +707,79 @@ describe('MainView', () => {
       ).toBe(true),
     );
   });
+
+  it('shows the Lab Disaster popup when the biopsy minigame tab reports a failing score', async () => {
+    await renderMainView();
+    await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin: window.location.origin,
+          data: { type: 'biopsy-minigame-result', shopItemId: 'exam-1', caseId: 'case-uuid', score: 10 },
+        }),
+      );
+    });
+
+    expect(screen.getByText('Lab Disaster')).toBeInTheDocument();
+  });
+
+  it('defers the Lab Disaster popup while the Daily Statistics popup is open, so a failing biopsy result does not block the day-end summary', async () => {
+    mockFetchRoutes({
+      '/api/v1/day/end': () =>
+        new Response(
+          JSON.stringify({
+            gameSession: { consecutiveBadDiagnosisCount: 0 },
+            dayLog: {
+              dayNumber: 1,
+              startingMoney: 100,
+              endingMoney: 130,
+              casesAttempted: 2,
+              casesCorrect: 2,
+              elapsedMs: 65000,
+            },
+          }),
+          { status: 200 },
+        ),
+    });
+    jest.useFakeTimers({ doNotFake: ['queueMicrotask'] });
+    try {
+      await renderMainView();
+      await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+
+      await act(async () => {
+        jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
+      });
+
+      await act(async () => {
+        screen.getByRole('radio', { name: 'Skin Cancer' }).click();
+      });
+      await act(async () => {
+        screen.getByText('Submit Diagnosis').click();
+      });
+      expect(screen.getByText('Correct!')).toBeInTheDocument();
+
+      await act(async () => {
+        screen.getByRole('button', { name: /continue/i }).click();
+      });
+
+      await waitFor(() =>
+        expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument(),
+      );
+
+      act(() => {
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: window.location.origin,
+            data: { type: 'biopsy-minigame-result', shopItemId: 'exam-1', caseId: 'case-uuid', score: 10 },
+          }),
+        );
+      });
+
+      expect(screen.queryByText('Lab Disaster')).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

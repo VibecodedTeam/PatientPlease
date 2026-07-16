@@ -10,6 +10,8 @@ const ITEM_TYPE_LABELS = {
   PLOT_ITEM: 'Plot Item',
 };
 
+const PUNCH_BIOPSY_SKU = 'exam-punch-biopsy';
+
 /**
  * @param {string} itemType
  * @returns {string}
@@ -130,7 +132,9 @@ export function NightViewContent() {
               <div className={styles.cardTrailing}>
                 <span className={styles.cardPrice}>
                   ${item.price}
-                  {item.itemType === 'EXAMINATION' && typeof item.timeCostMs === 'number'
+                  {item.itemType === 'EXAMINATION' &&
+                  item.sku !== PUNCH_BIOPSY_SKU &&
+                  typeof item.timeCostMs === 'number'
                     ? ` +${Math.round(item.timeCostMs / 1000)}s`
                     : null}
                 </span>

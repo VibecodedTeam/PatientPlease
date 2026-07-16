@@ -1,0 +1,1 @@
+export { LabDisasterPopup } from './LabDisasterPopup';

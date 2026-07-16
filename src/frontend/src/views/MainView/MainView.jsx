@@ -8,11 +8,13 @@ import { Table } from '../../components/Table';
 import { Settings } from '../../components/Settings';
 import { ResultPopup } from '../../components/ResultPopup';
 import { StatisticsPopup } from '../../components/StatisticsPopup';
+import { LabDisasterPopup } from '../../components/LabDisasterPopup';
 import { useRound } from '../../providers/Round';
 import { DocumentTableProvider } from '../../components/Table/providers/DocumentTable';
 import { GameSessionProvider, useGameSession } from './providers/GameSession';
 import { ResultsProvider, useResults } from './providers/Results';
 import { StatisticsProvider, useStatistics } from './providers/Statistics';
+import { BiopsyMinigameProvider, useBiopsyMinigame } from './providers/BiopsyMinigame';
 
 const TERMINAL_MESSAGES = {
   completed: "You've completed every case. Well done!",
@@ -42,6 +44,7 @@ function MainViewContent() {
     endDayError,
     retryFinishDay,
   } = useStatistics();
+  const { isLabDisasterOpen, closeLabDisaster } = useBiopsyMinigame();
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [settingsAutoOpened, setSettingsAutoOpened] = useState(false);
   const [activeView, setActiveView] = useState('scene');
@@ -202,6 +205,9 @@ function MainViewContent() {
       {isStatisticsOpen && statistics && !isResultOpen && (
         <StatisticsPopup statistics={statistics} onClose={handleCloseStatistics} />
       )}
+      {isLabDisasterOpen && !isResultOpen && !isStatisticsOpen && (
+        <LabDisasterPopup onClose={closeLabDisaster} />
+      )}
     </div>
   );
 }
@@ -211,9 +217,11 @@ export function MainView() {
     <GameSessionProvider>
       <StatisticsProvider>
         <ResultsProvider>
-          <DocumentTableProvider>
-            <MainViewContent />
-          </DocumentTableProvider>
+          <BiopsyMinigameProvider>
+            <DocumentTableProvider>
+              <MainViewContent />
+            </DocumentTableProvider>
+          </BiopsyMinigameProvider>
         </ResultsProvider>
       </StatisticsProvider>
     </GameSessionProvider>

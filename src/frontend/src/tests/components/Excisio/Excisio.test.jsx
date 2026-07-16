@@ -72,8 +72,20 @@ describe('Excisio', () => {
     expect(screen.getByRole('heading', { name: /technika biopsji wycinającej/i })).toBeInTheDocument();
   });
 
-  it('shows level 1 and a starting balance of 0,00 zł in the header', async () => {
+  it('shows no brand title, level number, or money/earnings figure in the header', async () => {
+    // Tutorial dismissed first: the tutorial copy's unrelated Polish text ("rozłóż",
+    // "zeszły") incidentally contains the substring "zł", which would otherwise collide
+    // with the /zł/ money-figure check below even though it has nothing to do with cash.
+    const user = userEvent.setup();
     render(<Excisio />);
-    expect(screen.getByText(/0,00 zł/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /rozumiem — zaczynamy zabieg/i }));
+
+    expect(screen.queryByText('EXCISIO')).not.toBeInTheDocument();
+    expect(screen.queryByText('symulator biopsji wycinającej')).not.toBeInTheDocument();
+    expect(screen.queryByText('Poziom')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d+ · .+/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Zarobek')).not.toBeInTheDocument();
+    expect(screen.queryByText(/zł/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /poradnik/i })).toBeInTheDocument();
   });
 });

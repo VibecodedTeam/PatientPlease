@@ -79,4 +79,23 @@ describe('Notebook', () => {
     renderWithDocumentTable([]);
     expect(screen.getByText('No examinations completed yet.')).toBeInTheDocument();
   });
+
+  it('shows only the findings text for an exam result whose content also carries a shopItemId, with no "Findings" label or raw id', () => {
+    const { container } = renderWithDocumentTable([
+      {
+        id: 'd8',
+        type: 'EXAMINATION_RESULTS',
+        title: 'Punch Biopsy',
+        content: {
+          shopItemId: '019f6604-fb9d-7787-a1f2-359e2c1522e7',
+          findings: 'Excision biopsy confirms melanoma.',
+        },
+      },
+    ]);
+
+    expect(container.textContent).toContain('Punch Biopsy: Excision biopsy confirms melanoma.');
+    expect(container.textContent).not.toContain('Shop Item Id');
+    expect(container.textContent).not.toContain('019f6604-fb9d-7787-a1f2-359e2c1522e7');
+    expect(container.textContent).not.toContain('Findings:');
+  });
 });

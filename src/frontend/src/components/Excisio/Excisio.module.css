@@ -79,56 +79,9 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 16px 26px;
   border-bottom: 1px solid rgba(120, 170, 175, 0.12);
-}
-
-.headerBrand {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.headerTitle {
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: 0.14em;
-  color: #eef6f5;
-}
-
-.headerSubtitle {
-  font-size: 12px;
-  color: #7e979b;
-}
-
-.headerStats {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-}
-
-.statBlock {
-  text-align: right;
-}
-
-.statLabel {
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: #6f888c;
-  text-transform: uppercase;
-}
-
-.statValue {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 16px;
-  color: #eef6f5;
-}
-
-.statValueAccent {
-  composes: statValue;
-  color: #57e0c0;
 }
 
 .divider {

@@ -23,6 +23,12 @@ const BODY_PARTS = [
   { name: 'Ramię', tone: ['#eabd9d', '#d69a76', '#c07f5d'] },
 ];
 
+const MAX_STARTING_LEVEL = 8;
+
+function pickRandomLevel() {
+  return 1 + Math.floor(Math.random() * MAX_STARTING_LEVEL);
+}
+
 const DEEP_NEED = 3;
 const SKIN_NEED = 5;
 
@@ -157,8 +163,14 @@ export function useExcisio() {
   const audioContextRef = useRef(null);
   const engine = useRef(null);
   if (!engine.current) engine.current = createEngine();
+  const startingLevelRef = useRef(null);
+  if (startingLevelRef.current === null) startingLevelRef.current = pickRandomLevel();
 
-  const [ui, setUi] = useState(INITIAL_UI);
+  const [ui, setUi] = useState(() => ({
+    ...INITIAL_UI,
+    level: startingLevelRef.current,
+    partName: computeDifficulty(startingLevelRef.current, BODY_PARTS).part,
+  }));
   const uiRef = useRef(ui);
 
   function patchUi(patch) {
@@ -1123,7 +1135,7 @@ export function useExcisio() {
   });
 
   useEffect(() => {
-    setupLevel(1);
+    setupLevel(startingLevelRef.current);
     const view = viewRef.current;
     const handleWheel = (event) => {
       if (uiRef.current.screen !== 'play' || uiRef.current.showTray) return;

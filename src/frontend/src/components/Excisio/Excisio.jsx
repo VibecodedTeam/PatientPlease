@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { OverlayPortal } from '../OverlayPortal';
 import { useExcisio } from './useExcisio';
-import { formatZloty } from './internal/geometry';
 import { DRAW_COLORS, DRAW_THICKNESSES } from './internal/plasterMotifs';
 import styles from './Excisio.module.css';
 
@@ -112,8 +111,28 @@ function buildBreakdown(result) {
  * an ellipse along the limb axis with a 1-3mm margin, close the wound in layers (deep +
  * skin sutures), dress it, and see a weighted score across all 4 stages.
  */
-export function Excisio() {
+export function Excisio({ onComplete }) {
   const { ui, refs, DEEP_NEED, SKIN_NEED, plasterCards, toolStatus, handlers } = useExcisio();
+  const completionTimerRef = useRef(null);
+  const hasCompletedRef = useRef(false);
+
+  useEffect(() => {
+    if (!onComplete || !ui.showResult || !ui.result) return undefined;
+    if (hasCompletedRef.current) return undefined;
+    completionTimerRef.current = setTimeout(() => {
+      hasCompletedRef.current = true;
+      onComplete(ui.result.score);
+    }, 5000);
+    return () => clearTimeout(completionTimerRef.current);
+  }, [onComplete, ui.showResult, ui.result]);
+
+  function handleManualComplete() {
+    if (hasCompletedRef.current) return;
+    hasCompletedRef.current = true;
+    clearTimeout(completionTimerRef.current);
+    onComplete(ui.result.score);
+  }
+
   const phase = phaseHint(ui.phase, ui.equipped, ui.deepCount, ui.skinCount, ui.disinfectPct, ui.creamPct, ui.injCount, DEEP_NEED, SKIN_NEED);
   const meta = PHASE_META[ui.phase] || PHASE_META.disinfect;
   const isPlay = ui.screen === 'play';
@@ -127,25 +146,10 @@ export function Excisio() {
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <div className={styles.headerBrand}>
-          <span className={styles.headerTitle}>EXCISIO</span>
-          <span className={styles.headerSubtitle}>symulator biopsji wycinającej</span>
-        </div>
-        <div className={styles.headerStats}>
-          <div className={styles.statBlock}>
-            <div className={styles.statLabel}>Poziom</div>
-            <div className={styles.statValue}>{ui.level} · {ui.partName}</div>
-          </div>
-          <div className={styles.divider} />
-          <div className={styles.statBlock}>
-            <div className={styles.statLabel}>Zarobek</div>
-            <div className={styles.statValueAccent}>{formatZloty(ui.cash)}</div>
-          </div>
-          <button type="button" className={styles.tutorialButton} onClick={handlers.openTutorial}>
-            <PoradnikIcon />
-            Poradnik
-          </button>
-        </div>
+        <button type="button" className={styles.tutorialButton} onClick={handlers.openTutorial}>
+          <PoradnikIcon />
+          Poradnik
+        </button>
       </div>
 
       <div className={styles.stageArea}>
@@ -427,7 +431,6 @@ export function Excisio() {
                   {ui.result.score}
                   <span className={styles.resultScorePercent}>%</span>
                 </div>
-                <div className={styles.resultMoney}>+{ui.result.money}</div>
               </div>
             </div>
 
@@ -463,8 +466,11 @@ export function Excisio() {
             </div>
 
             <div className={styles.resultActions}>
-              <button type="button" className={styles.retryButton} onClick={handlers.retry}>Powtórz poziom</button>
-              <button type="button" className={styles.nextButton} onClick={handlers.nextLevel}>Następny poziom →</button>
+              {onComplete && (
+                <button type="button" className={styles.nextButton} onClick={handleManualComplete}>
+                  Zakończ i wyślij wynik
+                </button>
+              )}
             </div>
           </div>
         </OverlayPortal>
@@ -541,6 +547,10 @@ BreakdownColumn.propTypes = {
   label: PropTypes.string.isRequired,
   pct: PropTypes.number.isRequired,
   color: PropTypes.string.isRequired,
+};
+
+Excisio.propTypes = {
+  onComplete: PropTypes.func,
 };
 
 function WipeIcon(props) {

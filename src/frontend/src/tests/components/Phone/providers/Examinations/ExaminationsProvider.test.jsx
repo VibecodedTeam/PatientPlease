@@ -68,7 +68,7 @@ function Probe() {
       <ul>
         {examinations.map((exam) => (
           <li key={exam.id}>
-            {exam.name} - {exam.price} - {exam.timeCostMs} - {exam.owned ? 'owned' : 'not-owned'}
+            {exam.name} - {exam.sku} - {exam.price} - {exam.timeCostMs} - {exam.owned ? 'owned' : 'not-owned'}
           </li>
         ))}
       </ul>
@@ -113,9 +113,9 @@ describe('ExaminationsProvider', () => {
     renderProvider();
 
     await waitFor(() =>
-      expect(screen.getByText('Punch Biopsy - 140 - 90000 - owned')).toBeInTheDocument(),
+      expect(screen.getByText('Punch Biopsy - exam-punch-biopsy - 140 - 90000 - owned')).toBeInTheDocument(),
     );
-    expect(screen.getByText('Dermoscopy Imaging - 80 - 30000 - not-owned')).toBeInTheDocument();
+    expect(screen.getByText('Dermoscopy Imaging - exam-dermoscopy - 80 - 30000 - not-owned')).toBeInTheDocument();
     expect(screen.queryByText(/ABCDE Rule/)).not.toBeInTheDocument();
   });
 
@@ -140,7 +140,7 @@ describe('ExaminationsProvider', () => {
       ),
     );
     renderProvider();
-    await waitFor(() => screen.getByText('Punch Biopsy - 140 - 90000 - owned'));
+    await waitFor(() => screen.getByText('Punch Biopsy - exam-punch-biopsy - 140 - 90000 - owned'));
 
     await user.click(screen.getByText('order-owned'));
 
@@ -163,7 +163,7 @@ describe('ExaminationsProvider', () => {
       Promise.resolve(new Response(JSON.stringify({ gameSession: { money: 100 } }), { status: 200 })),
     );
     renderProvider();
-    await waitFor(() => screen.getByText('Dermoscopy Imaging - 80 - 30000 - not-owned'));
+    await waitFor(() => screen.getByText('Dermoscopy Imaging - exam-dermoscopy - 80 - 30000 - not-owned'));
 
     await user.click(screen.getByText('order-unowned'));
 
@@ -181,7 +181,7 @@ describe('ExaminationsProvider', () => {
       ),
     );
     renderProvider();
-    await waitFor(() => screen.getByText('Punch Biopsy - 140 - 90000 - owned'));
+    await waitFor(() => screen.getByText('Punch Biopsy - exam-punch-biopsy - 140 - 90000 - owned'));
 
     await user.click(screen.getByText('order-owned'));
 

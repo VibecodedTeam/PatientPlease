@@ -4,10 +4,22 @@ import styles from './Phone.module.css';
 import { useExaminations } from './providers/Examinations';
 import { useRound } from '../../providers/Round';
 
+const PUNCH_BIOPSY_SKU = 'exam-punch-biopsy';
+
 export function Phone({ onCancel }) {
   const { examinations, isLoading, error, order, orderingId, orderError } = useExaminations();
   const { round } = useRound();
   const patient = round?.case?.patient;
+
+  function handleOrder(exam) {
+    if (exam.sku === PUNCH_BIOPSY_SKU) {
+      const params = new URLSearchParams({ shopItemId: exam.id, caseId: round?.case?.id ?? '' });
+      const opened = window.open(`/game/main/minigame?${params.toString()}`, '_blank');
+      if (opened) onCancel();
+      return;
+    }
+    order(exam.id);
+  }
 
   return (
     <div className={styles.phone}>
@@ -64,7 +76,7 @@ export function Phone({ onCancel }) {
                   </span>
 
                   <span className={styles.rowActions}>
-                    {!unavailable && (
+                    {!unavailable && exam.sku !== PUNCH_BIOPSY_SKU && (
                       <span className={styles.rowDuration}>
                         +{Math.round(exam.timeCostMs / 1000)}s
                       </span>
@@ -74,7 +86,7 @@ export function Phone({ onCancel }) {
                         type="button"
                         className={styles.orderButton}
                         disabled={isOrdering}
-                        onClick={() => order(exam.id)}
+                        onClick={() => handleOrder(exam)}
                       >
                         {isOrdering ? 'Ordering…' : 'Order'}
                       </button>

@@ -36,6 +36,7 @@ export function ExaminationsProvider({ children }) {
         .filter((item) => item.itemType === 'EXAMINATION')
         .map((item) => ({
           id: item.id,
+          sku: item.sku,
           name: item.name,
           description: item.description,
           price: item.price,

@@ -28,6 +28,26 @@ const SHOP_BEFORE_BUY = {
       owned: true,
       timeCostMs: null,
     },
+    {
+      id: 'i3',
+      sku: 'exam-punch-biopsy',
+      name: 'Punch Biopsy',
+      description: 'A small tissue sample sent to pathology for a definitive histological read.',
+      itemType: 'EXAMINATION',
+      price: 140,
+      owned: false,
+      timeCostMs: 90000,
+    },
+    {
+      id: 'i4',
+      sku: 'exam-dermoscopy',
+      name: 'Dermoscopy Imaging',
+      description: 'Magnified, polarized imaging.',
+      itemType: 'EXAMINATION',
+      price: 80,
+      owned: false,
+      timeCostMs: 30000,
+    },
   ],
   money: 120,
   isNightPhase: true,
@@ -153,5 +173,14 @@ describe('NightView', () => {
     await user.click(screen.getByRole('button', { name: 'Skip' }));
 
     expect(screen.getByText('Main View Stub')).toBeInTheDocument();
+  });
+
+  it('hides the time-cost suffix for Punch Biopsy but still shows it for other examinations', async () => {
+    mockFetch();
+    renderNightView();
+
+    await waitFor(() => expect(screen.getByText('Punch Biopsy')).toBeInTheDocument());
+    expect(screen.getByText('$140')).toBeInTheDocument();
+    expect(screen.getByText('$80 +30s')).toBeInTheDocument();
   });
 });

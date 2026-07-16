@@ -4,6 +4,21 @@ import { formatHistoryContent } from '../formatDocumentContent';
 import styles from './ExaminationsPage.module.css';
 
 /**
+ * An EXAMINATION_RESULTS document's content carries `findings` (the display text) alongside
+ * `shopItemId` (internal, used only for visibility gating in round.ts) — the findings text is
+ * shown on its own rather than through the generic multi-key formatter, since that field isn't
+ * meant to reach the player.
+ * @param {string | Record<string, unknown> | null} content
+ * @returns {string}
+ */
+function examinationFindingsText(content) {
+  if (content && typeof content === 'object' && 'findings' in content) {
+    return content.findings;
+  }
+  return formatHistoryContent(content);
+}
+
+/**
  * @param {object} props
  * @param {Array<{id: string, type: string, title: string, content: (string|Record<string, unknown>|null)}>} props.documents
  */
@@ -17,7 +32,7 @@ export function ExaminationsPage({ documents }) {
         examDocuments.map((doc) => (
           <p key={doc.id} className={styles.entry}>
             <strong>{doc.title}: </strong>
-            {formatHistoryContent(doc.content)}
+            {examinationFindingsText(doc.content)}
           </p>
         ))
       ) : (

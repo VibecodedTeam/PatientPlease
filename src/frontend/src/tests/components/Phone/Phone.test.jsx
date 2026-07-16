@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiProvider } from '../../../providers/Api';
 import { RoundProvider } from '../../../providers/Round';
@@ -33,6 +33,18 @@ const CATALOG = {
       unlockDay: null,
       iconImageUrl: null,
       owned: false,
+    },
+    {
+      id: 'exam-3',
+      sku: 'exam-skin-swab',
+      name: 'Skin Swab Culture',
+      description: 'A surface swab cultured to check for a bacterial or fungal cause.',
+      itemType: 'EXAMINATION',
+      price: 60,
+      timeCostMs: 20000,
+      unlockDay: null,
+      iconImageUrl: null,
+      owned: true,
     },
   ],
 };
@@ -72,8 +84,13 @@ function renderPhone(onCancel = jest.fn()) {
   );
 }
 
+function rowFor(text) {
+  return screen.getByText(text).closest('div');
+}
+
 describe('Phone', () => {
   beforeEach(() => {
+    window.open = jest.fn(() => ({}));
     global.fetch = mockRoundAndShopFetch(() =>
       Promise.resolve(
         new Response(
@@ -100,11 +117,18 @@ describe('Phone', () => {
     expect(screen.queryByText(/Anna Kowalska/)).not.toBeInTheDocument();
   });
 
-  it('shows the time cost (not price) as the emphasized action cost for an owned examination', async () => {
+  it('shows the time cost (not price) as the emphasized action cost for a non-biopsy owned examination', async () => {
+    renderPhone();
+    await waitFor(() => screen.getByText('Skin Swab Culture'));
+
+    expect(screen.getByText('+20s')).toBeInTheDocument();
+  });
+
+  it('does not show a time-cost duration next to Punch Biopsy, since its real cost is the minigame itself', async () => {
     renderPhone();
     await waitFor(() => screen.getByText('Punch Biopsy'));
 
-    expect(screen.getByText('+90s')).toBeInTheDocument();
+    expect(within(rowFor('Punch Biopsy')).queryByText(/^\+\d+s$/)).not.toBeInTheDocument();
   });
 
   it('disables an unowned examination with an English "buy at night" hint', async () => {
@@ -112,18 +136,17 @@ describe('Phone', () => {
     await waitFor(() => screen.getByText('Dermoscopy Imaging'));
 
     expect(screen.getByText(/buy at the night shop to unlock/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /order/i, hidden: false })).not.toBeNull();
-    // The unowned row must not expose an enabled Order button.
+    // Two owned rows (Punch Biopsy, Skin Swab Culture) each expose an Order button.
     const orderButtons = screen.getAllByRole('button', { name: 'Order' });
-    expect(orderButtons).toHaveLength(1);
+    expect(orderButtons).toHaveLength(2);
   });
 
-  it('clicking Order on an owned examination calls the examinations endpoint', async () => {
+  it('clicking Order on a non-biopsy owned examination still calls the examinations endpoint directly', async () => {
     const user = userEvent.setup();
     renderPhone();
-    await waitFor(() => screen.getByText('Punch Biopsy'));
+    await waitFor(() => screen.getByText('Skin Swab Culture'));
 
-    await user.click(screen.getByRole('button', { name: 'Order' }));
+    await user.click(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Order' }));
 
     await waitFor(() => {
       const examinationRequest = global.fetch.mock.calls
@@ -131,12 +154,15 @@ describe('Phone', () => {
         .find((request) => new URL(request.url).pathname === '/api/v1/examinations');
       expect(examinationRequest).toBeDefined();
     });
+    expect(window.open).not.toHaveBeenCalled();
     // Let the full order() chain (addElapsedSeconds + refreshRound) settle
     // before the test ends, so no state update lands after unmount.
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Order' })).toBeEnabled());
+    await waitFor(() =>
+      expect(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Order' })).toBeEnabled(),
+    );
   });
 
-  it('shows a pending state on the row being ordered', async () => {
+  it('shows a pending state on the row being ordered directly', async () => {
     let resolveOrder;
     global.fetch = mockRoundAndShopFetch(
       () =>
@@ -147,7 +173,7 @@ describe('Phone', () => {
                 JSON.stringify({
                   gameSession: { money: 100 },
                   caseExamination: { id: 'ce1' },
-                  timeCostMs: 90000,
+                  timeCostMs: 20000,
                 }),
                 { status: 200 },
               ),
@@ -156,15 +182,36 @@ describe('Phone', () => {
     );
     const user = userEvent.setup();
     renderPhone();
+    await waitFor(() => screen.getByText('Skin Swab Culture'));
+
+    await user.click(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Order' }));
+
+    await waitFor(() =>
+      expect(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Ordering…' })).toBeDisabled(),
+    );
+    resolveOrder();
+    await waitFor(() =>
+      expect(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Order' })).toBeEnabled(),
+    );
+  });
+
+  it('clicking Order on Punch Biopsy opens the minigame in a new tab and closes Phone, without ordering directly', async () => {
+    const user = userEvent.setup();
+    const onCancel = jest.fn();
+    renderPhone(onCancel);
     await waitFor(() => screen.getByText('Punch Biopsy'));
 
-    await user.click(screen.getByRole('button', { name: 'Order' }));
+    await user.click(within(rowFor('Punch Biopsy')).getByRole('button', { name: 'Order' }));
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Ordering…' })).toBeDisabled());
-    resolveOrder();
-    // Let the full order() chain (addElapsedSeconds + refreshRound) settle
-    // before the test ends, so no state update lands after unmount.
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Order' })).toBeEnabled());
+    expect(window.open).toHaveBeenCalledWith(
+      '/game/main/minigame?shopItemId=exam-1&caseId=case-1',
+      '_blank',
+    );
+    expect(onCancel).toHaveBeenCalled();
+    const examinationRequest = global.fetch.mock.calls
+      .map(([request]) => request)
+      .find((request) => new URL(request.url).pathname === '/api/v1/examinations');
+    expect(examinationRequest).toBeUndefined();
   });
 
   it('calls onCancel when the close (X) button is clicked', async () => {
