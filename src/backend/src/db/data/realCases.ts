@@ -113,7 +113,8 @@ export const REAL_CASES: RealCaseSeed[] = [
         type: 'UV_EXPOSURE_HISTORY',
         title: 'Historia ekspozycji na promieniowanie UV',
         content: {
-          history: 'Niedawny, intensywnie słoneczny urlop na Maderze skłonił ją do przyjrzenia się swoim znamionom.',
+          history:
+            'Niedawny, intensywnie słoneczny urlop na Maderze skłonił ją do przyjrzenia się swoim znamionom.',
         },
       },
       {
@@ -157,7 +158,8 @@ export const REAL_CASES: RealCaseSeed[] = [
         type: 'DISEASE_HISTORY',
         title: 'Historia choroby',
         content: {
-          history: 'Ogólnie zdrowy, bez istotnych chorób przewlekłych ani wcześniejszych nowotworów skóry.',
+          history:
+            'Ogólnie zdrowy, bez istotnych chorób przewlekłych ani wcześniejszych nowotworów skóry.',
         },
       },
       {
@@ -172,7 +174,8 @@ export const REAL_CASES: RealCaseSeed[] = [
         type: 'CLINICAL_SYMPTOMS',
         title: 'Powiększanie i uniesienie',
         content: {
-          description: 'Obszar stopniowo się powiększał i lekko uniósł, jakby coś gromadziło się pod skórą.',
+          description:
+            'Obszar stopniowo się powiększał i lekko uniósł, jakby coś gromadziło się pod skórą.',
         },
       },
       {
@@ -625,7 +628,8 @@ export const REAL_CASES: RealCaseSeed[] = [
         type: 'CLINICAL_SYMPTOMS',
         title: 'Wynik operacji',
         content: {
-          description: 'Podczas operacji stwierdzono ciemny, naciekający guz obejmujący dno żołądka.',
+          description:
+            'Podczas operacji stwierdzono ciemny, naciekający guz obejmujący dno żołądka.',
         },
       },
     ],

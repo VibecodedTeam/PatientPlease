@@ -1,0 +1,58 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main, dev]
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-dev:
+    name: Deploy to dev
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_DEPLOY_HOST }}
+          username: ${{ secrets.DEV_DEPLOY_USER }}
+          key: ${{ secrets.DEV_DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEV_DEPLOY_PORT }}
+          script: |
+            set -euo pipefail
+            cd /var/www/patient-please-dev/   # <-- PODAJ ŚCIEŻKĘ na serwerze dev
+            git pull origin dev
+            docker compose -f docker/docker-compose.yml up -d --build
+
+      - name: Alive-check
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 \
+            https://${{ secrets.DEV_DEPLOY_HOST }}/health
+
+  deploy-prod:
+    name: Deploy to production
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_DEPLOY_HOST }}
+          username: ${{ secrets.PROD_DEPLOY_USER }}
+          key: ${{ secrets.PROD_DEPLOY_SSH_KEY }}
+          port: ${{ secrets.PROD_DEPLOY_PORT }}
+          script: |
+            set -euo pipefail
+            cd /var/www/patient-please-master/   # <-- PODAJ ŚCIEŻKĘ na serwerze prod
+            git pull origin main
+            docker compose -f docker/docker-compose.yml up -d --build
+
+      - name: Alive-check
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 \
+            https://${{ secrets.PROD_DEPLOY_HOST }}/health

@@ -137,7 +137,7 @@ describe('createGeminiClient', () => {
       apiKey: 'test-key',
       model: 'gemini-2.0-flash',
       fallbackModel: 'gemini-flash-latest',
-      fetchImpl: fetchImpl as unknown as FetchLike,
+      fetchImpl: fetchImpl,
     });
 
     await expect(
@@ -154,7 +154,7 @@ describe('createGeminiClient', () => {
     const client = createGeminiClient({
       apiKey: 'test-key',
       model: 'gemini-2.0-flash',
-      fetchImpl: fetchImpl as unknown as FetchLike,
+      fetchImpl: fetchImpl,
     });
 
     await expect(
@@ -172,7 +172,7 @@ describe('createGeminiClient', () => {
       apiKey: 'test-key',
       model: 'gemini-2.0-flash',
       fallbackModel: 'gemini-2.0-flash',
-      fetchImpl: fetchImpl as unknown as FetchLike,
+      fetchImpl: fetchImpl,
     });
 
     await expect(

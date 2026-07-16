@@ -16,13 +16,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 90s
 
   backend:
     build:
       context: ..
       dockerfile: src/backend/Dockerfile
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-game}:${POSTGRES_PASSWORD:-game}@postgres:5432/${POSTGRES_DB:-skin_disease_game}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-game}:${POSTGRES_PASSWORD:-game}@${POSTGRES_URL:-postgres:5432}/${POSTGRES_DB:-skin_disease_game}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-test-client-id.apps.googleusercontent.com}
       COOKIE_SECRET: ${COOKIE_SECRET:-dev-only-insecure-secret-change-me}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4173}
@@ -57,7 +58,7 @@ services:
       target: build
     working_dir: /app/src/backend
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-game}:${POSTGRES_PASSWORD:-game}@postgres:5432/${POSTGRES_DB:-skin_disease_game}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-game}:${POSTGRES_PASSWORD:-game}@${POSTGRES_URL:-postgres:5432}/${POSTGRES_DB:-skin_disease_game}
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,6 +72,8 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-test-client-id.apps.googleusercontent.com}
         VITE_DAY_DURATION_SECONDS: ${DAY_DURATION_SECONDS:-60}
+    environment:
+      PREVIEW_ALLOWED_HOSTS: ${PREVIEW_ALLOWED_HOSTS:-}
     ports:
       - "4173:4173"
     healthcheck:

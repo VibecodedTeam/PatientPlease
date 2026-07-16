@@ -129,7 +129,13 @@ describe('seed', () => {
 
     const documentTypes = patient!.case!.documents.map((d) => d.type).sort();
     expect(documentTypes).toEqual(
-      ['CLINICAL_SYMPTOMS', 'CLINICAL_SYMPTOMS', 'EXAMINATION_RESULTS', 'SKIN_IMAGE', 'UV_EXPOSURE_HISTORY'].sort(),
+      [
+        'CLINICAL_SYMPTOMS',
+        'CLINICAL_SYMPTOMS',
+        'EXAMINATION_RESULTS',
+        'SKIN_IMAGE',
+        'UV_EXPOSURE_HISTORY',
+      ].sort(),
     );
 
     const skinImage = patient!.case!.documents.find((d) => d.type === 'SKIN_IMAGE')!;

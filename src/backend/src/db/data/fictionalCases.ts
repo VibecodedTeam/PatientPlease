@@ -24,7 +24,8 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
         type: 'UV_EXPOSURE_HISTORY',
         title: 'Historia ekspozycji na promieniowanie UV',
         content: {
-          history: 'Całe życie pracował na zewnątrz jako stolarz, rzadko używając ochrony przeciwsłonecznej na dłonie.',
+          history:
+            'Całe życie pracował na zewnątrz jako stolarz, rzadko używając ochrony przeciwsłonecznej na dłonie.',
         },
       },
       {
@@ -164,7 +165,8 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
         type: 'CLINICAL_SYMPTOMS',
         title: 'Wygląd guzka',
         content: {
-          description: 'Twardy, brązowawy guzek na podudziu prawej nogi, obecny od kilku lat po drobnym skaleczeniu.',
+          description:
+            'Twardy, brązowawy guzek na podudziu prawej nogi, obecny od kilku lat po drobnym skaleczeniu.',
         },
       },
       {
@@ -471,7 +473,8 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
         type: 'CLINICAL_SYMPTOMS',
         title: 'Nasilenie w ostatnich miesiącach',
         content: {
-          description: 'W ostatnich miesiącach trądzik jest nasilony, z bolesnymi, głębokimi zmianami pozostawiającymi blizny.',
+          description:
+            'W ostatnich miesiącach trądzik jest nasilony, z bolesnymi, głębokimi zmianami pozostawiającymi blizny.',
         },
       },
     ],
@@ -497,7 +500,8 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
         type: 'DISEASE_HISTORY',
         title: 'Historia choroby',
         content: {
-          history: 'Wirusowe zapalenie wątroby typu C rozpoznane pięć lat wcześniej, obecnie w trakcie leczenia.',
+          history:
+            'Wirusowe zapalenie wątroby typu C rozpoznane pięć lat wcześniej, obecnie w trakcie leczenia.',
         },
       },
       {
@@ -628,7 +632,8 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     bodyRegion: 'RIGHT_ARM',
     imageFile: 'case-46.png',
     examinationSku: 'exam-skin-scraping-koh',
-    examinationFindings: 'Preparat bezpośredni z zeskrobin naskórka w KOH potwierdza obecność strzępek grzyba.',
+    examinationFindings:
+      'Preparat bezpośredni z zeskrobin naskórka w KOH potwierdza obecność strzępek grzyba.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
@@ -1014,7 +1019,8 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     bodyRegion: 'HEAD',
     imageFile: 'case-54.png',
     examinationSku: 'exam-patch-test',
-    examinationFindings: 'Test płatkowy wykazuje dodatnią reakcję na składnik zawarty w nowym kremie do twarzy.',
+    examinationFindings:
+      'Test płatkowy wykazuje dodatnią reakcję na składnik zawarty w nowym kremie do twarzy.',
     documents: [
       {
         type: 'DISEASE_HISTORY',
@@ -1366,7 +1372,8 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     bodyRegion: 'RIGHT_LEG',
     imageFile: 'case-61.png',
     examinationSku: 'exam-skin-scraping-koh',
-    examinationFindings: 'Preparat bezpośredni z zeskrobin naskórka w KOH potwierdza obecność strzępek grzybni.',
+    examinationFindings:
+      'Preparat bezpośredni z zeskrobin naskórka w KOH potwierdza obecność strzępek grzybni.',
     documents: [
       {
         type: 'FAMILY_HISTORY',
