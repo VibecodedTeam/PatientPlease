@@ -21,9 +21,8 @@ describe('TabElem', () => {
     );
 
     expect(screen.getByText('Dane pacjenta')).toBeInTheDocument();
-    expect(screen.getByText('History')).toBeInTheDocument();
-    expect(screen.getByText('Symptoms')).toBeInTheDocument();
-    expect(screen.getByText('Exam Results')).toBeInTheDocument();
+    expect(screen.getByText('Dokumenty przypadku')).toBeInTheDocument();
+    expect(screen.getByText('Badania')).toBeInTheDocument();
     expect(screen.getByText('Extra content')).toBeInTheDocument();
   });
 

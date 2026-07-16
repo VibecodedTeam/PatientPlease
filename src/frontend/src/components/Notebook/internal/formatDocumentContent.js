@@ -1,9 +1,22 @@
+// Polish labels for the camelCase content keys that appear in case-document
+// JSON. Unknown keys fall back to the algorithmic spaced/capitalized form.
+const KEY_LABELS = {
+  history: 'Historia',
+  description: 'Opis',
+  findings: 'Wyniki',
+  finding: 'Wynik',
+  sunbedUse: 'Korzystanie z solarium',
+  occupationalExposure: 'Ekspozycja zawodowa',
+};
+
 /**
  * @param {string} key - camelCase object key, e.g. "sunbedUse".
- * @returns {string} Human-readable label, e.g. "Sunbed Use".
+ * @returns {string} Human-readable Polish label, e.g. "Korzystanie z solarium".
  */
 export function formatKeyLabel(key) {
-  return key.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
+  return (
+    KEY_LABELS[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase())
+  );
 }
 
 /**
