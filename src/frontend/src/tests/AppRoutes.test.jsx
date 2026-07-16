@@ -60,9 +60,9 @@ describe('AppRoutes', () => {
   it('renders the public StartView at / without requiring auth', async () => {
     mockAuth(false);
     renderAt('/');
-    expect(screen.getByText('Now Admitting')).toBeInTheDocument();
+    expect(screen.getByText('Trwają przyjęcia')).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument(),
+      expect(screen.getByRole('button', { name: /graj/i })).toBeInTheDocument(),
     );
   });
 
@@ -70,16 +70,16 @@ describe('AppRoutes', () => {
     mockAuth(false);
     renderAt('/game/night');
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument(),
+      expect(screen.getByRole('heading', { name: /zaloguj się/i })).toBeInTheDocument(),
     );
-    expect(screen.queryByText(/shop for items/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/zakupy/i)).not.toBeInTheDocument();
   });
 
   it('renders /game/night through the gate when authenticated', async () => {
     mockAuth(true);
     renderAt('/game/night');
-    await waitFor(() => expect(screen.getByText(/shop for items/i)).toBeInTheDocument());
-    expect(screen.queryByRole('heading', { name: /sign in/i })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/zakupy/i)).toBeInTheDocument());
+    expect(screen.queryByRole('heading', { name: /zaloguj się/i })).not.toBeInTheDocument();
   });
 
   it('redirects /game to /game/main when authenticated', async () => {

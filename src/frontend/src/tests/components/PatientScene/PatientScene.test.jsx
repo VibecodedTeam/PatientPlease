@@ -231,7 +231,7 @@ describe('PatientScene', () => {
     fireEvent.click(canvas, { clientX: 150, clientY: 75 });
     expect(dot.material.color.getHex()).toBe(0xff0000);
 
-    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+    fireEvent.click(screen.getByRole('button', { name: /zamknij/i }));
 
     expect(dot.material.color.getHex()).toBe(0x00ff00);
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
@@ -305,7 +305,7 @@ describe('PatientScene', () => {
       'https://cdn.example.test/real-lesion.png',
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+    fireEvent.click(screen.getByRole('button', { name: /zamknij/i }));
 
     pickDot.mockReturnValue(chestDot);
     fireEvent.click(canvas, { clientX: 150, clientY: 75 });
