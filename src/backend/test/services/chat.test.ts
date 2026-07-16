@@ -365,5 +365,24 @@ describe('sendChatMessage', () => {
       expect(result.patientMessage.content).toBeDefined();
       expect(result.revealedDocuments).toEqual([]);
     });
+
+    it('strips shopItemId out of a revealed EXAMINATION_RESULTS document, keeping only findings', async () => {
+      const { prisma, deps, input } = setUpRevealCase({
+        documents: [
+          makeDocument({
+            id: 'exam-doc',
+            type: 'EXAMINATION_RESULTS',
+            title: 'Biopsy',
+            content: { shopItemId: 'exam-shop-item-uuid', findings: 'Atypical melanocytes.' },
+          }),
+        ],
+        selectedIds: ['exam-doc'],
+      });
+
+      const result = await sendChatMessage(prisma, deps, input);
+
+      expect(result.revealedDocuments.map((d) => d.id)).toEqual(['exam-doc']);
+      expect(result.revealedDocuments[0].content).toEqual({ findings: 'Atypical melanocytes.' });
+    });
   });
 });

@@ -5,6 +5,7 @@ import {
   type ChatSenderValue,
 } from './casePrompt.js';
 import type { GenerateReplyInput } from './llm.js';
+import { toDisplayContent } from './round.js';
 
 export interface ChatMessageRecord {
   id: string;
@@ -229,6 +230,6 @@ function toRevealedDocument(document: ChatCaseDocumentRecord): RevealedDocumentR
     imageWidthPx: document.imageWidthPx,
     imageHeightPx: document.imageHeightPx,
     imageAltText: document.imageAltText,
-    content: document.content,
+    content: toDisplayContent(document),
   };
 }

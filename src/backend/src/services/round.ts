@@ -436,7 +436,7 @@ function isVisibleDocument(
   return true;
 }
 
-function toDisplayContent(document: CaseDocumentRecord): CaseDocumentRecord['content'] {
+export function toDisplayContent(document: CaseDocumentRecord): CaseDocumentRecord['content'] {
   if (document.type === 'EXAMINATION_RESULTS') {
     const findings = (document.content as { findings?: string } | null)?.findings;
     return findings !== undefined ? { findings } : document.content;
