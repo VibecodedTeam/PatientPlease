@@ -695,10 +695,24 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Pojawienie się pęcherzyków',
+        content: {
+          description: 'Wokół ust i nosa dziewczynki pojawiły się pęcherzyki.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Pękanie pęcherzyków',
+        content: {
+          description: 'Pęcherzyki szybko pękły, pozostawiając miodowo-żółte strupy.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Rozprzestrzenianie się zmian',
         content: {
           description:
-            'Wokół ust i nosa dziewczynki pojawiły się pęcherzyki, które szybko pękły, pozostawiając miodowo-żółte strupy. Zmiany szybko rozprzestrzeniły się po tym, jak dotykała ich rękami w przedszkolu.',
+            'Zmiany szybko rozprzestrzeniły się po tym, jak dotykała ich rękami w przedszkolu.',
         },
       },
     ],
@@ -723,15 +737,27 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
-        content: { history: 'Cukrzyca typu II oraz przewlekła niewydolność żylna kończyn dolnych.' },
+        title: 'Cukrzyca',
+        content: { history: 'Cukrzyca typu II.' },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Niewydolność żylna',
+        content: { history: 'Przewlekła niewydolność żylna kończyn dolnych.' },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd zmiany',
         content: {
           description:
-            'Od dwóch dni prawa goleń jest gorąca, bolesna, wyraźnie zaczerwieniona i obrzęknięta, z niewyraźną granicą zmiany. Towarzyszy temu gorączka i dreszcze.',
+            'Od dwóch dni prawa goleń jest gorąca, bolesna, wyraźnie zaczerwieniona i obrzęknięta, z niewyraźną granicą zmiany.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Objawy ogólne',
+        content: {
+          description: 'Towarzyszy temu gorączka i dreszcze.',
         },
       },
     ],
@@ -756,17 +782,31 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Rozpoznanie choroby skóry',
         content: {
-          history: 'Atopowe zapalenie skóry rozpoznane w niemowlęctwie, obecnie łagodnie kontrolowane.',
+          history: 'Atopowe zapalenie skóry rozpoznano w niemowlęctwie.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Aktualny stan choroby',
+        content: {
+          history: 'Obecnie jest łagodnie kontrolowane.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd grudek',
         content: {
           description:
-            'Na brzuchu chłopca pojawiło się kilkanaście małych, perłowych, gładkich grudek z charakterystycznym wgłębieniem pośrodku. Podobne zmiany miał kolega z basenu.',
+            'Na brzuchu chłopca pojawiło się kilkanaście małych, perłowych, gładkich grudek z charakterystycznym wgłębieniem pośrodku.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Podobny przypadek u kolegi',
+        content: {
+          description: 'Podobne zmiany miał kolega z basenu.',
         },
       },
     ],
@@ -791,17 +831,31 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Stan zdrowia',
         content: {
-          history: 'Ogólnie zdrowy; regularnie korzysta z basenu szkolnego.',
+          history: 'Ogólnie zdrowy.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Aktywność rekreacyjna',
+        content: {
+          history: 'Regularnie korzysta z basenu szkolnego.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd narośli',
         content: {
           description:
-            'Na knykciu lewej dłoni od kilku miesięcy rośnie szorstka, twarda narośl przypominająca kalafior. Czasami lekko krwawi po otarciu.',
+            'Na knykciu lewej dłoni od kilku miesięcy rośnie szorstka, twarda narośl przypominająca kalafior.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Krwawienie narośli',
+        content: {
+          description: 'Czasami lekko krwawi po otarciu.',
         },
       },
     ],
@@ -826,17 +880,31 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Ogólny stan zdrowia',
         content: {
-          history: 'Ogólnie zdrowy jak na swój wiek, bez wcześniejszych nowotworów skóry.',
+          history: 'Ogólnie zdrowy jak na swój wiek.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Historia nowotworów skóry',
+        content: {
+          history: 'Nie miał wcześniej nowotworów skóry.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd i lokalizacja zmian',
         content: {
           description:
-            'Na plecach i klatce piersiowej ma liczne, brązowe do czarnych, woskowate narośle o różnej wielkości, obecne od wielu lat, powoli przybywające.',
+            'Na plecach i klatce piersiowej ma liczne, brązowe do czarnych, woskowate narośle o różnej wielkości.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Przebieg zmian',
+        content: {
+          description: 'Zmiany są obecne od wielu lat i powoli ich przybywa.',
         },
       },
     ],
@@ -868,10 +936,16 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd znamienia',
         content: {
-          description:
-            'Od dzieciństwa ma niewielkie, gładkie, symetryczne znamię na ramieniu, które rosło proporcjonalnie wraz z nią, bez zmian koloru czy kształtu.',
+          description: 'Od dzieciństwa ma niewielkie, gładkie, symetryczne znamię na ramieniu.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Przebieg znamienia',
+        content: {
+          description: 'Znamię rosło proporcjonalnie wraz z nią, bez zmian koloru czy kształtu.',
         },
       },
     ],
@@ -896,17 +970,31 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Bóle stawów',
         content: {
-          history: 'Przewlekłe bóle stawów kolanowych od kilku lat, dotąd wiązane wyłącznie z wiekiem.',
+          history: 'Przewlekłe bóle stawów kolanowych od kilku lat.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Dotychczasowe wyjaśnienie bólu',
+        content: {
+          history: 'Ból ten dotąd wiązano wyłącznie z wiekiem.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd i lokalizacja zmian',
         content: {
           description:
-            'Na obu goleniach oraz owłosionej skórze głowy nawracają grube, srebrzyste blaszki, które nasiliły się po niedawnej infekcji gardła.',
+            'Na obu goleniach oraz owłosionej skórze głowy nawracają grube, srebrzyste blaszki.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Zaostrzenie po infekcji',
+        content: {
+          description: 'Blaszki nasiliły się po niedawnej infekcji gardła.',
         },
       },
     ],
@@ -937,10 +1025,24 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zaczerwienienie',
         content: {
           description:
-            'Dwa dni po użyciu nowego kremu nawilżającego na twarzy pojawiło się silne zaczerwienienie, pieczenie i drobne pęcherzyki dokładnie w miejscu aplikacji.',
+            'Dwa dni po użyciu nowego kremu nawilżającego na twarzy pojawiło się silne zaczerwienienie dokładnie w miejscu aplikacji.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Pieczenie',
+        content: {
+          description: 'Towarzyszyło temu pieczenie w miejscu aplikacji kremu.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Pęcherzyki',
+        content: {
+          description: 'Pojawiły się także drobne pęcherzyki dokładnie w miejscu aplikacji kremu.',
         },
       },
     ],
@@ -965,17 +1067,31 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Spożycie alkoholu',
         content: {
-          history: 'Regularnie spożywa alkohol w towarzystwie zawodowym; poza tym ogólnie zdrowy.',
+          history: 'Regularnie spożywa alkohol w towarzystwie zawodowym.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Ogólny stan zdrowia',
+        content: {
+          history: 'Poza tym jest ogólnie zdrowy.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd nosa',
         content: {
           description:
-            'Od lat ma czerwony, stopniowo powiększający się i pogrubiały nos, z widocznymi drobnymi naczynkami. Skóra w tym miejscu jest nierówna i lekko obrzęknięta.',
+            'Od lat ma czerwony, stopniowo powiększający się i pogrubiały nos, z widocznymi drobnymi naczynkami.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Stan skóry',
+        content: {
+          description: 'Skóra w tym miejscu jest nierówna i lekko obrzęknięta.',
         },
       },
     ],
@@ -1000,18 +1116,39 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
+        title: 'Opalanie w porze szczytowej',
         content: {
           history:
-            'Przez wiele lat regularnie korzystała z opalania na tarasie w porze największego nasłonecznienia, bez stosowania filtrów przeciwsłonecznych.',
+            'Przez wiele lat regularnie korzystała z opalania na tarasie w porze największego nasłonecznienia.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Brak ochrony przeciwsłonecznej',
+        content: {
+          history: 'Nie stosowała przy tym filtrów przeciwsłonecznych.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zauważenie zmiany',
+        content: {
+          description: 'Znamię na plecach zauważył mąż podczas wakacji.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Zmiana koloru',
         content: {
           description:
-            'Znamię na plecach, które mąż zauważył podczas wakacji, w ciągu kilku miesięcy zmieniło kolor na ciemniejszy i nierównomierny, a jego brzegi stały się postrzępione.',
+            'W ciągu kilku miesięcy znamię zmieniło kolor na ciemniejszy i nierównomierny.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Zmiana brzegów',
+        content: {
+          description: 'Jego brzegi stały się postrzępione.',
         },
       },
     ],
@@ -1036,18 +1173,38 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
+        title: 'Codzienna ekspozycja na słońce',
         content: {
-          history:
-            'Przez 35 lat pracy jako listonosz codziennie spędzał kilka godzin na słońcu, rzadko nosząc nakrycie głowy.',
+          history: 'Przez 35 lat pracy jako listonosz codziennie spędzał kilka godzin na słońcu.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Brak nakrycia głowy',
+        content: {
+          history: 'Rzadko nosił przy tym nakrycie głowy.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd zmiany',
         content: {
           description:
-            'Na czole ma niewielki, perłowy guzek z widocznymi drobnymi naczynkami na powierzchni, obecny od ponad roku, powoli powiększający się, czasem lekko krwawiący.',
+            'Na czole ma niewielki, perłowy guzek z widocznymi drobnymi naczynkami na powierzchni.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Przebieg zmiany',
+        content: {
+          description: 'Guzek jest obecny od ponad roku i powoli się powiększa.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Krwawienie zmiany',
+        content: {
+          description: 'Czasem lekko krwawi.',
         },
       },
     ],
@@ -1071,15 +1228,33 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
-        content: { history: 'Ponad 30 lat pracy jako dekarz na dachach, z minimalną ochroną przeciwsłoneczną.' },
+        title: 'Wieloletnia praca na dachach',
+        content: { history: 'Ponad 30 lat pracy jako dekarz na dachach.' },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Minimalna ochrona przeciwsłoneczna',
+        content: { history: 'Miał przy tym minimalną ochronę przeciwsłoneczną.' },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd zmiany',
         content: {
-          description:
-            'Na małżowinie usznej ma twardą, łuszczącą się, owrzodziałą zmianę, która od kilku miesięcy stopniowo się powiększa i czasami krwawi.',
+          description: 'Na małżowinie usznej ma twardą, łuszczącą się, owrzodziałą zmianę.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Powiększanie się zmiany',
+        content: {
+          description: 'Zmiana od kilku miesięcy stopniowo się powiększa.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Krwawienie zmiany',
+        content: {
+          description: 'Czasami krwawi.',
         },
       },
     ],
@@ -1105,14 +1280,29 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
       {
         type: 'FAMILY_HISTORY',
         title: 'Historia rodzinna',
-        content: { history: 'Ciotka pacjentki miała usuwane atypowe znamiona kilkukrotnie w przeszłości.' },
+        content: {
+          history: 'Ciotka pacjentki miała usuwane atypowe znamiona kilkukrotnie w przeszłości.',
+        },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Rozmiar znamienia',
         content: {
-          description:
-            'Na ramieniu ma znamię większe od pozostałych, o niejednolitym, plamistym kolorze i lekko nieregularnych brzegach, obecne od kilku lat, bez wyraźnych zmian w ostatnim czasie.',
+          description: 'Na ramieniu ma znamię większe od pozostałych.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Kolor i brzegi znamienia',
+        content: {
+          description: 'Znamię ma niejednolity, plamisty kolor i lekko nieregularne brzegi.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Stabilność znamienia',
+        content: {
+          description: 'Znamię jest obecne od kilku lat, bez wyraźnych zmian w ostatnim czasie.',
         },
       },
     ],
@@ -1137,15 +1327,26 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
-        content: { history: 'Całe życie spędził pracując na roli, rzadko nosząc kapelusz.' },
+        title: 'Praca na roli',
+        content: { history: 'Całe życie spędził pracując na roli.' },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Brak nakrycia głowy',
+        content: { history: 'Rzadko nosił przy tym kapelusz.' },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Lokalizacja i liczba zmian',
         content: {
-          description:
-            'Na łysiejącej skórze głowy ma kilka szorstkich, czerwonawych plam o papierowej fakturze, wyczuwalnych bardziej niż widocznych.',
+          description: 'Na łysiejącej skórze głowy ma kilka szorstkich, czerwonawych plam.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Faktura zmian',
+        content: {
+          description: 'Plamy mają papierową fakturę i są wyczuwalne bardziej niż widoczne.',
         },
       },
     ],
@@ -1169,18 +1370,31 @@ export const FICTIONAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'FAMILY_HISTORY',
-        title: 'Historia rodzinna',
+        title: 'Historia brata',
         content: {
-          history:
-            'Starszy brat miał podobną zmianę skórną rok wcześniej, ustąpiła po leczeniu maścią przeciwgrzybiczą.',
+          history: 'Starszy brat miał podobną zmianę skórną rok wcześniej.',
+        },
+      },
+      {
+        type: 'FAMILY_HISTORY',
+        title: 'Wynik leczenia brata',
+        content: {
+          history: 'Zmiana u brata ustąpiła po leczeniu maścią przeciwgrzybiczą.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd zmiany',
         content: {
           description:
-            'Na łydce pojawiła się swędząca, czerwona, pierścieniowata zmiana z wyraźnym, uniesionym brzegiem, po tym jak głaskała kota sąsiadów.',
+            'Na łydce pojawiła się swędząca, czerwona, pierścieniowata zmiana z wyraźnym, uniesionym brzegiem.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Kontakt z kotem',
+        content: {
+          description: 'Zmiana pojawiła się po tym, jak głaskała kota sąsiadów.',
         },
       },
     ],
