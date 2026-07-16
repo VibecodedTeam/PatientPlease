@@ -134,7 +134,7 @@ describe('seed', () => {
 
     const skinImage = patient!.case!.documents.find((d) => d.type === 'SKIN_IMAGE')!;
     expect(skinImage.attentionPointRegion).toBe('CHEST');
-    expect(skinImage.imageUrl).toBe('/cases/case-08.png');
+    expect(skinImage.imageUrl).toBe('/cases/case-02.png');
   });
 
   it('gives every case at least 3 reveal-gated documents, so chat reveal can be progressive', async () => {
@@ -156,7 +156,7 @@ describe('seed', () => {
     expect(casesWithTooFewGatedDocuments.map((c) => c.patient.name)).toEqual([]);
   });
 
-  it('seeds real portrait URLs and featuredOrder for the first 15 cases', async () => {
+  it('seeds real portrait URLs and featuredOrder for the first 13 cases', async () => {
     await seed();
 
     const featured = await prisma.case.findMany({
@@ -164,7 +164,7 @@ describe('seed', () => {
       orderBy: { featuredOrder: 'asc' },
       include: { patient: true },
     });
-    expect(featured).toHaveLength(15);
+    expect(featured).toHaveLength(13);
     featured.forEach((caseRecord, idx) => {
       expect(caseRecord.featuredOrder).toBe(idx + 1);
       expect(caseRecord.patient.portraitImageUrl).toBe(

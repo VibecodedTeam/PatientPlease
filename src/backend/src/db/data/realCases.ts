@@ -51,54 +51,12 @@ export type RealCaseSeed = {
 
 export const REAL_CASES: RealCaseSeed[] = [
   {
-    patientName: 'Irena Kwiat',
-    age: 41,
-    sex: 'FEMALE',
-    occupation: 'Fryzjerka',
-    bodyRegion: 'RIGHT_ARM',
-    imageFile: 'case-01.png',
-    examinationSku: 'exam-dermoscopy',
-    examinationFindings:
-      'Dermoskopia wykazuje dwie małe, pigmentowane zmiany o symetrycznej strukturze i regularnej sieci barwnikowej — cechy uspokajające, przemawiające przeciwko złośliwości.',
-    documents: [
-      {
-        type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
-        content: {
-          history:
-            'Przez lata korzystała z solarium i rzadko stosowała krem z filtrem, wierząc, że opalona skóra wygląda zdrowiej, jest bardziej atrakcyjna i dodaje pewności siebie.',
-        },
-      },
-      {
-        type: 'CLINICAL_SYMPTOMS',
-        title: 'Wygląd zmian',
-        content: {
-          description: 'Dwa maleńkie, ciemne znamiona na ramieniu, jedno nie większe niż ukłucie igłą.',
-        },
-      },
-      {
-        type: 'CLINICAL_SYMPTOMS',
-        title: 'Dodatkowe obserwacje',
-        content: {
-          description: 'Nie wyglądają dramatycznie i nie bolą, ale oba są symetryczne i wielobarwne.',
-        },
-      },
-    ],
-    diagnosisCode: 'dysplastic-nevus',
-    treatmentCode: 'watchful-waiting',
-    difficulty: 1,
-    featuredOrder: 1,
-    resultExplanationText:
-      'Symetryczne, równomiernie pigmentowane znamiona o łagodnym obrazie dermoskopowym — znamię dysplastyczne, leczone obserwacją i kontrolą po 3 miesiącach zamiast natychmiastowego wycięcia.',
-    sourceNote: null,
-  },
-  {
     patientName: 'Dariusz Wilk',
     age: 36,
     sex: 'MALE',
     occupation: 'Księgowy',
     bodyRegion: 'NECK',
-    imageFile: 'case-02.png',
+    imageFile: 'case-01.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Biopsja masy podżuchwowej potwierdza pierwotnego czerniaka — bardzo rzadką postać wywodzącą się z okolicy gruczołu podżuchwowego.',
@@ -135,61 +93,54 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'surgical-excision',
     difficulty: 3,
-    featuredOrder: 2,
+    featuredOrder: 1,
     resultExplanationText:
       'Rzadki pierwotny czerniak okolicy gruczołu podżuchwowego, wymagający całkowitej resekcji chirurgicznej i rekonstrukcji żuchwy.',
     sourceNote: null,
   },
   {
-    patientName: 'Robert Sadowski',
-    age: 39,
-    sex: 'MALE',
-    occupation: 'Pracownik magazynu',
-    bodyRegion: 'BACK',
-    imageFile: 'case-03.png',
-    examinationSku: 'exam-punch-biopsy',
+    patientName: 'Barbara Sikora',
+    age: 45,
+    sex: 'FEMALE',
+    occupation: 'Kierowniczka ds. marketingu',
+    bodyRegion: 'CHEST',
+    imageFile: 'case-02.png',
+    examinationSku: 'exam-dermoscopy',
     examinationFindings:
-      'Biopsja wykazuje jedynie warstwy rogowe i brodawkowate rozrosty naskórka bez atypii — obraz typowy dla łagodnego rogowacenia łojotokowego.',
+      'Dermoskopia wykazuje symetryczną strukturę i regularną, jednolitą pigmentację — typowy obraz łagodnego znamienia melanocytowego, bez cech niepokojących.',
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
         title: 'Historia ekspozycji na promieniowanie UV',
         content: {
-          history:
-            'Rzadko stosuje krem z filtrem; przez lata pracował fizycznie na zewnątrz bez ochrony przeciwsłonecznej.',
+          history: 'Niedawny, intensywnie słoneczny urlop na Maderze skłonił ją do przyjrzenia się swoim znamionom.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Wygląd narośli',
-        content: {
-          description: 'Chropowata, brązowa narośl na plecach, obecna od lat, jakby "przyklejona" do skóry.',
-        },
-      },
-      {
-        type: 'CLINICAL_SYMPTOMS',
-        title: 'Krwawienie po podrażnieniu',
+        title: 'Nowo zauważone znamię',
         content: {
           description:
-            'Zaczęła krwawić po prysznicu i wycieraniu się ręcznikiem — partnerka zauważyła, że skóra wokół niej się podrażniła od ubrania.',
+            'Po powrocie z urlopu na Maderze zauważyła znamię nad lewym obojczykiem, którego wcześniej nie zauważyła.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Stabilność zmiany',
+        title: 'Cechy i stabilność znamienia',
         content: {
-          description: 'Sama narośl nie zmienia kształtu ani wielkości, czasem tylko swędzi po podrażnieniu.',
+          description:
+            'Ma równe brzegi, jednolity brązowy kolor i nie zmieniła się w ciągu miesiąca obserwacji — dermoskopia nie wykazuje żadnej ewolucji.',
         },
       },
     ],
-    diagnosisCode: 'seborrheic-keratosis',
-    treatmentCode: 'no-treatment',
+    diagnosisCode: 'common-nevus',
+    treatmentCode: 'watchful-waiting',
     difficulty: 1,
-    featuredOrder: 3,
+    featuredOrder: 2,
     resultExplanationText:
-      'Stabilna, chropowata, "przyklejona" narośl na plecach, krwawiąca jedynie po podrażnieniu ręcznikiem — łagodne rogowacenie łojotokowe, niewymagające leczenia.',
+      'Symetryczne, jednolicie zabarwione znamię nad obojczykiem, niezmienione w miesięcznej obserwacji — zwykłe znamię melanocytowe, niewymagające interwencji.',
     sourceNote:
-      'Zmodyfikowany wariant fabularny — pierwotny raport dotyczył czerniaka; tutaj zmiana zaadaptowana na łagodne rogowacenie łojotokowe w celu urozmaicenia rozkładu diagnoz.',
+      'Zmodyfikowany wariant fabularny — pierwotny raport dotyczył czerniaka; tutaj zmiana zaadaptowana na zwykłe znamię w celu urozmaicenia rozkładu diagnoz.',
   },
   {
     patientName: 'Kamil Zych',
@@ -197,7 +148,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'MALE',
     occupation: 'Tatuażysta',
     bodyRegion: 'LEFT_ARM',
-    imageFile: 'case-04.png',
+    imageFile: 'case-03.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Biopsja zmienionego pigmentu tatuażu potwierdza czerniaka rozwijającego się w obrębie wytatuowanej skóry — rzadkie, ale znane zjawisko.',
@@ -236,7 +187,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 3,
-    featuredOrder: 4,
+    featuredOrder: 3,
     resultExplanationText:
       'Czerniak rozwijający się w obrębie wytatuowanej skóry — rzadka, lecz udokumentowana postać, w której guz można pomylić ze zmianami pigmentu tatuażu.',
     sourceNote: null,
@@ -247,7 +198,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'FEMALE',
     occupation: 'Krawcowa',
     bodyRegion: 'ABDOMEN',
-    imageFile: 'case-05.png',
+    imageFile: 'case-04.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Biopsja potwierdza włókniaka twardego (dermatofibroma) — łagodną zmianę tkanki łącznej, bez cech złośliwości.',
@@ -293,7 +244,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'dermatofibroma',
     treatmentCode: 'no-treatment',
     difficulty: 1,
-    featuredOrder: 5,
+    featuredOrder: 4,
     resultExplanationText:
       'Twardy guzek wciągający się przy ucisku, powstały po drobnym urazie przy pracy z igłami — klasyczny obraz włókniaka twardego, zmiany łagodnej.',
     sourceNote:
@@ -305,7 +256,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'FEMALE',
     occupation: 'Emerytka',
     bodyRegion: 'HEAD',
-    imageFile: 'case-06.png',
+    imageFile: 'case-05.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Biopsja wykazuje komórki barwnikowe SOX-10 dodatnie; wynik potwierdza desmoplastycznego czerniaka błony śluzowej nosa — bardzo rzadką lokalizację czerniaka.',
@@ -359,7 +310,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 3,
-    featuredOrder: 6,
+    featuredOrder: 5,
     resultExplanationText:
       'Rzadki desmoplastyczny czerniak błony śluzowej nosa, wykryty przypadkowo podczas diagnostyki przewlekłych objawów nosowych.',
     sourceNote: null,
@@ -370,7 +321,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'MALE',
     occupation: 'Emeryt',
     bodyRegion: 'LEFT_ARM',
-    imageFile: 'case-07.png',
+    imageFile: 'case-06.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Badanie kliniczne i biopsja potwierdzają srebrzyste, dobrze odgraniczone blaszki typowe dla łuszczycy zwykłej, bez cech złośliwości.',
@@ -416,55 +367,11 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'psoriasis',
     treatmentCode: 'topical-corticosteroid',
     difficulty: 1,
-    featuredOrder: 7,
+    featuredOrder: 6,
     resultExplanationText:
       'Nawracające, srebrzyście łuszczące się czerwone blaszki na ramieniu i łokciu, z dodatnim wywiadem rodzinnym — łuszczyca zwykła.',
     sourceNote:
       'Zmodyfikowany wariant fabularny — pierwotny raport dotyczył czerniaka; tutaj zmiana zaadaptowana na łuszczycę w celu urozmaicenia rozkładu diagnoz.',
-  },
-  {
-    patientName: 'Barbara Sikora',
-    age: 45,
-    sex: 'FEMALE',
-    occupation: 'Kierowniczka ds. marketingu',
-    bodyRegion: 'CHEST',
-    imageFile: 'case-08.png',
-    examinationSku: 'exam-dermoscopy',
-    examinationFindings:
-      'Dermoskopia wykazuje symetryczną strukturę i regularną, jednolitą pigmentację — typowy obraz łagodnego znamienia melanocytowego, bez cech niepokojących.',
-    documents: [
-      {
-        type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
-        content: {
-          history: 'Niedawny, intensywnie słoneczny urlop na Maderze skłonił ją do przyjrzenia się swoim znamionom.',
-        },
-      },
-      {
-        type: 'CLINICAL_SYMPTOMS',
-        title: 'Nowo zauważone znamię',
-        content: {
-          description:
-            'Po powrocie z urlopu na Maderze zauważyła znamię nad lewym obojczykiem, którego wcześniej nie zauważyła.',
-        },
-      },
-      {
-        type: 'CLINICAL_SYMPTOMS',
-        title: 'Cechy i stabilność znamienia',
-        content: {
-          description:
-            'Ma równe brzegi, jednolity brązowy kolor i nie zmieniła się w ciągu miesiąca obserwacji — dermoskopia nie wykazuje żadnej ewolucji.',
-        },
-      },
-    ],
-    diagnosisCode: 'common-nevus',
-    treatmentCode: 'watchful-waiting',
-    difficulty: 1,
-    featuredOrder: 9,
-    resultExplanationText:
-      'Symetryczne, jednolicie zabarwione znamię nad obojczykiem, niezmienione w miesięcznej obserwacji — zwykłe znamię melanocytowe, niewymagające interwencji.',
-    sourceNote:
-      'Zmodyfikowany wariant fabularny — pierwotny raport dotyczył czerniaka; tutaj zmiana zaadaptowana na zwykłe znamię w celu urozmaicenia rozkładu diagnoz.',
   },
   {
     patientName: 'Józef Baran',
@@ -472,7 +379,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'MALE',
     occupation: 'Inżynier budownictwa',
     bodyRegion: 'NECK',
-    imageFile: 'case-09.png',
+    imageFile: 'case-07.png',
     examinationSku: 'exam-dermoscopy',
     examinationFindings:
       'Dermoskopia i pełna ocena ABCDE silnie sugerują czerniaka, biorąc pod uwagę asymetrię, nieregularne brzegi, zróżnicowanie koloru, rozmiar i ewolucję zmiany.',
@@ -519,7 +426,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: null,
     difficulty: 2,
-    featuredOrder: 8,
+    featuredOrder: 7,
     resultExplanationText:
       'Zmieniające się znamię na szyi spełniające wszystkie pięć kryteriów ostrzegawczych ABCDE u długoletniego pracownika fizycznego pracującego na zewnątrz, z historią oparzeń słonecznych w dzieciństwie.',
     sourceNote:
@@ -531,7 +438,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'MALE',
     occupation: 'Robotnik budowlany',
     bodyRegion: 'HEAD',
-    imageFile: 'case-10.png',
+    imageFile: 'case-08.png',
     examinationSku: 'exam-dermoscopy',
     examinationFindings:
       'Dermoskopia i badanie kliniczne potwierdzają perłowy, teleangiektatyczny guzek typowy dla raka podstawnokomórkowego w I stopniu zaawansowania.',
@@ -570,7 +477,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'basal-cell-carcinoma',
     treatmentCode: 'mohs-surgery',
     difficulty: 1,
-    featuredOrder: 13,
+    featuredOrder: 8,
     resultExplanationText:
       'Klasyczny perłowy, błyszczący guzek na policzku — rak podstawnokomórkowy w I stopniu zaawansowania, leczony chirurgią mikrograficzną Mohsa ze względu na lokalizację na twarzy.',
     sourceNote: null,
@@ -581,7 +488,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'FEMALE',
     occupation: 'Emerytka',
     bodyRegion: 'NECK',
-    imageFile: 'case-11.png',
+    imageFile: 'case-09.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Biopsja potwierdza raka kolczystokomórkowego w III stopniu zaawansowania, z zajęciem regionalnych węzłów chłonnych i głębokim naciekaniem sąsiednich mięśni i tkanki nerwowej; badania obrazowe ujawniają także niewielki przerzut do płuc.',
@@ -619,7 +526,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'squamous-cell-carcinoma',
     treatmentCode: 'referral-oncology',
     difficulty: 3,
-    featuredOrder: 15,
+    featuredOrder: 9,
     resultExplanationText:
       'Długotrwałe owrzodziałe, łuszczące się zmiany na szyi przekształciły się w raka kolczystokomórkowego w III stopniu zaawansowania z przerzutami do węzłów chłonnych i płuc, wymagające skierowania onkologicznego celem resekcji, usunięcia węzłów chłonnych i chemioterapii.',
     sourceNote: null,
@@ -630,7 +537,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'MALE',
     occupation: 'Kierowca autobusu',
     bodyRegion: 'HEAD',
-    imageFile: 'case-12.png',
+    imageFile: 'case-10.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Badanie histopatologiczne potwierdza pierwotnego czerniaka błony śluzowej dziąsła szczęki — rzadką lokalizację czerniaka.',
@@ -686,7 +593,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'FEMALE',
     occupation: 'Emerytka',
     bodyRegion: 'CHEST',
-    imageFile: 'case-13.png',
+    imageFile: 'case-11.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Badanie histopatologiczne potwierdza czerniaka, najprawdopodobniej późny przerzut czerniaka wyciętego ponad 30 lat wcześniej.',
@@ -725,7 +632,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'referral-oncology',
     difficulty: 3,
-    featuredOrder: 12,
+    featuredOrder: 11,
     resultExplanationText:
       'Guz żołądka pojawiający się dekady po wcześniejszym wycięciu czerniaka okazał się późnym przerzutowym nawrotem tego pierwotnego czerniaka.',
     sourceNote: null,
@@ -736,7 +643,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'FEMALE',
     occupation: 'Agentka turystyczna',
     bodyRegion: 'RIGHT_ARM',
-    imageFile: 'case-14.png',
+    imageFile: 'case-12.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Test płatkowy wykazuje wyraźnie dodatnią reakcję na nikiel; biopsja wykazuje jedynie zmiany zapalne, bez cech nowotworowych.',
@@ -791,7 +698,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'contact-dermatitis',
     treatmentCode: 'topical-corticosteroid',
     difficulty: 1,
-    featuredOrder: 11,
+    featuredOrder: 12,
     resultExplanationText:
       'Swędząca wysypka ograniczona do miejsca kontaktu z bransoletką, z dodatnim testem płatkowym na nikiel — alergiczne kontaktowe zapalenie skóry, mimo istotnych czynników ryzyka związanych z UV i historią rodzinną.',
     sourceNote:
@@ -803,7 +710,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     sex: 'MALE',
     occupation: 'Programista',
     bodyRegion: 'BACK',
-    imageFile: 'case-15.png',
+    imageFile: 'case-13.png',
     examinationSku: 'exam-punch-biopsy',
     examinationFindings:
       'Badanie histopatologiczne potwierdza czerniaka guzkowego w II stopniu klinicznego zaawansowania, o grubości Breslowa powyżej 2 mm; wykonano biopsję węzła wartowniczego wraz z szerokim wycięciem.',
@@ -843,7 +750,7 @@ export const REAL_CASES: RealCaseSeed[] = [
     diagnosisCode: 'melanoma',
     treatmentCode: 'surgical-excision',
     difficulty: 3,
-    featuredOrder: 14,
+    featuredOrder: 13,
     resultExplanationText:
       'Szybko rosnący, ciemnoniebieski guzek na plecach — czerniak guzkowy w II stopniu zaawansowania, leczony szerokim wycięciem i biopsją węzła wartowniczego.',
     sourceNote: null,
