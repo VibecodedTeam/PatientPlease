@@ -87,7 +87,7 @@ describe('Wall', () => {
     mockRoundFetch(OWNED_ITEMS);
     renderWithProviders(<Wall />);
     expect(
-      await screen.findByRole('button', { name: /open the abcde mole self-check/i }),
+      await screen.findByRole('button', { name: /otwórz samobadanie znamion abcde/i }),
     ).toBeInTheDocument();
   });
 
@@ -198,7 +198,7 @@ describe('Wall', () => {
     renderWithProviders(<Wall />);
 
     const orderTestsButton = await screen.findByRole('button', { name: /otwórz zlecenia badań/i });
-    const abcdeButton = screen.getByRole('button', { name: /open the abcde mole self-check/i });
+    const abcdeButton = screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i });
 
     // Order-tests (phone) button must come after the ABCDE board in DOM order, so it renders
     // to the right of it in the header's left-to-right flex layout.

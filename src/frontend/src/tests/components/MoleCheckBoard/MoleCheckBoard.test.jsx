@@ -11,14 +11,14 @@ describe('MoleCheckBoard', () => {
   it('renders only the collapsed board with the five bold letters, no descriptions or switches', () => {
     render(<MoleCheckBoard />);
 
-    const board = screen.getByRole('button', { name: /open the abcde mole self-check/i });
+    const board = screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i });
     expect(within(board).getByText('A')).toBeInTheDocument();
     expect(within(board).getByText('B')).toBeInTheDocument();
     expect(within(board).getByText('C')).toBeInTheDocument();
     expect(within(board).getByText('D')).toBeInTheDocument();
     expect(within(board).getByText('E')).toBeInTheDocument();
 
-    expect(screen.queryByText('Asymmetry')).not.toBeInTheDocument();
+    expect(screen.queryByText("Asymetria")).not.toBeInTheDocument();
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
@@ -26,9 +26,9 @@ describe('MoleCheckBoard', () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
 
-    const dialog = screen.getByRole('dialog', { name: /the abcde rule/i });
+    const dialog = screen.getByRole('dialog', { name: /reguła abcde/i });
     expect(dialog).toBeInTheDocument();
     expect(document.getElementById('overlay-root').contains(dialog)).toBe(true);
   });
@@ -37,21 +37,21 @@ describe('MoleCheckBoard', () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
 
-    expect(screen.getByText('Asymmetry')).toBeInTheDocument();
-    expect(screen.getByText('Border')).toBeInTheDocument();
-    expect(screen.getByText('Color')).toBeInTheDocument();
-    expect(screen.getByText('Diameter')).toBeInTheDocument();
-    expect(screen.getByText('Evolving')).toBeInTheDocument();
-    expect(screen.getByText(/Larger than 6 mm/)).toBeInTheDocument();
+    expect(screen.getByText("Asymetria")).toBeInTheDocument();
+    expect(screen.getByText("Brzegi")).toBeInTheDocument();
+    expect(screen.getByText("Kolor")).toBeInTheDocument();
+    expect(screen.getByText("Średnica")).toBeInTheDocument();
+    expect(screen.getByText("Ewolucja")).toBeInTheDocument();
+    expect(screen.getByText(/Większa niż 6 mm/)).toBeInTheDocument();
   });
 
   it('renders exactly five switches, all unchecked by default', async () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
 
     const switches = screen.getAllByRole('switch');
     expect(switches).toHaveLength(5);
@@ -63,11 +63,11 @@ describe('MoleCheckBoard', () => {
     const onSelectionChange = jest.fn();
     render(<MoleCheckBoard onSelectionChange={onSelectionChange} />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
-    await user.click(screen.getByRole('switch', { name: /mark trait: diameter/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
+    await user.click(screen.getByRole('switch', { name: /zaznacz cechę: średnica/i }));
     expect(onSelectionChange).toHaveBeenLastCalledWith(['D']);
 
-    await user.click(screen.getByRole('switch', { name: /mark trait: asymmetry/i }));
+    await user.click(screen.getByRole('switch', { name: /zaznacz cechę: asymetria/i }));
     expect(onSelectionChange).toHaveBeenLastCalledWith(['A', 'D']);
   });
 
@@ -76,8 +76,8 @@ describe('MoleCheckBoard', () => {
     const onSelectionChange = jest.fn();
     render(<MoleCheckBoard onSelectionChange={onSelectionChange} />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
-    const asymetriaSwitch = screen.getByRole('switch', { name: /mark trait: asymmetry/i });
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
+    const asymetriaSwitch = screen.getByRole('switch', { name: /zaznacz cechę: asymetria/i });
 
     await user.click(asymetriaSwitch);
     expect(onSelectionChange).toHaveBeenLastCalledWith(['A']);
@@ -92,46 +92,46 @@ describe('MoleCheckBoard', () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
-    await user.click(screen.getByRole('switch', { name: /mark trait: asymmetry/i }));
-    await user.click(screen.getByRole('switch', { name: /mark trait: diameter/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
+    await user.click(screen.getByRole('switch', { name: /zaznacz cechę: asymetria/i }));
+    await user.click(screen.getByRole('switch', { name: /zaznacz cechę: średnica/i }));
 
-    expect(screen.getByRole('switch', { name: /mark trait: asymmetry/i })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('switch', { name: /mark trait: diameter/i })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('switch', { name: /mark trait: border/i })).toHaveAttribute('aria-checked', 'false');
-    expect(screen.getByRole('switch', { name: /mark trait: color/i })).toHaveAttribute('aria-checked', 'false');
-    expect(screen.getByRole('switch', { name: /mark trait: evolving/i })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: /zaznacz cechę: asymetria/i })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: /zaznacz cechę: średnica/i })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: /zaznacz cechę: brzegi/i })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: /zaznacz cechę: kolor/i })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: /zaznacz cechę: ewolucja/i })).toHaveAttribute('aria-checked', 'false');
   });
 
   it('pre-checks the letters passed via initialSelected once expanded', async () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard initialSelected={['B', 'E']} />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
 
-    expect(screen.getByRole('switch', { name: /mark trait: border/i })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('switch', { name: /mark trait: evolving/i })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('switch', { name: /mark trait: asymmetry/i })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: /zaznacz cechę: brzegi/i })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: /zaznacz cechę: ewolucja/i })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: /zaznacz cechę: asymetria/i })).toHaveAttribute('aria-checked', 'false');
   });
 
   it('keeps selection state across closing and reopening the overlay', async () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
-    await user.click(screen.getByRole('switch', { name: /mark trait: color/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
+    await user.click(screen.getByRole('switch', { name: /zaznacz cechę: kolor/i }));
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
-    expect(screen.getByRole('switch', { name: /mark trait: color/i })).toHaveAttribute('aria-checked', 'true');
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
+    expect(screen.getByRole('switch', { name: /zaznacz cechę: kolor/i })).toHaveAttribute('aria-checked', 'true');
   });
 
   it('does not dismiss when the layer behind the panel is clicked, so the rest of the page stays usable', async () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
     const dialog = screen.getByRole('dialog');
     await user.click(dialog.parentElement);
 
@@ -142,7 +142,7 @@ describe('MoleCheckBoard', () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
     await user.keyboard('{Escape}');
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -152,7 +152,7 @@ describe('MoleCheckBoard', () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
     await user.click(screen.getByRole('dialog'));
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -162,8 +162,8 @@ describe('MoleCheckBoard', () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
-    await user.click(screen.getByRole('button', { name: /close/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
+    await user.click(screen.getByRole('button', { name: /zamknij/i }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -172,7 +172,7 @@ describe('MoleCheckBoard', () => {
     const user = userEvent.setup();
     render(<MoleCheckBoard />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
     const dialog = screen.getByRole('dialog');
     const handle = screen.getByTestId('drag-handle');
 
@@ -190,10 +190,10 @@ describe('MoleCheckBoard', () => {
     const onExpandedChange = jest.fn();
     render(<MoleCheckBoard onExpandedChange={onExpandedChange} />);
 
-    await user.click(screen.getByRole('button', { name: /open the abcde mole self-check/i }));
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
     expect(onExpandedChange).toHaveBeenLastCalledWith(true);
 
-    await user.click(screen.getByRole('button', { name: /close/i }));
+    await user.click(screen.getByRole('button', { name: /zamknij/i }));
     expect(onExpandedChange).toHaveBeenLastCalledWith(false);
   });
 });
