@@ -742,7 +742,7 @@ describe('startRound', () => {
             imageWidthPx: null,
             imageHeightPx: null,
             imageAltText: null,
-            content: { shopItemId: 'exam-shop-item-uuid' },
+            content: { shopItemId: 'exam-shop-item-uuid', findings: 'Biopsy findings text' },
           },
         ],
       }),
@@ -755,6 +755,11 @@ describe('startRound', () => {
       'document-uuid',
       'exam-doc-uuid',
     ]);
+    expect(
+      result.case.documents.find((document) => document.id === 'exam-doc-uuid')!.content,
+    ).toEqual({
+      findings: 'Biopsy findings text',
+    });
   });
 
   it('omits a reveal-gated document (e.g. DISEASE_HISTORY) when no CaseDocumentReveal row exists for it', async () => {
