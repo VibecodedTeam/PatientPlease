@@ -89,6 +89,9 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       createWhisperClient({
         baseUrl: whisperBaseUrl,
         model: whisperModel,
+        // The game is Polish-only, so transcribe spoken doctor input as Polish
+        // rather than relying on Whisper's language auto-detection.
+        languageCode: 'pl',
         ...(whisperApiKey ? { apiKey: whisperApiKey } : {}),
       }),
     geminiClient:
