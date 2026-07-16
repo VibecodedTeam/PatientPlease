@@ -8,8 +8,8 @@ import { useAuth } from '../../providers/Auth';
 import styles from './Settings.module.css';
 
 const CONFIRM_MESSAGES = {
-  day: 'Return to the start of the day? Your progress today will be lost.',
-  game: 'Return to the start of the game? All progress will be lost.',
+  day: 'Wrócić do początku dnia? Dzisiejszy postęp zostanie utracony.',
+  game: 'Wrócić do początku gry? Cały postęp zostanie utracony.',
 };
 
 export function Settings({ onClose, autoPaused = false }) {
@@ -48,34 +48,34 @@ export function Settings({ onClose, autoPaused = false }) {
       <OverlayPortal>
         <div className={styles.panel}>
           <div className={styles.clip} aria-hidden="true" />
-          <span className={styles.kicker}>Night Shift Control</span>
-          <h2 className={styles.title}>Settings</h2>
+          <span className={styles.kicker}>Sterowanie zmianą</span>
+          <h2 className={styles.title}>Ustawienia</h2>
           {autoPaused && (
-            <p className={styles.notice}>Game paused because you left the tab.</p>
+            <p className={styles.notice}>Gra wstrzymana — karta była nieaktywna.</p>
           )}
           <div className={styles.settingRow}>
-            <span>Logged in as {user.name}</span>
+            <span>Zalogowano jako {user.name}</span>
             <button
               type="button"
               className={`${styles.button} ${styles.rowButton}`}
               onClick={handleLogout}
             >
-              Log out
+              Wyloguj się
             </button>
           </div>
           <div className={styles.settingRow}>
-            <span>Music</span>
+            <span>Muzyka</span>
             <button
               type="button"
               className={`${styles.button} ${styles.toggle}`}
-              aria-label="Toggle music"
+              aria-label="Przełącz muzykę"
               aria-pressed={isMusicOn}
               onClick={() => setIsMusicOn((current) => !current)}
             >
               <span className={styles.toggleTrack} aria-hidden="true">
                 <span className={styles.toggleThumb} />
               </span>
-              <span className={styles.toggleText}>{isMusicOn ? 'On' : 'Off'}</span>
+              <span className={styles.toggleText}>{isMusicOn ? 'Wł.' : 'Wył.'}</span>
             </button>
           </div>
           <div className={styles.actions}>
@@ -84,21 +84,21 @@ export function Settings({ onClose, autoPaused = false }) {
               className={`${styles.button} ${styles.primary}`}
               onClick={onClose}
             >
-              Resume
+              Wznów
             </button>
             <button
               type="button"
               className={`${styles.button} ${styles.danger}`}
               onClick={() => setPendingReset('day')}
             >
-              Back to start of day
+              Wróć do początku dnia
             </button>
             <button
               type="button"
               className={`${styles.button} ${styles.danger}`}
               onClick={() => setPendingReset('game')}
             >
-              Back to start of game
+              Wróć do początku gry
             </button>
           </div>
         </div>

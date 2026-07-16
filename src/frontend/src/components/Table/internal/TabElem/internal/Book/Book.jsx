@@ -3,15 +3,15 @@ import PropTypes from 'prop-types';
 import styles from './Book.module.css';
 
 const DEFAULT_STORY_PARAGRAPHS = [
-  'The patient has presented for evaluation of a persistent skin change noticed over recent weeks. ' +
-    'They report no significant prior dermatological history and describe the affected area as ' +
-    'gradually more noticeable during daily activities.',
+  'Pacjent zgłosił się w celu oceny utrzymującej się zmiany skórnej zauważonej w ciągu ostatnich tygodni. ' +
+    'Nie podaje istotnego wywiadu dermatologicznego i opisuje zmianę jako stopniowo coraz bardziej ' +
+    'widoczną podczas codziennych czynności.',
 ];
 
 const DEFAULT_SYMPTOMS = [
-  { name: 'Itching', duration: '2 weeks' },
-  { name: 'Redness', duration: '3 days' },
-  { name: 'Swelling', duration: '5 days' },
+  { name: 'Świąd', duration: '2 tygodnie' },
+  { name: 'Zaczerwienienie', duration: '3 dni' },
+  { name: 'Obrzęk', duration: '5 dni' },
 ];
 
 /**
@@ -26,9 +26,9 @@ const DEFAULT_SYMPTOMS = [
  * @param {{name: string, duration: string}[]} [props.symptoms] - Right page symptom rows.
  */
 export function Book({
-  storyTitle = 'General Patient Story',
+  storyTitle = 'Ogólny opis pacjenta',
   storyParagraphs = DEFAULT_STORY_PARAGRAPHS,
-  symptomsTitle = 'Clinical Symptoms',
+  symptomsTitle = 'Objawy kliniczne',
   symptoms = DEFAULT_SYMPTOMS,
   className = '',
   ...rest

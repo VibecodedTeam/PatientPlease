@@ -39,7 +39,7 @@ export function Login({ googleClientId, onCredential }) {
 
   return (
     <div className={styles.login}>
-      <h1 className={styles.title}>Sign in</h1>
+      <h1 className={styles.title}>Zaloguj się</h1>
       <div ref={buttonRef} />
     </div>
   );

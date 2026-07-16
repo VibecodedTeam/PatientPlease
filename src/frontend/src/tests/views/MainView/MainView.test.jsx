@@ -152,7 +152,7 @@ async function renderMainView() {
       ),
     ),
   );
-  await waitFor(() => expect(screen.getByText('Status: Running')).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText('Status: W toku')).toBeInTheDocument());
   return result;
 }
 
@@ -169,14 +169,14 @@ describe('MainView', () => {
 
   it('renders the wall', async () => {
     await renderMainView();
-    expect(screen.getByRole('region', { name: /doctor office wall/i })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /ściana gabinetu/i })).toBeInTheDocument();
   });
 
   it('renders the patient documents desk', async () => {
     await renderMainView();
 
-    await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
-    expect(screen.getByText('Patient Information')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Diagnoza')).toBeInTheDocument());
+    expect(screen.getByText('Dane pacjenta')).toBeInTheDocument();
   });
 
   it('shows a completion message instead of the desk when the game is finished', async () => {
@@ -187,8 +187,8 @@ describe('MainView', () => {
 
     renderMainView();
 
-    await waitFor(() => expect(screen.getByText(/completed every case/i)).toBeInTheDocument());
-    expect(screen.queryByText('Patient Information')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/wszystkie przypadki ukończone/i)).toBeInTheDocument());
+    expect(screen.queryByText('Dane pacjenta')).not.toBeInTheDocument();
   });
 
   it('shows a game-over message when the session is over', async () => {
@@ -198,7 +198,7 @@ describe('MainView', () => {
 
     renderMainView();
 
-    await waitFor(() => expect(screen.getByText(/game over/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/koniec gry/i)).toBeInTheDocument());
   });
 
   it('allows resetting the game from the completion screen, so a finished session is not a dead end', async () => {
@@ -218,18 +218,18 @@ describe('MainView', () => {
     const user = userEvent.setup();
 
     renderMainView();
-    await waitFor(() => expect(screen.getByText(/completed every case/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/wszystkie przypadki ukończone/i)).toBeInTheDocument());
 
-    await user.click(screen.getByText('Open Settings'));
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Otwórz ustawienia'));
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
 
-    await user.click(screen.getByText('Back to start of game'));
-    await user.click(screen.getByText('Confirm'));
+    await user.click(screen.getByText('Wróć do początku gry'));
+    await user.click(screen.getByText('Potwierdź'));
 
     await waitFor(() =>
-      expect(screen.queryByText(/completed every case/i)).not.toBeInTheDocument(),
+      expect(screen.queryByText(/wszystkie przypadki ukończone/i)).not.toBeInTheDocument(),
     );
-    await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Diagnoza')).toBeInTheDocument());
     const resetCalls = global.fetch.mock.calls.filter(
       ([request]) => new URL(request.url).pathname === '/api/v1/game/reset',
     );
@@ -295,7 +295,7 @@ describe('MainView', () => {
         ),
       ),
     );
-    await waitFor(() => expect(screen.getByText('Status: Running')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Status: W toku')).toBeInTheDocument());
     await waitFor(() => expect(roundCallCount).toBe(2));
 
     roundCaseId = 'case-today'; // models a new day/case becoming available while away
@@ -329,19 +329,19 @@ describe('MainView', () => {
     // Scene is shown by default; the chat panel is not mounted yet.
     expect(screen.getByTestId('patient-scene-provider-stub')).toBeInTheDocument();
     expect(
-      screen.queryByRole('complementary', { name: /patient chat panel/i }),
+      screen.queryByRole('complementary', { name: /panel rozmowy z pacjentem/i }),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /^chat$/i }));
+    await user.click(screen.getByRole('button', { name: /^czat$/i }));
     expect(
-      screen.getByRole('complementary', { name: /patient chat panel/i }),
+      screen.getByRole('complementary', { name: /panel rozmowy z pacjentem/i }),
     ).toBeInTheDocument();
     // Scene stays mounted underneath (kept alive to avoid re-running Three.js setup).
     expect(screen.getByTestId('patient-scene-provider-stub')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /3d view/i }));
+    await user.click(screen.getByRole('button', { name: /widok 3d/i }));
     expect(
-      screen.queryByRole('complementary', { name: /patient chat panel/i }),
+      screen.queryByRole('complementary', { name: /panel rozmowy z pacjentem/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -372,7 +372,7 @@ describe('MainView', () => {
     // Triggers a re-render (opening Settings) while the round fetch is still
     // unresolved, so `round` is still null and the `documents` fallback is
     // still in play.
-    await user.click(screen.getByText('Open Settings'));
+    await user.click(screen.getByText('Otwórz ustawienia'));
     const lastCall = PatientScene.mock.calls[PatientScene.mock.calls.length - 1];
 
     expect(lastCall[0].documents).toBe(firstDocuments);
@@ -391,7 +391,7 @@ describe('MainView', () => {
     // Closes the Settings opened above so its unmount-triggered resumeGame()
     // call resolves within this test's own async flow, instead of firing
     // unawaited into RTL's automatic cleanup after the test returns.
-    await user.click(screen.getByText('Resume'));
+    await user.click(screen.getByText('Wznów'));
     await waitFor(() =>
       expect(
         global.fetch.mock.calls.some(
@@ -405,26 +405,26 @@ describe('MainView', () => {
     const user = userEvent.setup();
     await renderMainView();
 
-    await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
-    await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
-    await user.click(screen.getByText('Submit Diagnosis'));
+    await waitFor(() => expect(screen.getByText('Diagnoza')).toBeInTheDocument());
+    await user.click(screen.getByRole('radio', { name: 'Rak skóry' }));
+    await user.click(screen.getByText('Zatwierdź diagnozę'));
 
-    expect(screen.getByText('Correct!')).toBeInTheDocument();
+    expect(screen.getByText('Poprawnie!')).toBeInTheDocument();
     expect(screen.getByText('+$50')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /continue/i }));
-    expect(screen.queryByText('Correct!')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /dalej/i }));
+    expect(screen.queryByText('Poprawnie!')).not.toBeInTheDocument();
   });
 
   it('shows the ResultPopup with the real money penalty after submitting an incorrect diagnosis', async () => {
     const user = userEvent.setup();
     await renderMainView();
 
-    await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
-    await user.click(screen.getByRole('radio', { name: 'No Skin Condition' }));
-    await user.click(screen.getByText('Submit Diagnosis'));
+    await waitFor(() => expect(screen.getByText('Diagnoza')).toBeInTheDocument());
+    await user.click(screen.getByRole('radio', { name: 'Brak zmian skórnych' }));
+    await user.click(screen.getByText('Zatwierdź diagnozę'));
 
-    expect(screen.getByText('Incorrect')).toBeInTheDocument();
+    expect(screen.getByText('Niepoprawnie')).toBeInTheDocument();
     expect(screen.getByText('-$20')).toBeInTheDocument();
   });
 
@@ -455,7 +455,7 @@ describe('MainView', () => {
     jest.useFakeTimers({ doNotFake: ['queueMicrotask'] });
     try {
       await renderMainView();
-      await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('Diagnoza')).toBeInTheDocument());
 
       await act(async () => {
         jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
@@ -464,30 +464,30 @@ describe('MainView', () => {
       // Timer ran out while the player was still deciding on a diagnosis —
       // the day must not end (or interrupt them with the Daily Statistics
       // popup) in the middle of that examination.
-      expect(screen.queryByRole('heading', { name: 'Daily Statistics' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Statystyki dnia' })).not.toBeInTheDocument();
       expect(dayEndFetchCount()).toBe(0);
 
       await act(async () => {
-        screen.getByRole('radio', { name: 'Skin Cancer' }).click();
+        screen.getByRole('radio', { name: 'Rak skóry' }).click();
       });
       await act(async () => {
-        screen.getByText('Submit Diagnosis').click();
+        screen.getByText('Zatwierdź diagnozę').click();
       });
-      expect(screen.getByText('Correct!')).toBeInTheDocument();
+      expect(screen.getByText('Poprawnie!')).toBeInTheDocument();
       expect(dayEndFetchCount()).toBe(0);
 
       await act(async () => {
-        screen.getByRole('button', { name: /continue/i }).click();
+        screen.getByRole('button', { name: /dalej/i }).click();
       });
 
       await waitFor(() =>
-        expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument(),
+        expect(screen.getByRole('heading', { name: 'Statystyki dnia' })).toBeInTheDocument(),
       );
       expect(screen.getByText('$130')).toBeInTheDocument();
       expect(dayEndFetchCount()).toBe(1);
 
       await act(async () => {
-        screen.getByRole('button', { name: /continue/i }).click();
+        screen.getByRole('button', { name: /dalej/i }).click();
       });
 
       expect(screen.getByText('Night marker')).toBeInTheDocument();
@@ -517,15 +517,15 @@ describe('MainView', () => {
     jest.useFakeTimers({ doNotFake: ['queueMicrotask'] });
     try {
       await renderMainView();
-      await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('Diagnoza')).toBeInTheDocument());
 
       await act(async () => {
-        screen.getByRole('radio', { name: 'Skin Cancer' }).click();
+        screen.getByRole('radio', { name: 'Rak skóry' }).click();
       });
       await act(async () => {
-        screen.getByText('Submit Diagnosis').click();
+        screen.getByText('Zatwierdź diagnozę').click();
       });
-      expect(screen.getByText('Correct!')).toBeInTheDocument();
+      expect(screen.getByText('Poprawnie!')).toBeInTheDocument();
 
       await act(async () => {
         jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
@@ -533,17 +533,17 @@ describe('MainView', () => {
 
       // The day must not actually end (no backend call, no popup) while the
       // player hasn't yet acknowledged their diagnosis result.
-      expect(screen.queryByRole('heading', { name: 'Daily Statistics' })).not.toBeInTheDocument();
-      expect(screen.getByText('Correct!')).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Statystyki dnia' })).not.toBeInTheDocument();
+      expect(screen.getByText('Poprawnie!')).toBeInTheDocument();
       expect(dayEndFetchCount()).toBe(0);
 
       await act(async () => {
-        screen.getByRole('button', { name: /continue/i }).click();
+        screen.getByRole('button', { name: /dalej/i }).click();
       });
 
-      expect(screen.queryByText('Correct!')).not.toBeInTheDocument();
+      expect(screen.queryByText('Poprawnie!')).not.toBeInTheDocument();
       await waitFor(() =>
-        expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument(),
+        expect(screen.getByRole('heading', { name: 'Statystyki dnia' })).toBeInTheDocument(),
       );
       expect(dayEndFetchCount()).toBe(1);
     } finally {
@@ -577,35 +577,35 @@ describe('MainView', () => {
     jest.useFakeTimers({ doNotFake: ['queueMicrotask'] });
     try {
       await renderMainView();
-      await waitFor(() => expect(screen.getByText('Diagnosis')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('Diagnoza')).toBeInTheDocument());
 
       await act(async () => {
         jest.advanceTimersByTime(DAY_DURATION_SECONDS * 1000);
       });
       await act(async () => {
-        screen.getByRole('radio', { name: 'Skin Cancer' }).click();
+        screen.getByRole('radio', { name: 'Rak skóry' }).click();
       });
       await act(async () => {
-        screen.getByText('Submit Diagnosis').click();
+        screen.getByText('Zatwierdź diagnozę').click();
       });
       await act(async () => {
-        screen.getByRole('button', { name: /continue/i }).click();
+        screen.getByRole('button', { name: /dalej/i }).click();
       });
 
       // endDay failed: the player must see a recoverable error, not a silent
       // frozen desk, and the Daily Statistics popup must NOT have opened.
-      await waitFor(() => expect(screen.getByText(/couldn't end the day/i)).toBeInTheDocument());
-      expect(screen.queryByRole('heading', { name: 'Daily Statistics' })).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText(/nie udało się zakończyć dnia/i)).toBeInTheDocument());
+      expect(screen.queryByRole('heading', { name: 'Statystyki dnia' })).not.toBeInTheDocument();
 
       dayEndShouldFail = false;
       await act(async () => {
-        screen.getByRole('button', { name: /try again/i }).click();
+        screen.getByRole('button', { name: /spróbuj ponownie/i }).click();
       });
 
       await waitFor(() =>
-        expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument(),
+        expect(screen.getByRole('heading', { name: 'Statystyki dnia' })).toBeInTheDocument(),
       );
-      expect(screen.queryByText(/couldn't end the day/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/nie udało się zakończyć dnia/i)).not.toBeInTheDocument();
     } finally {
       jest.useRealTimers();
     }
@@ -615,36 +615,36 @@ describe('MainView', () => {
     const user = userEvent.setup();
     await renderMainView();
 
-    expect(screen.getByText('Status: Running')).toBeInTheDocument();
+    expect(screen.getByText('Status: W toku')).toBeInTheDocument();
 
-    await user.click(screen.getByText('Open Settings'));
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
-    expect(screen.getByText('Status: Paused')).toBeInTheDocument();
-    expect(screen.queryByText('Game paused because you left the tab.')).not.toBeInTheDocument();
+    await user.click(screen.getByText('Otwórz ustawienia'));
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
+    expect(screen.getByText('Status: Wstrzymano')).toBeInTheDocument();
+    expect(screen.queryByText('Gra wstrzymana — karta była nieaktywna.')).not.toBeInTheDocument();
 
-    await user.click(screen.getByText('Resume'));
-    expect(screen.queryByText('Settings')).not.toBeInTheDocument();
-    expect(screen.getByText('Status: Running')).toBeInTheDocument();
+    await user.click(screen.getByText('Wznów'));
+    expect(screen.queryByText('Ustawienia')).not.toBeInTheDocument();
+    expect(screen.getByText('Status: W toku')).toBeInTheDocument();
   });
 
   it('auto-pauses and opens Settings with a notice when the document becomes hidden', async () => {
     await renderMainView();
-    expect(screen.getByText('Status: Running')).toBeInTheDocument();
-    expect(screen.queryByText('Settings')).not.toBeInTheDocument();
+    expect(screen.getByText('Status: W toku')).toBeInTheDocument();
+    expect(screen.queryByText('Ustawienia')).not.toBeInTheDocument();
 
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
     act(() => {
       document.dispatchEvent(new Event('visibilitychange'));
     });
 
-    expect(screen.getByText('Status: Paused')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText('Settings')).toBeInTheDocument());
-    expect(screen.getByText('Game paused because you left the tab.')).toBeInTheDocument();
+    expect(screen.getByText('Status: Wstrzymano')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Ustawienia')).toBeInTheDocument());
+    expect(screen.getByText('Gra wstrzymana — karta była nieaktywna.')).toBeInTheDocument();
 
     // Closes the auto-opened Settings so its unmount-triggered resumeGame()
     // call resolves within this test's own async flow, instead of firing
     // unawaited into RTL's automatic cleanup after the test returns.
-    await userEvent.setup().click(screen.getByText('Resume'));
+    await userEvent.setup().click(screen.getByText('Wznów'));
     await waitFor(() =>
       expect(
         global.fetch.mock.calls.some(
@@ -665,7 +665,7 @@ describe('MainView', () => {
       document.dispatchEvent(new Event('visibilitychange'));
     });
 
-    await waitFor(() => expect(screen.getByText('Settings')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Ustawienia')).toBeInTheDocument());
     const pauseCalls = global.fetch.mock.calls.filter(
       ([request]) => new URL(request.url).pathname === '/api/v1/game/pause',
     );
@@ -674,7 +674,7 @@ describe('MainView', () => {
     // Closes the auto-opened Settings so its unmount-triggered resumeGame()
     // call resolves within this test's own async flow, instead of firing
     // unawaited into RTL's automatic cleanup after the test returns.
-    await userEvent.setup().click(screen.getByText('Resume'));
+    await userEvent.setup().click(screen.getByText('Wznów'));
     await waitFor(() =>
       expect(
         global.fetch.mock.calls.some(
@@ -688,14 +688,14 @@ describe('MainView', () => {
     const user = userEvent.setup();
     await renderMainView();
 
-    await user.click(screen.getByText('Open Settings'));
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Otwórz ustawienia'));
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
 
-    await user.click(screen.getByText('Back to start of day'));
-    await user.click(screen.getByText('Confirm'));
+    await user.click(screen.getByText('Wróć do początku dnia'));
+    await user.click(screen.getByText('Potwierdź'));
 
-    expect(screen.queryByText('Settings')).not.toBeInTheDocument();
-    expect(screen.getByText('Status: Running')).toBeInTheDocument();
+    expect(screen.queryByText('Ustawienia')).not.toBeInTheDocument();
+    expect(screen.getByText('Status: W toku')).toBeInTheDocument();
 
     // Settings unmounting here fires resumeTimer's resumeGame() call; wait
     // for it to resolve so it doesn't dangle into RTL's post-test cleanup.

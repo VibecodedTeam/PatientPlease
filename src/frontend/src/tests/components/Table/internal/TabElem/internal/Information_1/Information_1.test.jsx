@@ -20,12 +20,12 @@ describe('Information_1', () => {
 
   it('falls back to placeholder content when no patient is available', () => {
     renderWithDocumentTable(<Information_1 />);
-    expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-    expect(screen.getByText('Age 42')).toBeInTheDocument();
-    expect(screen.getAllByText('Pending clinical note')).toHaveLength(3);
+    expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
+    expect(screen.getByText('Wiek 42')).toBeInTheDocument();
+    expect(screen.getAllByText('Oczekująca notatka kliniczna')).toHaveLength(3);
   });
 
-  it('renders real patient fields when a patient is provided', () => {
+  it('renders real patient fields, mapping sex to a Polish label, when a patient is provided', () => {
     renderWithDocumentTable(<Information_1 />, {
       patient: {
         name: 'Jan Kowalski',
@@ -36,9 +36,17 @@ describe('Information_1', () => {
     });
 
     expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
-    expect(screen.getByText('Age 52')).toBeInTheDocument();
-    expect(screen.getByText('Sex: MALE')).toBeInTheDocument();
-    expect(screen.getByText('Occupation: Roofer')).toBeInTheDocument();
+    expect(screen.getByText('Wiek 52')).toBeInTheDocument();
+    expect(screen.getByText('Płeć: Mężczyzna')).toBeInTheDocument();
+    expect(screen.getByText('Zawód: Roofer')).toBeInTheDocument();
+  });
+
+  it('maps a female patient sex to the Polish label', () => {
+    renderWithDocumentTable(<Information_1 />, {
+      patient: { name: 'Anna Nowak', age: 60, sex: 'FEMALE', occupation: null },
+    });
+
+    expect(screen.getByText('Płeć: Kobieta')).toBeInTheDocument();
   });
 
   it('applies the card layout class to its root element', () => {

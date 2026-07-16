@@ -28,14 +28,14 @@ describe('AuthGate', () => {
   it('shows a loading state before the session check resolves', () => {
     renderGate(() => new Promise(() => {}));
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByText(/ładowanie/i)).toBeInTheDocument();
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
   });
 
   it('shows Login when unauthenticated', async () => {
     renderGate(() => Promise.resolve(new Response('{}', { status: 401 })));
 
-    await waitFor(() => expect(screen.getByText('Sign in')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Zaloguj się')).toBeInTheDocument());
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
   });
 
@@ -79,7 +79,7 @@ describe('AuthGate', () => {
 
     await user.click(screen.getByRole('button', { name: /logout/i }));
 
-    await waitFor(() => expect(screen.getByText('Sign in')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Zaloguj się')).toBeInTheDocument());
   });
 
   it('catches (does not leave unhandled) a rejected login when the backend rejects the Google credential', async () => {
@@ -103,7 +103,7 @@ describe('AuthGate', () => {
         </AuthProvider>
       </ApiProvider>,
     );
-    await waitFor(() => expect(screen.getByText('Sign in')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Zaloguj się')).toBeInTheDocument());
 
     const { callback } = initialize.mock.calls[0][0];
     callback({ credential: 'expired-token' });
@@ -116,7 +116,7 @@ describe('AuthGate', () => {
     await waitFor(() =>
       expect(consoleError).toHaveBeenCalledWith('Google sign-in failed', expect.anything()),
     );
-    expect(screen.getByText('Sign in')).toBeInTheDocument();
+    expect(screen.getByText('Zaloguj się')).toBeInTheDocument();
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
     consoleError.mockRestore();
   });

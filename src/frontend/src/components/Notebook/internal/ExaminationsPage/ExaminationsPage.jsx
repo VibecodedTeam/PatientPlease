@@ -12,7 +12,7 @@ export function ExaminationsPage({ documents }) {
 
   return (
     <div className={styles.page}>
-      <h3 className={styles.heading}>Examinations</h3>
+      <h3 className={styles.heading}>Badania</h3>
       {examDocuments.length > 0 ? (
         examDocuments.map((doc) => (
           <p key={doc.id} className={styles.entry}>
@@ -21,7 +21,7 @@ export function ExaminationsPage({ documents }) {
           </p>
         ))
       ) : (
-        <p className={styles.empty}>No examinations completed yet.</p>
+        <p className={styles.empty}>Nie wykonano jeszcze żadnych badań.</p>
       )}
     </div>
   );

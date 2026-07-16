@@ -65,7 +65,7 @@ export function MoleCheckBoard({
         className={styles.board}
         aria-haspopup="dialog"
         aria-expanded={isExpanded}
-        aria-label="Open the ABCDE mole self-check"
+        aria-label="Otwórz samobadanie znamion ABCDE"
         onClick={openBoard}
       >
         <span className={styles.frame}>
@@ -88,7 +88,7 @@ export function MoleCheckBoard({
           <div
             className={styles.expandedBoard}
             role="dialog"
-            aria-label="Mole self-check — the ABCDE rule"
+            aria-label="Samobadanie znamion — reguła ABCDE"
             style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
             onClick={(event) => event.stopPropagation()}
           >
@@ -96,7 +96,7 @@ export function MoleCheckBoard({
               <span className={styles.dragGrip} aria-hidden="true" />
             </div>
 
-            <button type="button" className={styles.closeButton} aria-label="Close" onClick={closeBoard}>
+            <button type="button" className={styles.closeButton} aria-label="Zamknij" onClick={closeBoard}>
               ×
             </button>
 
@@ -108,7 +108,7 @@ export function MoleCheckBoard({
               ))}
             </div>
 
-            <div className={styles.rows} role="list" aria-label="ABCDE criteria">
+            <div className={styles.rows} role="list" aria-label="Kryteria ABCDE">
               {criteria.map((c, index) => (
                 <LetterToggle
                   key={c.letter}

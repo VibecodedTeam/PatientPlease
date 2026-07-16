@@ -10,14 +10,14 @@ describe('ResultPopup', () => {
   it('shows a correct verdict with the money earned', () => {
     render(<ResultPopup isCorrect moneyDelta={50} onClose={() => {}} />);
 
-    expect(screen.getByText(/correct/i)).toBeInTheDocument();
+    expect(screen.getByText(/poprawnie/i)).toBeInTheDocument();
     expect(screen.getByText('+$50')).toBeInTheDocument();
   });
 
   it('shows an incorrect verdict with the money lost', () => {
     render(<ResultPopup isCorrect={false} moneyDelta={-20} onClose={() => {}} />);
 
-    expect(screen.getByText(/incorrect/i)).toBeInTheDocument();
+    expect(screen.getByText(/niepoprawnie/i)).toBeInTheDocument();
     expect(screen.getByText('-$20')).toBeInTheDocument();
   });
 
@@ -31,7 +31,7 @@ describe('ResultPopup', () => {
     const onClose = jest.fn();
     render(<ResultPopup isCorrect moneyDelta={50} onClose={onClose} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /dalej/i }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -48,7 +48,7 @@ describe('ResultPopup', () => {
     );
 
     expect(screen.getByText('+$75')).toBeInTheDocument();
-    expect(screen.getByText((_, element) => element.textContent === 'Examine time: 0:42')).toBeInTheDocument();
-    expect(screen.getByText((_, element) => element.textContent === 'Balance: $275')).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element.textContent === 'Czas badania: 0:42')).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element.textContent === 'Saldo: $275')).toBeInTheDocument();
   });
 });

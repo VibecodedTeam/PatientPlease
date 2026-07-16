@@ -20,7 +20,7 @@ export function Table({ children, className = '', ...rest }) {
       : undefined;
   // Diagnose stays presentational and doesn't know about the backend/axios error
   // shape, so this is where the raw error is turned into a message it can render.
-  const errorMessage = error ? 'Could not submit diagnosis. Please try again.' : undefined;
+  const errorMessage = error ? 'Nie udało się zatwierdzić diagnozy. Spróbuj ponownie.' : undefined;
 
   return (
     <div className={rootClassName} {...rest}>

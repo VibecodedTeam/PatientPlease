@@ -90,8 +90,8 @@ describe('NightView', () => {
     mockFetch();
     renderNightView();
 
-    expect(screen.getByRole('heading', { name: 'Shop for Items' })).toBeInTheDocument();
-    expect(screen.getByText('End of shift')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Zakupy' })).toBeInTheDocument();
+    expect(screen.getByText('Koniec zmiany')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('120')).toBeInTheDocument());
   });
 
@@ -103,16 +103,16 @@ describe('NightView', () => {
     expect(screen.getByText('$45')).toBeInTheDocument();
     expect(screen.getByText('Dermatoscope')).toBeInTheDocument();
     expect(screen.getByText('$60')).toBeInTheDocument();
-    expect(screen.getByText('In library')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /select dermatoscope/i })).not.toBeInTheDocument();
+    expect(screen.getByText('W bibliotece')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /wybierz dermatoscope/i })).not.toBeInTheDocument();
   });
 
   it('starts with nothing selected and a Skip action', async () => {
     mockFetch();
     renderNightView();
 
-    await waitFor(() => expect(screen.getByText('No items selected')).toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Skip' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Nie wybrano przedmiotów')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Pomiń' })).toBeInTheDocument();
   });
 
   it('selecting an item updates the cart total and the action button', async () => {
@@ -121,10 +121,10 @@ describe('NightView', () => {
     renderNightView();
 
     await waitFor(() => expect(screen.getByText('Atlas of Dermatology')).toBeInTheDocument());
-    await user.click(screen.getByRole('button', { name: /select atlas of dermatology/i }));
+    await user.click(screen.getByRole('button', { name: /wybierz atlas of dermatology/i }));
 
-    expect(screen.getByText('1 item selected')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Buy · $45' })).toBeInTheDocument();
+    expect(screen.getByText('Wybrane przedmioty: 1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Kup · $45' })).toBeInTheDocument();
   });
 
   it('buying purchases the selection, refreshes the catalog, and redirects to /game/main', async () => {
@@ -133,8 +133,8 @@ describe('NightView', () => {
     renderNightView();
 
     await waitFor(() => expect(screen.getByText('Atlas of Dermatology')).toBeInTheDocument());
-    await user.click(screen.getByRole('button', { name: /select atlas of dermatology/i }));
-    await user.click(screen.getByRole('button', { name: 'Buy · $45' }));
+    await user.click(screen.getByRole('button', { name: /wybierz atlas of dermatology/i }));
+    await user.click(screen.getByRole('button', { name: 'Kup · $45' }));
 
     await waitFor(() => expect(screen.getByText('Main View Stub')).toBeInTheDocument());
     const purchaseRequest = global.fetch.mock.calls
@@ -149,8 +149,8 @@ describe('NightView', () => {
     const user = userEvent.setup();
     renderNightView();
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Skip' })).toBeInTheDocument());
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Pomiń' })).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Pomiń' }));
 
     expect(screen.getByText('Main View Stub')).toBeInTheDocument();
   });

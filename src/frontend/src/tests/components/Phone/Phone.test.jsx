@@ -88,15 +88,15 @@ describe('Phone', () => {
     );
   });
 
-  it('renders English copy with the real patient, not the old Polish/hardcoded copy', async () => {
+  it('renders Polish copy with the real patient, not a hardcoded patient', async () => {
     renderPhone();
 
-    expect(screen.getByRole('heading', { name: 'Order laboratory tests' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Zleć badania laboratoryjne' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('Punch Biopsy')).toBeInTheDocument());
     expect(screen.getByText('Jordan Ellis', { exact: false })).toBeInTheDocument();
     expect(screen.getByText('52', { exact: false })).toBeInTheDocument();
 
-    expect(screen.queryByText('Zleć badania')).not.toBeInTheDocument();
+    // The patient line must come from the real round payload, never a hardcoded name.
     expect(screen.queryByText(/Anna Kowalska/)).not.toBeInTheDocument();
   });
 
@@ -111,10 +111,10 @@ describe('Phone', () => {
     renderPhone();
     await waitFor(() => screen.getByText('Dermoscopy Imaging'));
 
-    expect(screen.getByText(/buy at the night shop to unlock/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /order/i, hidden: false })).not.toBeNull();
+    expect(screen.getByText(/kup w nocnym sklepie, aby odblokować/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /zleć/i, hidden: false })).not.toBeNull();
     // The unowned row must not expose an enabled Order button.
-    const orderButtons = screen.getAllByRole('button', { name: 'Order' });
+    const orderButtons = screen.getAllByRole('button', { name: 'Zleć' });
     expect(orderButtons).toHaveLength(1);
   });
 
@@ -123,7 +123,7 @@ describe('Phone', () => {
     renderPhone();
     await waitFor(() => screen.getByText('Punch Biopsy'));
 
-    await user.click(screen.getByRole('button', { name: 'Order' }));
+    await user.click(screen.getByRole('button', { name: 'Zleć' }));
 
     await waitFor(() => {
       const examinationRequest = global.fetch.mock.calls
@@ -133,7 +133,7 @@ describe('Phone', () => {
     });
     // Let the full order() chain (addElapsedSeconds + refreshRound) settle
     // before the test ends, so no state update lands after unmount.
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Order' })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Zleć' })).toBeEnabled());
   });
 
   it('shows a pending state on the row being ordered', async () => {
@@ -158,13 +158,13 @@ describe('Phone', () => {
     renderPhone();
     await waitFor(() => screen.getByText('Punch Biopsy'));
 
-    await user.click(screen.getByRole('button', { name: 'Order' }));
+    await user.click(screen.getByRole('button', { name: 'Zleć' }));
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Ordering…' })).toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Zlecanie…' })).toBeDisabled());
     resolveOrder();
     // Let the full order() chain (addElapsedSeconds + refreshRound) settle
     // before the test ends, so no state update lands after unmount.
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Order' })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Zleć' })).toBeEnabled());
   });
 
   it('calls onCancel when the close (X) button is clicked', async () => {
@@ -173,7 +173,7 @@ describe('Phone', () => {
     renderPhone(onCancel);
     await waitFor(() => screen.getByText('Punch Biopsy'));
 
-    await user.click(screen.getByRole('button', { name: /^close$/i }));
+    await user.click(screen.getByRole('button', { name: /^zamknij$/i }));
 
     expect(onCancel).toHaveBeenCalled();
   });
@@ -190,7 +190,7 @@ describe('Phone', () => {
     });
     renderPhone();
 
-    expect(screen.getByRole('heading', { name: 'Order laboratory tests' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Zleć badania laboratoryjne' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('Punch Biopsy')).toBeInTheDocument());
     expect(screen.queryByText(/Patient:/)).not.toBeInTheDocument();
   });

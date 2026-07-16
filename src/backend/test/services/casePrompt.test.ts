@@ -35,13 +35,13 @@ describe('buildCasePrompt', () => {
   it('includes the patient identity and occupation in the system instruction', () => {
     const prompt = buildCasePrompt(PATIENT, CASE, []);
     expect(prompt.systemInstruction).toContain('Jan Kowalski');
-    expect(prompt.systemInstruction).toContain('52-year-old male');
-    expect(prompt.systemInstruction).toContain('working as a Roofer');
+    expect(prompt.systemInstruction).toContain('52-letniego pacjenta (male)');
+    expect(prompt.systemInstruction).toContain('pracującego jako Roofer');
   });
 
   it('omits the occupation clause when the patient has none', () => {
     const prompt = buildCasePrompt({ ...PATIENT, occupation: null }, CASE, []);
-    expect(prompt.systemInstruction).not.toContain('working as a');
+    expect(prompt.systemInstruction).not.toContain('pracującego jako');
   });
 
   it('lists every case document in the system instruction', () => {
@@ -52,7 +52,7 @@ describe('buildCasePrompt', () => {
 
   it('falls back to a placeholder when the case has no documents', () => {
     const prompt = buildCasePrompt(PATIENT, { difficulty: 1, documents: [] }, []);
-    expect(prompt.systemInstruction).toContain('(no additional documented history)');
+    expect(prompt.systemInstruction).toContain('(brak dodatkowej udokumentowanej historii)');
   });
 
   it('maps PLAYER history to the user role and PATIENT history to the model role, in order', () => {
@@ -78,32 +78,32 @@ describe('buildCasePrompt', () => {
 
   it('instructs the model to roleplay strictly as the patient, never as the doctor or an AI', () => {
     const prompt = buildCasePrompt(PATIENT, CASE, []);
-    expect(prompt.systemInstruction).toContain('never the doctor');
-    expect(prompt.systemInstruction).toContain('never an AI assistant');
-    expect(prompt.systemInstruction).toContain('Stay in character');
+    expect(prompt.systemInstruction).toContain('nigdy lekarzem');
+    expect(prompt.systemInstruction).toContain('nigdy asystentem AI');
+    expect(prompt.systemInstruction).toContain('pozostań w roli');
   });
 
   it('instructs the model to answer with natural uncertainty when a fact is not known', () => {
     const prompt = buildCasePrompt(PATIENT, CASE, []);
-    expect(prompt.systemInstruction).toContain("I don't know");
-    expect(prompt.systemInstruction).toContain("I'm not sure");
-    expect(prompt.systemInstruction).toContain("I don't remember");
-    expect(prompt.systemInstruction).toContain("I don't think so");
+    expect(prompt.systemInstruction).toContain('Nie wiem');
+    expect(prompt.systemInstruction).toContain('Nie jestem pewien');
+    expect(prompt.systemInstruction).toContain('Nie pamiętam');
+    expect(prompt.systemInstruction).toContain('Chyba nie');
   });
 
   it('instructs the model to avoid medical advice, jargon, and volunteering facts', () => {
     const prompt = buildCasePrompt(PATIENT, CASE, []);
-    expect(prompt.systemInstruction.toLowerCase()).toContain('medical advice');
-    expect(prompt.systemInstruction.toLowerCase()).toContain('jargon');
+    expect(prompt.systemInstruction.toLowerCase()).toContain('porad medycznych');
+    expect(prompt.systemInstruction.toLowerCase()).toContain('żargonu');
   });
 
   it('instructs the model never to reveal it is an AI, or mention Gemini/prompts/databases/case data', () => {
     const prompt = buildCasePrompt(PATIENT, CASE, []);
     const lower = prompt.systemInstruction.toLowerCase();
-    expect(lower).toContain('never mention');
+    expect(lower).toContain('nigdy nie wspominaj');
     expect(lower).toContain('gemini');
-    expect(lower).toContain('database');
-    expect(lower).toContain('case data');
+    expect(lower).toContain('bazach danych');
+    expect(lower).toContain('danych przypadku');
   });
 
   it('never includes doctor-only facts (diagnosis, result explanation, treatment) in the prompt', () => {
