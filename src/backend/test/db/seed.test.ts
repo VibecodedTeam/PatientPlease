@@ -128,6 +128,7 @@ describe('seed', () => {
     expect(patient!.case!.correctTreatment).toBeNull();
 
     const documentTypes = patient!.case!.documents.map((d) => d.type).sort();
+    // NOTE: this exact type list must be revisited once Task 2 splits this case's documents into more entries.
     expect(documentTypes).toEqual(
       ['CLINICAL_SYMPTOMS', 'EXAMINATION_RESULTS', 'SKIN_IMAGE', 'UV_EXPOSURE_HISTORY'].sort(),
     );
@@ -135,6 +136,25 @@ describe('seed', () => {
     const skinImage = patient!.case!.documents.find((d) => d.type === 'SKIN_IMAGE')!;
     expect(skinImage.attentionPointRegion).toBe('CHEST');
     expect(skinImage.imageUrl).toBe('/cases/case-08.png');
+  });
+
+  it('gives every case at least 3 reveal-gated documents, so chat reveal can be progressive', async () => {
+    await seed();
+
+    const cases = await prisma.case.findMany({ include: { documents: true, patient: true } });
+    const REVEAL_GATED_TYPES = new Set([
+      'DISEASE_HISTORY',
+      'UV_EXPOSURE_HISTORY',
+      'CLINICAL_SYMPTOMS',
+      'FAMILY_HISTORY',
+      'WEATHER_HISTORY',
+    ]);
+
+    const casesWithTooFewGatedDocuments = cases.filter(
+      (c) => c.documents.filter((d) => REVEAL_GATED_TYPES.has(d.type)).length < 3,
+    );
+
+    expect(casesWithTooFewGatedDocuments.map((c) => c.patient.name)).toEqual([]);
   });
 
   it('seeds real portrait URLs and featuredOrder for the first 15 cases', async () => {
