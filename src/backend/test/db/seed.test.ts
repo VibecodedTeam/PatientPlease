@@ -137,6 +137,27 @@ describe('seed', () => {
     expect(skinImage.imageUrl).toBe('/cases/case-08.png');
   });
 
+  it('seeds the catalog and generated case labels in Polish', async () => {
+    await seed();
+
+    const melanoma = await prisma.diagnosis.findUnique({ where: { code: 'melanoma' } });
+    expect(melanoma?.name).toBe('Czerniak');
+
+    const dermatoscope = await prisma.shopItem.findUnique({ where: { sku: 'equip-dermatoscope' } });
+    expect(dermatoscope?.name).toBe('Dermatoskop');
+
+    const skinImage = await prisma.caseDocument.findFirst({ where: { type: 'SKIN_IMAGE' } });
+    expect(skinImage?.title).toBe('Zbliżenie zmiany skórnej');
+
+    const examResults = await prisma.caseDocument.findFirst({
+      where: { type: 'EXAMINATION_RESULTS' },
+    });
+    expect(examResults?.title).toBe('Wyniki badania');
+
+    const hint = await prisma.caseHint.findFirst();
+    expect(hint?.content).toContain('Rozważ rozpoznanie');
+  });
+
   it('seeds real portrait URLs and featuredOrder for the first 15 cases', async () => {
     await seed();
 
