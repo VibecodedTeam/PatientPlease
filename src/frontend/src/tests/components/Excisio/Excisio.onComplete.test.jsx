@@ -61,7 +61,7 @@ function mockCompletedRun() {
         tone: '#a78bfa',
         title: 'Wynik',
         msg: 'Podsumowanie',
-        money: '21,00 zł',
+        money: '21,00 $',
         disinfect: 80,
         inject: 70,
         excise: 60,

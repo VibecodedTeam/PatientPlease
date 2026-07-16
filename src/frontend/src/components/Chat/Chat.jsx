@@ -86,7 +86,7 @@ export function Chat({ gameSessionId, caseId }) {
       });
       setMessages((prev) => prev.filter((message) => message.id !== pendingId));
       setDraft(text);
-      setError('Could not send message. Try again.');
+      setError('Nie udało się wysłać wiadomości. Spróbuj ponownie.');
     } finally {
       setIsSending(false);
     }
@@ -100,16 +100,16 @@ export function Chat({ gameSessionId, caseId }) {
   }
 
   return (
-    <aside className={styles.chat} aria-label="Patient chat panel">
+    <aside className={styles.chat} aria-label="Panel czatu z pacjentem">
       <header className={styles.header}>
-        <h1 className={styles.headerTitle}>Patient Chart</h1>
+        <h1 className={styles.headerTitle}>Karta pacjenta</h1>
         <button type="button" className={styles.clearButton} onClick={clearHistory}>
-          Clear history
+          Wyczyść historię
         </button>
       </header>
 
       <section className={styles.face}>
-        <img className={styles.portrait} alt="Patient portrait" src={portraitSrc} />
+        <img className={styles.portrait} alt="Portret pacjenta" src={portraitSrc} />
       </section>
 
       <div className={styles.log} role="log" aria-live="polite">
@@ -118,7 +118,7 @@ export function Chat({ gameSessionId, caseId }) {
             key={message.id}
             className={`${styles.msg} ${message.sender === 'PATIENT' ? styles.msgPatient : styles.msgDoctor}`}
           >
-            <span className={styles.who}>{message.sender === 'PATIENT' ? 'Patient' : 'Doctor'}</span>
+            <span className={styles.who}>{message.sender === 'PATIENT' ? 'Pacjent' : 'Lekarz'}</span>
             {message.content}
           </div>
         ))}
@@ -129,8 +129,8 @@ export function Chat({ gameSessionId, caseId }) {
       <div className={styles.inputRow}>
         <textarea
           className={styles.input}
-          aria-label="Doctor reply"
-          placeholder="Ask the patient a question…"
+          aria-label="Odpowiedź lekarza"
+          placeholder="Zadaj pacjentowi pytanie…"
           value={draft}
           disabled={isSending}
           onChange={(event) => setDraft(event.target.value)}
@@ -142,7 +142,7 @@ export function Chat({ gameSessionId, caseId }) {
           disabled={isSending}
           onClick={sendDoctorReply}
         >
-          {isSending ? 'Sending…' : 'Send'}
+          {isSending ? 'Wysyłanie…' : 'Wyślij'}
         </button>
       </div>
     </aside>

@@ -100,7 +100,7 @@ describe('Settings', () => {
     mockFetchRoutes();
     renderSettings();
 
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
     expect(screen.getByTestId('isPaused')).toHaveTextContent('true');
     await waitFor(() => expect(findRequestByPath('/api/v1/game/pause')).toBeDefined());
     expect(findRequestByPath('/api/v1/game/pause').method).toBe('POST');
@@ -110,8 +110,8 @@ describe('Settings', () => {
     mockFetchRoutes();
     renderSettings({ autoPaused: true });
 
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
-    expect(screen.getByText('Game paused because you left the tab.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
+    expect(screen.getByText('Gra została wstrzymana, ponieważ opuszczono kartę przeglądarki.')).toBeInTheDocument();
   });
 
   it('calls onClose and resumes the session when Resume is clicked', async () => {
@@ -119,8 +119,8 @@ describe('Settings', () => {
     const onClose = jest.fn();
     renderSettings({ onClose });
 
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
-    fireEvent.click(screen.getByText('Resume'));
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Wznów'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -130,8 +130,8 @@ describe('Settings', () => {
     mockFetchRoutes();
     renderSettings();
 
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
-    await user.click(screen.getByText('Log out'));
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Wyloguj się'));
 
     await waitFor(() => expect(findRequestByPath('/auth/logout')).toBeDefined());
     expect(findRequestByPath('/auth/logout').method).toBe('POST');
@@ -142,10 +142,10 @@ describe('Settings', () => {
     mockFetchRoutes();
     renderSettings();
 
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
     expect(screen.getByTestId('location')).toHaveTextContent('/game/main');
 
-    await user.click(screen.getByText('Log out'));
+    await user.click(screen.getByText('Wyloguj się'));
 
     await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/'));
   });
@@ -156,13 +156,13 @@ describe('Settings', () => {
     const onClose = jest.fn();
     renderSettings({ onClose });
 
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
-    await user.click(screen.getByText('Back to start of day'));
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Powrót do początku dnia'));
     expect(
-      screen.getByText('Return to the start of the day? Your progress today will be lost.'),
+      screen.getByText('Powrót do początku dnia? Twój dzisiejszy postęp zostanie utracony.'),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByText('Confirm'));
+    await user.click(screen.getByText('Potwierdź'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(findRequestByPath('/api/v1/day/reset')).toBeDefined());
@@ -175,13 +175,13 @@ describe('Settings', () => {
     const onClose = jest.fn();
     renderSettings({ onClose });
 
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
-    await user.click(screen.getByText('Back to start of game'));
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Powrót do początku gry'));
     expect(
-      screen.getByText('Return to the start of the game? All progress will be lost.'),
+      screen.getByText('Powrót do początku gry? Cały postęp zostanie utracony.'),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByText('Confirm'));
+    await user.click(screen.getByText('Potwierdź'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(findRequestByPath('/api/v1/game/reset')).toBeDefined());
@@ -194,21 +194,21 @@ describe('Settings', () => {
     const onClose = jest.fn();
     renderSettings({ onClose });
 
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
-    await user.click(screen.getByText('Back to start of game'));
-    await user.click(screen.getByText('Cancel'));
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
+    await user.click(screen.getByText('Powrót do początku gry'));
+    await user.click(screen.getByText('Anuluj'));
 
-    expect(screen.queryByText('Return to the start of the game? All progress will be lost.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Powrót do początku gry? Cały postęp zostanie utracony.')).not.toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByText('Settings')).toBeInTheDocument();
+    expect(screen.getByText('Ustawienia')).toBeInTheDocument();
   });
 
   it('toggles the music setting locally', async () => {
     mockFetchRoutes();
     renderSettings();
 
-    await waitFor(() => expect(screen.getByText('Logged in as Test User')).toBeInTheDocument());
-    const toggle = screen.getByLabelText('Toggle music');
+    await waitFor(() => expect(screen.getByText('Zalogowano jako Test User')).toBeInTheDocument());
+    const toggle = screen.getByLabelText('Przełącz muzykę');
     expect(toggle).toHaveAttribute('aria-pressed', 'true');
 
     fireEvent.click(toggle);

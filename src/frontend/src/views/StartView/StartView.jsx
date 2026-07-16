@@ -47,7 +47,7 @@ export function StartView() {
       <div className={styles.content}>
         <div className={styles.chip}>
           <span className={styles.chipDot} />
-          Now Admitting
+          Teraz przyjmujemy
         </div>
 
         <h1 className={styles.title}>
@@ -69,7 +69,7 @@ export function StartView() {
                   <path d="M5 3.5v17a1 1 0 0 0 1.53.85l13.2-8.5a1 1 0 0 0 0-1.7L6.53 2.65A1 1 0 0 0 5 3.5Z" />
                 </svg>
               </span>
-              PLAY
+              GRAJ
             </button>
           </div>
         )}

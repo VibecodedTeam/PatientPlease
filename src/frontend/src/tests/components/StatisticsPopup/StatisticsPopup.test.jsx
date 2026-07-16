@@ -19,10 +19,10 @@ describe('StatisticsPopup', () => {
   it('shows the Daily Statistics title, correct/attempted count, signed money earned, ending balance, and day time', () => {
     render(<StatisticsPopup statistics={STATISTICS} onClose={() => {}} />);
 
-    expect(screen.getByRole('heading', { name: 'Daily Statistics' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Statystyki dnia' })).toBeInTheDocument();
     expect(screen.getByText('3 / 4')).toBeInTheDocument();
-    expect(screen.getByText('+$150')).toBeInTheDocument();
-    expect(screen.getByText('$250')).toBeInTheDocument();
+    expect(screen.getByText('+150 $')).toBeInTheDocument();
+    expect(screen.getByText('250 $')).toBeInTheDocument();
     expect(screen.getByText('1:05')).toBeInTheDocument();
   });
 
@@ -34,14 +34,14 @@ describe('StatisticsPopup', () => {
       />,
     );
 
-    expect(screen.getByText('-$40')).toBeInTheDocument();
+    expect(screen.getByText('-40 $')).toBeInTheDocument();
   });
 
   it('calls onClose exactly once when the continue button is clicked', () => {
     const onClose = jest.fn();
     render(<StatisticsPopup statistics={STATISTICS} onClose={onClose} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /kontynuuj/i }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });

@@ -9,27 +9,27 @@
 export const CRITERIA = [
   {
     letter: 'A',
-    label: 'Asymmetry',
-    description: 'One half of the mole differs in shape or size from the other.',
+    label: 'Asymetria',
+    description: 'Jedna połowa znamienia różni się kształtem lub rozmiarem od drugiej.',
   },
   {
     letter: 'B',
-    label: 'Border',
-    description: 'The edges are ragged, notched, or blurred rather than smooth.',
+    label: 'Brzegi',
+    description: 'Brzegi są postrzępione, karbowane lub rozmyte, a nie gładkie.',
   },
   {
     letter: 'C',
-    label: 'Color',
-    description: 'Uneven, varied color — shades of brown and black, sometimes red or blue.',
+    label: 'Kolor',
+    description: 'Nierówny, zróżnicowany kolor — odcienie brązu i czerni, czasem czerwony lub niebieski.',
   },
   {
     letter: 'D',
-    label: 'Diameter',
-    description: 'Larger than 6 mm across — roughly the size of a pencil eraser.',
+    label: 'Średnica',
+    description: 'Większa niż 6 mm średnicy — mniej więcej wielkość gumki na końcu ołówka.',
   },
   {
     letter: 'E',
-    label: 'Evolving',
-    description: 'The mole changes over time — in size, shape, color, or appearance.',
+    label: 'Ewolucja',
+    description: 'Znamię zmienia się z czasem — rozmiarem, kształtem, kolorem lub wyglądem.',
   },
 ];

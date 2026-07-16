@@ -15,7 +15,7 @@
 /* faded stencil-style background text, centered on the wall's own grid cell so it sits
    behind .panel in paint order without needing position: absolute */
 .wall::before {
-  content: 'SKIN CANCER AWARENESS';
+  content: 'ŚWIADOMOŚĆ RAKA SKÓRY';
   grid-area: 1 / 1;
   align-self: center;
   justify-self: end;

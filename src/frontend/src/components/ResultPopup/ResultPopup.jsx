@@ -37,7 +37,7 @@ export function ResultPopup({ isCorrect, moneyDelta, examineSeconds, balance, on
   const moneyClassName = isCorrect
     ? `${styles.moneyBox} ${styles.moneyPositive}`
     : `${styles.moneyBox} ${styles.moneyNegative}`;
-  const formattedMoney = `${isCorrect ? '+' : '-'}$${Math.abs(moneyDelta)}`;
+  const formattedMoney = `${isCorrect ? '+' : '-'}${Math.abs(moneyDelta)} $`;
 
   return (
     // overlay-portal: result must render above the day-phase screen; no onDismiss —
@@ -45,15 +45,15 @@ export function ResultPopup({ isCorrect, moneyDelta, examineSeconds, balance, on
     // explicit Continue button, never a backdrop click or Escape.
     <OverlayPortal>
       <div className={styles.panel} onClick={(event) => event.stopPropagation()}>
-        <h2 className={styles.title}>Diagnosis Result</h2>
-        <p className={verdictClassName}>{isCorrect ? 'Correct!' : 'Incorrect'}</p>
+        <h2 className={styles.title}>Wynik diagnozy</h2>
+        <p className={verdictClassName}>{isCorrect ? 'Poprawnie!' : 'Niepoprawnie'}</p>
         <div className={moneyClassName}>{formattedMoney}</div>
         {typeof examineSeconds === 'number' && (
-          <p className={styles.meta}>Examine time: {formatMMSS(examineSeconds)}</p>
+          <p className={styles.meta}>Czas badania: {formatMMSS(examineSeconds)}</p>
         )}
-        {typeof balance === 'number' && <p className={styles.meta}>Balance: ${balance}</p>}
+        {typeof balance === 'number' && <p className={styles.meta}>Saldo: {balance} $</p>}
         <button type="button" className={`${styles.button} ${styles.primary}`} onClick={onClose}>
-          Continue
+          Kontynuuj
         </button>
       </div>
     </OverlayPortal>

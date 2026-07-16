@@ -26,14 +26,14 @@ export function LabDisasterPopup({ onClose }) {
         <div className={styles.warningBadge} aria-hidden="true">
           ⚠
         </div>
-        <h2 className={styles.title}>Lab Disaster</h2>
+        <h2 className={styles.title}>Katastrofa laboratoryjna</h2>
         <p className={styles.message}>
-          The tissue sample was compromised during processing. No results are available for this
-          test.
+          Próbka tkanki uległa uszkodzeniu podczas przetwarzania. Wyniki tego badania nie są
+          dostępne.
         </p>
         <div className={styles.actions}>
           <button type="button" className={styles.button} onClick={onClose}>
-            Continue
+            Kontynuuj
           </button>
         </div>
       </div>

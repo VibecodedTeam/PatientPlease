@@ -29,7 +29,7 @@ export function LetterToggle({ letter, label, description, isChecked, onToggle, 
         type="button"
         role="switch"
         aria-checked={isChecked}
-        aria-label={`Mark trait: ${label}`}
+        aria-label={`Zaznacz cechę: ${label}`}
         className={switchClassName}
         onClick={onToggle}
       >

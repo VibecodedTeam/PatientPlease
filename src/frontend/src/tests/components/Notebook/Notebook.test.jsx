@@ -28,12 +28,12 @@ describe('Notebook', () => {
       },
     ]);
 
-    expect(screen.getByText('Case Documents')).toBeInTheDocument();
+    expect(screen.getByText('Dokumentacja przypadku')).toBeInTheDocument();
     expect(screen.queryByText('History')).not.toBeInTheDocument();
     expect(screen.queryByText('Symptoms')).not.toBeInTheDocument();
     expect(container.textContent).toContain('Sun exposure history:');
-    expect(container.textContent).toContain('Sunbed Use: frequent');
-    expect(container.textContent).toContain('Occupational Exposure: high');
+    expect(container.textContent).toContain('Korzystanie z solarium: frequent');
+    expect(container.textContent).toContain('Narażenie zawodowe: high');
     expect(container.textContent).toContain('Symptoms: Itching and bleeding for the past week.');
   });
 
@@ -51,7 +51,7 @@ describe('Notebook', () => {
 
   it('shows the empty state when there are no case documents', () => {
     renderWithDocumentTable([]);
-    expect(screen.getByText('No case documents revealed yet.')).toBeInTheDocument();
+    expect(screen.getByText('Nie ujawniono jeszcze żadnej dokumentacji przypadku.')).toBeInTheDocument();
   });
 
   it('renders every exam results document, including multiple results', () => {
@@ -70,14 +70,14 @@ describe('Notebook', () => {
       },
     ]);
 
-    expect(screen.getByText('Examinations')).toBeInTheDocument();
+    expect(screen.getByText('Badania')).toBeInTheDocument();
     expect(container.textContent).toContain('Dermoscopy: Irregular pigment network');
     expect(container.textContent).toContain('Biopsy: Atypical melanocytes');
   });
 
   it('shows the empty state when no examinations have been completed', () => {
     renderWithDocumentTable([]);
-    expect(screen.getByText('No examinations completed yet.')).toBeInTheDocument();
+    expect(screen.getByText('Nie wykonano jeszcze żadnych badań.')).toBeInTheDocument();
   });
 
   it('shows only the findings text for an exam result whose content also carries a shopItemId, with no "Findings" label or raw id', () => {

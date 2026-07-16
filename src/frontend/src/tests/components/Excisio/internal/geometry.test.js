@@ -92,7 +92,7 @@ describe('rayDistanceToPolygon / segmentIntersectionT', () => {
 
 describe('formatZloty', () => {
   it('formats with a comma decimal separator and a trailing currency mark', () => {
-    expect(formatZloty(12.5)).toBe('12,50 zł');
+    expect(formatZloty(12.5)).toBe('12,50 $');
   });
 });
 

@@ -85,13 +85,13 @@ describe('Table', () => {
     // after the round has loaded (selecting before then gets reset, since
     // Diagnose remounts once a real case id replaces the initial null one).
     await waitFor(async () => {
-      await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
-      expect(screen.getByText('Submit Diagnosis')).not.toBeDisabled();
+      await user.click(screen.getByRole('radio', { name: 'Rak skóry' }));
+      expect(screen.getByText('Prześlij diagnozę')).not.toBeDisabled();
     });
-    await user.click(screen.getByText('Submit Diagnosis'));
+    await user.click(screen.getByText('Prześlij diagnozę'));
 
     await waitFor(() =>
-      expect(screen.getByText(/could not submit/i)).toBeInTheDocument(),
+      expect(screen.getByText(/nie udało się przesłać/i)).toBeInTheDocument(),
     );
   });
 
@@ -115,15 +115,15 @@ describe('Table', () => {
     const user = userEvent.setup();
     renderWithProviders(<Table />);
     await waitFor(async () => {
-      await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
-      expect(screen.getByText('Submit Diagnosis')).not.toBeDisabled();
+      await user.click(screen.getByRole('radio', { name: 'Rak skóry' }));
+      expect(screen.getByText('Prześlij diagnozę')).not.toBeDisabled();
     });
-    await user.click(screen.getByText('Submit Diagnosis'));
+    await user.click(screen.getByText('Prześlij diagnozę'));
 
     await waitFor(() =>
       expect(screen.getByTestId('results-peek').textContent).toBe(
         JSON.stringify({
-          selection: { id: 'skin-cancer', label: 'Skin Cancer' },
+          selection: { id: 'skin-cancer', label: 'Rak skóry' },
           isCorrect: true,
           moneyDelta: 50,
           examineSeconds: 0,
@@ -156,12 +156,12 @@ describe('Table', () => {
     const user = userEvent.setup();
     renderWithProviders(<Table />);
     await waitFor(async () => {
-      await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
-      expect(screen.getByText('Submit Diagnosis')).not.toBeDisabled();
+      await user.click(screen.getByRole('radio', { name: 'Rak skóry' }));
+      expect(screen.getByText('Prześlij diagnozę')).not.toBeDisabled();
     });
-    await user.click(screen.getByText('Submit Diagnosis'));
+    await user.click(screen.getByText('Prześlij diagnozę'));
     await waitFor(() =>
-      expect(screen.getByRole('radio', { name: 'Skin Cancer' })).toHaveAttribute(
+      expect(screen.getByRole('radio', { name: 'Rak skóry' })).toHaveAttribute(
         'aria-checked',
         'true',
       ),
@@ -170,7 +170,7 @@ describe('Table', () => {
     await user.click(screen.getByText('Continue'));
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
 
-    expect(screen.getByRole('radio', { name: 'Skin Cancer' })).toHaveAttribute(
+    expect(screen.getByRole('radio', { name: 'Rak skóry' })).toHaveAttribute(
       'aria-checked',
       'false',
     );
@@ -207,7 +207,7 @@ describe('Table', () => {
 
     expect(screen.getByRole('radio', { name: 'Melanoma' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Seborrheic Keratosis' })).toBeInTheDocument();
-    expect(screen.queryByRole('radio', { name: 'Skin Cancer' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'Rak skóry' })).not.toBeInTheDocument();
   });
 
   it('disables diagnosis submission while the round is still loading, so the fake DEFAULT_OPTIONS ids can never reach the backend', async () => {
@@ -230,8 +230,8 @@ describe('Table', () => {
       </ApiProvider>,
     );
 
-    await user.click(screen.getByRole('radio', { name: 'Skin Cancer' }));
+    await user.click(screen.getByRole('radio', { name: 'Rak skóry' }));
 
-    expect(screen.getByText('Submit Diagnosis')).toBeDisabled();
+    expect(screen.getByText('Prześlij diagnozę')).toBeDisabled();
   });
 });

@@ -92,10 +92,10 @@ export function melanomaRadiusAt(mel, theta) {
 
 /**
  * @param {number} amount
- * @returns {string} e.g. "12,50 zł"
+ * @returns {string} e.g. "12,50 $"
  */
 export function formatZloty(amount) {
-  return `${amount.toFixed(2).replace('.', ',')} zł`;
+  return `${amount.toFixed(2).replace('.', ',')} $`;
 }
 
 /**

@@ -6,7 +6,7 @@ describe('MoleCheckBoard internal/criteria', () => {
     expect(CRITERIA.map((c) => c.letter)).toEqual(['A', 'B', 'C', 'D', 'E']);
   });
 
-  it('gives every entry a non-empty English label and description', () => {
+  it('gives every entry a non-empty Polish label and description', () => {
     CRITERIA.forEach((c) => {
       expect(typeof c.label).toBe('string');
       expect(c.label.length).toBeGreaterThan(0);
@@ -15,7 +15,7 @@ describe('MoleCheckBoard internal/criteria', () => {
     });
   });
 
-  it('labels C as "Color", matching the ABCDE mole-check mnemonic', () => {
-    expect(CRITERIA.find((c) => c.letter === 'C').label).toBe('Color');
+  it('labels C as "Kolor", matching the ABCDE mole-check mnemonic', () => {
+    expect(CRITERIA.find((c) => c.letter === 'C').label).toBe('Kolor');
   });
 });

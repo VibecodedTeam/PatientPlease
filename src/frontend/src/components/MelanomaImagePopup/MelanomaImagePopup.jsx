@@ -18,7 +18,7 @@ import styles from './MelanomaImagePopup.module.css';
 export function MelanomaImagePopup({ caseDocument, onClose }) {
   const [fallbackImageUrl] = useState(() => pickRandomImage(MELANOMA_IMAGES));
   const imageUrl = caseDocument?.imageUrl ?? fallbackImageUrl;
-  const altText = caseDocument?.imageAltText ?? 'Lesion close-up';
+  const altText = caseDocument?.imageAltText ?? 'Zbliżenie zmiany skórnej';
 
   return (
     // overlay-portal: popup must render above the 3D canvas and the rest of the page layout
@@ -29,7 +29,7 @@ export function MelanomaImagePopup({ caseDocument, onClose }) {
           data-testid="melanoma-popup-box"
           onClick={(event) => event.stopPropagation()}
         >
-          <button type="button" className={styles.closeButton} aria-label="Close" onClick={onClose}>
+          <button type="button" className={styles.closeButton} aria-label="Zamknij" onClick={onClose}>
             ×
           </button>
           <div className={styles.imageWrapper}>

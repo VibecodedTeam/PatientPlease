@@ -73,9 +73,8 @@ describe('Excisio', () => {
   });
 
   it('shows no brand title, level number, or money/earnings figure in the header', async () => {
-    // Tutorial dismissed first: the tutorial copy's unrelated Polish text ("rozłóż",
-    // "zeszły") incidentally contains the substring "zł", which would otherwise collide
-    // with the /zł/ money-figure check below even though it has nothing to do with cash.
+    // Tutorial dismissed first so its copy can't incidentally satisfy the
+    // money-figure check below.
     const user = userEvent.setup();
     render(<Excisio />);
     await user.click(screen.getByRole('button', { name: /rozumiem — zaczynamy zabieg/i }));
@@ -85,7 +84,7 @@ describe('Excisio', () => {
     expect(screen.queryByText('Poziom')).not.toBeInTheDocument();
     expect(screen.queryByText(/^\d+ · .+/)).not.toBeInTheDocument();
     expect(screen.queryByText('Zarobek')).not.toBeInTheDocument();
-    expect(screen.queryByText(/zł/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\$/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /poradnik/i })).toBeInTheDocument();
   });
 });

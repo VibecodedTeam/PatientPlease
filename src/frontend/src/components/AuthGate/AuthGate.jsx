@@ -8,7 +8,7 @@ export function AuthGate({ googleClientId, children }) {
   const { status, login } = useAuth();
 
   if (status === 'loading') {
-    return <div className={styles.loading}>Loading…</div>;
+    return <div className={styles.loading}>Ładowanie…</div>;
   }
 
   if (status === 'unauthenticated') {

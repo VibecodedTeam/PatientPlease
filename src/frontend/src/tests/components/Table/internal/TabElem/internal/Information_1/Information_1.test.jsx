@@ -20,9 +20,9 @@ describe('Information_1', () => {
 
   it('falls back to placeholder content when no patient is available', () => {
     renderWithDocumentTable(<Information_1 />);
-    expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-    expect(screen.getByText('Age 42')).toBeInTheDocument();
-    expect(screen.getAllByText('Pending clinical note')).toHaveLength(3);
+    expect(screen.getByText('Janina Kowalska')).toBeInTheDocument();
+    expect(screen.getByText('Wiek 42')).toBeInTheDocument();
+    expect(screen.getAllByText('Oczekująca notatka kliniczna')).toHaveLength(3);
   });
 
   it('renders real patient fields when a patient is provided', () => {
@@ -36,9 +36,9 @@ describe('Information_1', () => {
     });
 
     expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
-    expect(screen.getByText('Age 52')).toBeInTheDocument();
-    expect(screen.getByText('Sex: MALE')).toBeInTheDocument();
-    expect(screen.getByText('Occupation: Roofer')).toBeInTheDocument();
+    expect(screen.getByText('Wiek 52')).toBeInTheDocument();
+    expect(screen.getByText('Płeć: MALE')).toBeInTheDocument();
+    expect(screen.getByText('Zawód: Roofer')).toBeInTheDocument();
   });
 
   it('applies the card layout class to its root element', () => {

@@ -1,9 +1,13 @@
 import { formatKeyLabel, formatHistoryContent } from '../../../../components/Notebook/internal/formatDocumentContent';
 
 describe('formatKeyLabel', () => {
-  it('inserts a space before each uppercase letter and capitalizes the first character', () => {
-    expect(formatKeyLabel('sunbedUse')).toBe('Sunbed Use');
-    expect(formatKeyLabel('occupationalExposure')).toBe('Occupational Exposure');
+  it('returns the known Polish label for a recognized key', () => {
+    expect(formatKeyLabel('sunbedUse')).toBe('Korzystanie z solarium');
+    expect(formatKeyLabel('occupationalExposure')).toBe('Narażenie zawodowe');
+  });
+
+  it('falls back to inserting a space before each uppercase letter and capitalizing the first character for an unrecognized key', () => {
+    expect(formatKeyLabel('someUnknownKey')).toBe('Some Unknown Key');
   });
 });
 
@@ -27,7 +31,7 @@ describe('formatHistoryContent', () => {
 
   it('joins a multi-key object as "Label: value; Label: value"', () => {
     expect(formatHistoryContent({ sunbedUse: 'frequent', occupationalExposure: 'high' })).toBe(
-      'Sunbed Use: frequent; Occupational Exposure: high',
+      'Korzystanie z solarium: frequent; Narażenie zawodowe: high',
     );
   });
 });

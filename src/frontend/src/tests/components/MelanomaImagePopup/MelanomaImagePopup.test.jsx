@@ -34,7 +34,7 @@ describe('MelanomaImagePopup', () => {
     const onClose = jest.fn();
     render(<MelanomaImagePopup onClose={onClose} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+    fireEvent.click(screen.getByRole('button', { name: /zamknij/i }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });

@@ -11,8 +11,8 @@ describe('LabDisasterPopup', () => {
   it('shows the lab disaster message', () => {
     render(<LabDisasterPopup onClose={jest.fn()} />);
 
-    expect(screen.getByText('Lab Disaster')).toBeInTheDocument();
-    expect(screen.getByText(/no results are available/i)).toBeInTheDocument();
+    expect(screen.getByText('Katastrofa laboratoryjna')).toBeInTheDocument();
+    expect(screen.getByText(/nie są dostępne/i)).toBeInTheDocument();
   });
 
   it('calls onClose when Continue is clicked', async () => {
@@ -20,7 +20,7 @@ describe('LabDisasterPopup', () => {
     const onClose = jest.fn();
     render(<LabDisasterPopup onClose={onClose} />);
 
-    await user.click(screen.getByText('Continue'));
+    await user.click(screen.getByText('Kontynuuj'));
 
     expect(onClose).toHaveBeenCalled();
   });

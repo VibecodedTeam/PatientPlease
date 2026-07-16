@@ -10,28 +10,28 @@ describe('ResultPopup', () => {
   it('shows a correct verdict with the money earned', () => {
     render(<ResultPopup isCorrect moneyDelta={50} onClose={() => {}} />);
 
-    expect(screen.getByText(/correct/i)).toBeInTheDocument();
-    expect(screen.getByText('+$50')).toBeInTheDocument();
+    expect(screen.getByText('Poprawnie!')).toBeInTheDocument();
+    expect(screen.getByText('+50 $')).toBeInTheDocument();
   });
 
   it('shows an incorrect verdict with the money lost', () => {
     render(<ResultPopup isCorrect={false} moneyDelta={-20} onClose={() => {}} />);
 
-    expect(screen.getByText(/incorrect/i)).toBeInTheDocument();
-    expect(screen.getByText('-$20')).toBeInTheDocument();
+    expect(screen.getByText('Niepoprawnie')).toBeInTheDocument();
+    expect(screen.getByText('-20 $')).toBeInTheDocument();
   });
 
   it('shows a negative sign for an incorrect verdict even when the penalty is zero', () => {
     render(<ResultPopup isCorrect={false} moneyDelta={-0} onClose={() => {}} />);
 
-    expect(screen.getByText('-$0')).toBeInTheDocument();
+    expect(screen.getByText('-0 $')).toBeInTheDocument();
   });
 
   it('calls onClose when the close button is clicked', () => {
     const onClose = jest.fn();
     render(<ResultPopup isCorrect moneyDelta={50} onClose={onClose} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /kontynuuj/i }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -47,8 +47,8 @@ describe('ResultPopup', () => {
       />,
     );
 
-    expect(screen.getByText('+$75')).toBeInTheDocument();
-    expect(screen.getByText((_, element) => element.textContent === 'Examine time: 0:42')).toBeInTheDocument();
-    expect(screen.getByText((_, element) => element.textContent === 'Balance: $275')).toBeInTheDocument();
+    expect(screen.getByText('+75 $')).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element.textContent === 'Czas badania: 0:42')).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element.textContent === 'Saldo: 275 $')).toBeInTheDocument();
   });
 });

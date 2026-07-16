@@ -4,10 +4,10 @@ import { NightShopProvider, useNightShop } from './providers/NightShop';
 import styles from './NightView.module.css';
 
 const ITEM_TYPE_LABELS = {
-  HANDBOOK: 'Handbook',
-  EQUIPMENT: 'Equipment',
-  EXAMINATION: 'Examination',
-  PLOT_ITEM: 'Plot Item',
+  HANDBOOK: 'Podręcznik',
+  EQUIPMENT: 'Sprzęt',
+  EXAMINATION: 'Badanie',
+  PLOT_ITEM: 'Element fabuły',
 };
 
 const PUNCH_BIOPSY_SKU = 'exam-punch-biopsy';
@@ -18,6 +18,21 @@ const PUNCH_BIOPSY_SKU = 'exam-punch-biopsy';
  */
 function itemTypeLabel(itemType) {
   return ITEM_TYPE_LABELS[itemType] ?? itemType;
+}
+
+/**
+ * Polish plural form of "item(s)" for the selection-count text.
+ * @param {number} count
+ * @returns {string}
+ */
+function itemCountNoun(count) {
+  if (count === 1) return 'przedmiot';
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+  if (lastDigit >= 2 && lastDigit <= 4 && !(lastTwoDigits >= 12 && lastTwoDigits <= 14)) {
+    return 'przedmioty';
+  }
+  return 'przedmiotów';
 }
 
 /**
@@ -45,7 +60,7 @@ export function NightViewContent() {
   const anySelected = selectedIds.size > 0;
   const nSelected = selectedIds.size;
   const selectionLabel =
-    nSelected === 0 ? 'No items selected' : `${nSelected} ${nSelected === 1 ? 'item' : 'items'} selected`;
+    nSelected === 0 ? 'Nie wybrano żadnych przedmiotów' : `Wybrano ${nSelected} ${itemCountNoun(nSelected)}`;
 
   function handleAction() {
     if (anySelected) {
@@ -59,21 +74,21 @@ export function NightViewContent() {
   let actionDisabled;
   let actionHint;
   if (isBuying) {
-    actionLabel = 'Buy';
+    actionLabel = 'Kup';
     actionDisabled = true;
-    actionHint = 'Processing purchase…';
+    actionHint = 'Przetwarzanie zakupu…';
   } else if (!anySelected) {
-    actionLabel = 'Skip';
+    actionLabel = 'Pomiń';
     actionDisabled = false;
-    actionHint = 'End the shift without buying';
+    actionHint = 'Zakończ zmianę bez zakupów';
   } else if (remaining < 0) {
-    actionLabel = 'Buy';
+    actionLabel = 'Kup';
     actionDisabled = true;
-    actionHint = `Insufficient funds — remove an item (over by $${-remaining})`;
+    actionHint = `Niewystarczające środki — usuń przedmiot (przekroczono o $${-remaining})`;
   } else {
-    actionLabel = `Buy · $${selectedTotal}`;
+    actionLabel = `Kup · $${selectedTotal}`;
     actionDisabled = false;
-    actionHint = `$${remaining} will remain`;
+    actionHint = `Pozostanie $${remaining}`;
   }
 
   const combinedError = buyError ?? error;
@@ -88,16 +103,16 @@ export function NightViewContent() {
               <circle cx="12" cy="9" r="1.5" fill="#A89E96" stroke="none" />
             </svg>
           </span>
-          End of shift
+          Koniec zmiany
         </div>
 
         <div className={styles.titleBlock}>
-          <h1 className={styles.title}>Shop for Items</h1>
-          <p className={styles.subtitle}>Restock your practice before tomorrow&apos;s patients</p>
+          <h1 className={styles.title}>Sklep z przedmiotami</h1>
+          <p className={styles.subtitle}>Uzupełnij zapasy gabinetu przed jutrzejszymi pacjentami</p>
         </div>
 
         <div className={styles.balance}>
-          <span className={styles.balanceLabel}>Balance</span>
+          <span className={styles.balanceLabel}>Saldo</span>
           <span className={styles.balanceValue}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="9" fill="#A89E96" stroke="#8c8279" strokeWidth="1.5" />
@@ -139,11 +154,11 @@ export function NightViewContent() {
                     : null}
                 </span>
                 {item.owned ? (
-                  <span className={styles.ownedBadge}>In library</span>
+                  <span className={styles.ownedBadge}>W bibliotece</span>
                 ) : (
                   <button
                     type="button"
-                    aria-label={`Select ${item.name}`}
+                    aria-label={`Wybierz ${item.name}`}
                     aria-pressed={selected}
                     disabled={disabledToggle}
                     className={`${styles.selectDot}${selected ? ` ${styles.selectDotSelected}` : ''}`}
@@ -159,7 +174,7 @@ export function NightViewContent() {
       <div className={styles.summary}>
         <span className={styles.summaryLabel}>{selectionLabel}</span>
         <span className={styles.total}>
-          <span className={styles.totalLabel}>Cart total</span>
+          <span className={styles.totalLabel}>Suma koszyka</span>
           <span className={styles.totalValue}>${selectedTotal}</span>
         </span>
       </div>
@@ -169,7 +184,7 @@ export function NightViewContent() {
           {actionLabel}
         </button>
         <span className={styles.actionHint}>
-          {combinedError ? `Something went wrong: ${combinedError.message ?? 'please try again'}` : actionHint}
+          {combinedError ? `Coś poszło nie tak: ${combinedError.message ?? 'spróbuj ponownie'}` : actionHint}
         </span>
       </div>
     </div>

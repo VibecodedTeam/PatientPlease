@@ -31,9 +31,9 @@ describe('StartView', () => {
     mockAuthStatus(false);
     renderStartView();
 
-    expect(screen.getByText('Now Admitting')).toBeInTheDocument();
+    expect(screen.getByText('Teraz przyjmujemy')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /patient.*please/i })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: /graj/i })).toBeInTheDocument());
   });
 
   it('surfaces Google sign-in when clicking PLAY while unauthenticated', async () => {
@@ -41,10 +41,10 @@ describe('StartView', () => {
     mockAuthStatus(false);
     renderStartView();
 
-    await waitFor(() => screen.getByRole('button', { name: /play/i }));
-    await user.click(screen.getByRole('button', { name: /play/i }));
+    await waitFor(() => screen.getByRole('button', { name: /graj/i }));
+    await user.click(screen.getByRole('button', { name: /graj/i }));
 
-    expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /zaloguj się/i })).toBeInTheDocument();
   });
 
   it('does not surface Google sign-in when clicking PLAY while already authenticated', async () => {
@@ -52,9 +52,9 @@ describe('StartView', () => {
     mockAuthStatus(true);
     renderStartView();
 
-    await waitFor(() => screen.getByRole('button', { name: /play/i }));
-    await user.click(screen.getByRole('button', { name: /play/i }));
+    await waitFor(() => screen.getByRole('button', { name: /graj/i }));
+    await user.click(screen.getByRole('button', { name: /graj/i }));
 
-    expect(screen.queryByRole('heading', { name: /sign in/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /zaloguj się/i })).not.toBeInTheDocument();
   });
 });

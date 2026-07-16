@@ -17,8 +17,8 @@ import { StatisticsProvider, useStatistics } from './providers/Statistics';
 import { BiopsyMinigameProvider, useBiopsyMinigame } from './providers/BiopsyMinigame';
 
 const TERMINAL_MESSAGES = {
-  completed: "You've completed every case. Well done!",
-  game_over: 'Game over. Your practice has closed.',
+  completed: 'Ukończyłeś wszystkie przypadki. Świetna robota!',
+  game_over: 'Koniec gry. Twoja praktyka została zamknięta.',
 };
 
 // Stable fallback so PatientScene's documents prop keeps the same reference
@@ -96,7 +96,7 @@ function MainViewContent() {
           <span className={styles.gearIcon} aria-hidden="true">
             ⚙
           </span>
-          <span>Open Settings</span>
+          <span>Otwórz ustawienia</span>
         </button>
         {isSettingsOpen && (
           <Settings onClose={handleCloseSettings} autoPaused={settingsAutoOpened} />
@@ -110,7 +110,7 @@ function MainViewContent() {
       <div className={`${styles.hud} ${isPaused ? styles.hudPaused : ''}`}>
         <div className={styles.readouts}>
           <span className={`${styles.timer} ${isPaused ? styles.timerPaused : ''}`}>
-            Elapsed: {elapsedSeconds}s
+            Upłynęło: {elapsedSeconds}s
           </span>
           <div className={styles.statusRow}>
             <span
@@ -120,7 +120,7 @@ function MainViewContent() {
               }`}
             />
             <span className={`${styles.status} ${isPaused ? styles.statusPaused : ''}`}>
-              Status: {isPaused ? 'Paused' : 'Running'}
+              Status: {isPaused ? 'Wstrzymano' : 'W toku'}
             </span>
           </div>
         </div>
@@ -128,11 +128,11 @@ function MainViewContent() {
           <span className={styles.gearIcon} aria-hidden="true">
             ⚙
           </span>
-          <span>Open Settings</span>
+          <span>Otwórz ustawienia</span>
         </button>
       </div>
       <div className={styles.mainView}>
-        <section className={styles.patientArea} aria-label="Patient preview area">
+        <section className={styles.patientArea} aria-label="Podgląd pacjenta">
           <div className={styles.patientAreaToggle}>
             <button
               type="button"
@@ -140,7 +140,7 @@ function MainViewContent() {
               aria-pressed={activeView === 'scene'}
               onClick={() => setActiveView('scene')}
             >
-              3D View
+              Widok 3D
             </button>
             <button
               type="button"
@@ -148,7 +148,7 @@ function MainViewContent() {
               aria-pressed={activeView === 'chat'}
               onClick={() => setActiveView('chat')}
             >
-              Chat
+              Czat
             </button>
           </div>
           <div className={styles.patientAreaContent}>
@@ -182,9 +182,9 @@ function MainViewContent() {
           it recoverable. Hidden once the Daily Statistics popup succeeds. */}
       {endDayError && !isStatisticsOpen && (
         <div className={styles.endDayError} role="alert">
-          <span>Couldn't end the day. Please try again.</span>
+          <span>Nie udało się zakończyć dnia. Spróbuj ponownie.</span>
           <button type="button" className={styles.retryButton} onClick={retryFinishDay}>
-            Try again
+            Spróbuj ponownie
           </button>
         </div>
       )}

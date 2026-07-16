@@ -28,7 +28,7 @@ describe('Chat', () => {
 
   it('falls back to a known portrait when the round has no case portrait yet', () => {
     renderChat();
-    const portrait = screen.getByAltText(/patient portrait/i);
+    const portrait = screen.getByAltText(/portret pacjenta/i);
     expect(portrait.getAttribute('src')).toMatch(/^\/patient-portraits\/.+\.png$/);
   });
 
@@ -57,7 +57,7 @@ describe('Chat', () => {
     renderChat();
 
     await waitFor(() =>
-      expect(screen.getByAltText(/patient portrait/i).getAttribute('src')).toBe(
+      expect(screen.getByAltText(/portret pacjenta/i).getAttribute('src')).toBe(
         '/portraits/portrait-03.png',
       ),
     );
@@ -84,9 +84,9 @@ describe('Chat', () => {
 
     renderChat();
 
-    const input = screen.getByLabelText(/doctor reply/i);
+    const input = screen.getByLabelText(/odpowiedź lekarza/i);
     await user.type(input, 'How long have you had this pain?');
-    await user.click(screen.getByRole('button', { name: /send/i }));
+    await user.click(screen.getByRole('button', { name: /wyślij/i }));
 
     await waitFor(() => expect(screen.getByText('About two days now, doctor.')).toBeInTheDocument());
     expect(screen.getByText('How long have you had this pain?')).toBeInTheDocument();
@@ -100,11 +100,11 @@ describe('Chat', () => {
 
     renderChat();
 
-    const input = screen.getByLabelText(/doctor reply/i);
+    const input = screen.getByLabelText(/odpowiedź lekarza/i);
     await user.type(input, 'Does it itch?');
-    await user.click(screen.getByRole('button', { name: /send/i }));
+    await user.click(screen.getByRole('button', { name: /wyślij/i }));
 
-    await waitFor(() => expect(screen.getByText(/could not send/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/nie udało się wysłać/i)).toBeInTheDocument());
     expect(input).toHaveValue('Does it itch?');
     expect(screen.getByRole('log').textContent).not.toContain('Does it itch?');
   });
@@ -121,9 +121,9 @@ describe('Chat', () => {
 
     renderChat();
 
-    const input = screen.getByLabelText(/doctor reply/i);
+    const input = screen.getByLabelText(/odpowiedź lekarza/i);
     await user.type(input, 'How long have you had this pain?');
-    await user.click(screen.getByRole('button', { name: /send/i }));
+    await user.click(screen.getByRole('button', { name: /wyślij/i }));
 
     expect(screen.getByText('How long have you had this pain?')).toBeInTheDocument();
     expect(input).toHaveValue('');
@@ -167,9 +167,9 @@ describe('Chat', () => {
     );
 
     const { unmount } = renderChat();
-    const input = screen.getByLabelText(/doctor reply/i);
+    const input = screen.getByLabelText(/odpowiedź lekarza/i);
     await user.type(input, 'Does it itch?');
-    await user.click(screen.getByRole('button', { name: /send/i }));
+    await user.click(screen.getByRole('button', { name: /wyślij/i }));
     await waitFor(() => expect(screen.getByText('Yes, especially at night.')).toBeInTheDocument());
 
     unmount();
@@ -197,12 +197,12 @@ describe('Chat', () => {
     );
 
     const { unmount } = renderChat();
-    const input = screen.getByLabelText(/doctor reply/i);
+    const input = screen.getByLabelText(/odpowiedź lekarza/i);
     await user.type(input, 'Does it itch?');
-    await user.click(screen.getByRole('button', { name: /send/i }));
+    await user.click(screen.getByRole('button', { name: /wyślij/i }));
     await waitFor(() => expect(screen.getByText('Yes, especially at night.')).toBeInTheDocument());
 
-    await user.click(screen.getByRole('button', { name: /clear history/i }));
+    await user.click(screen.getByRole('button', { name: /wyczyść historię/i }));
     expect(screen.queryByText('Yes, especially at night.')).not.toBeInTheDocument();
 
     unmount();
@@ -279,9 +279,9 @@ describe('Chat', () => {
     );
     await waitFor(() => expect(screen.getByTestId('doc-titles').textContent).toBe(''));
 
-    const input = screen.getByLabelText(/doctor reply/i);
+    const input = screen.getByLabelText(/odpowiedź lekarza/i);
     await user.type(input, 'Does it itch?');
-    await user.click(screen.getByRole('button', { name: /send/i }));
+    await user.click(screen.getByRole('button', { name: /wyślij/i }));
 
     await waitFor(() =>
       expect(screen.getByTestId('doc-titles').textContent).toBe('Left shoulder — day 1'),

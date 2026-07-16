@@ -23,7 +23,7 @@ export function CaseDocumentsPage({ documents }) {
 
   return (
     <div className={styles.page}>
-      <h3 className={styles.heading}>Case Documents</h3>
+      <h3 className={styles.heading}>Dokumentacja przypadku</h3>
       {caseDocuments.length > 0 ? (
         caseDocuments.map((doc) => (
           <p key={doc.id} className={styles.entry}>
@@ -32,7 +32,7 @@ export function CaseDocumentsPage({ documents }) {
           </p>
         ))
       ) : (
-        <p className={styles.empty}>No case documents revealed yet.</p>
+        <p className={styles.empty}>Nie ujawniono jeszcze żadnej dokumentacji przypadku.</p>
       )}
     </div>
   );

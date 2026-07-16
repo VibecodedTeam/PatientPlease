@@ -6,8 +6,8 @@ export const WallInventoryContext = createContext(null);
 
 /** Human-readable label for the office-wall categories the wall renders. */
 const CATEGORY_LABELS = {
-  HANDBOOK: 'Handbook',
-  EQUIPMENT: 'Equipment',
+  HANDBOOK: 'Podręcznik',
+  EQUIPMENT: 'Sprzęt',
 };
 
 /**

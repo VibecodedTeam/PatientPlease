@@ -105,15 +105,14 @@ describe('Phone', () => {
     );
   });
 
-  it('renders English copy with the real patient, not the old Polish/hardcoded copy', async () => {
+  it('renders Polish copy with the real patient, not old hardcoded placeholder copy', async () => {
     renderPhone();
 
-    expect(screen.getByRole('heading', { name: 'Order laboratory tests' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Zleć badania laboratoryjne' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('Punch Biopsy')).toBeInTheDocument());
     expect(screen.getByText('Jordan Ellis', { exact: false })).toBeInTheDocument();
     expect(screen.getByText('52', { exact: false })).toBeInTheDocument();
 
-    expect(screen.queryByText('Zleć badania')).not.toBeInTheDocument();
     expect(screen.queryByText(/Anna Kowalska/)).not.toBeInTheDocument();
   });
 
@@ -131,13 +130,13 @@ describe('Phone', () => {
     expect(within(rowFor('Punch Biopsy')).queryByText(/^\+\d+s$/)).not.toBeInTheDocument();
   });
 
-  it('disables an unowned examination with an English "buy at night" hint', async () => {
+  it('disables an unowned examination with a Polish "buy at night" hint', async () => {
     renderPhone();
     await waitFor(() => screen.getByText('Dermoscopy Imaging'));
 
-    expect(screen.getByText(/buy at the night shop to unlock/i)).toBeInTheDocument();
+    expect(screen.getByText(/kup w sklepie nocnym, aby odblokować/i)).toBeInTheDocument();
     // Two owned rows (Punch Biopsy, Skin Swab Culture) each expose an Order button.
-    const orderButtons = screen.getAllByRole('button', { name: 'Order' });
+    const orderButtons = screen.getAllByRole('button', { name: 'Zamów' });
     expect(orderButtons).toHaveLength(2);
   });
 
@@ -146,7 +145,7 @@ describe('Phone', () => {
     renderPhone();
     await waitFor(() => screen.getByText('Skin Swab Culture'));
 
-    await user.click(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Order' }));
+    await user.click(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Zamów' }));
 
     await waitFor(() => {
       const examinationRequest = global.fetch.mock.calls
@@ -158,7 +157,7 @@ describe('Phone', () => {
     // Let the full order() chain (addElapsedSeconds + refreshRound) settle
     // before the test ends, so no state update lands after unmount.
     await waitFor(() =>
-      expect(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Order' })).toBeEnabled(),
+      expect(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Zamów' })).toBeEnabled(),
     );
   });
 
@@ -184,14 +183,14 @@ describe('Phone', () => {
     renderPhone();
     await waitFor(() => screen.getByText('Skin Swab Culture'));
 
-    await user.click(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Order' }));
+    await user.click(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Zamów' }));
 
     await waitFor(() =>
-      expect(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Ordering…' })).toBeDisabled(),
+      expect(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Zamawianie…' })).toBeDisabled(),
     );
     resolveOrder();
     await waitFor(() =>
-      expect(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Order' })).toBeEnabled(),
+      expect(within(rowFor('Skin Swab Culture')).getByRole('button', { name: 'Zamów' })).toBeEnabled(),
     );
   });
 
@@ -201,7 +200,7 @@ describe('Phone', () => {
     renderPhone(onCancel);
     await waitFor(() => screen.getByText('Punch Biopsy'));
 
-    await user.click(within(rowFor('Punch Biopsy')).getByRole('button', { name: 'Order' }));
+    await user.click(within(rowFor('Punch Biopsy')).getByRole('button', { name: 'Zamów' }));
 
     expect(window.open).toHaveBeenCalledWith(
       '/game/main/minigame?shopItemId=exam-1&caseId=case-1',
@@ -220,7 +219,7 @@ describe('Phone', () => {
     renderPhone(onCancel);
     await waitFor(() => screen.getByText('Punch Biopsy'));
 
-    await user.click(screen.getByRole('button', { name: /^close$/i }));
+    await user.click(screen.getByRole('button', { name: /^zamknij$/i }));
 
     expect(onCancel).toHaveBeenCalled();
   });
@@ -237,8 +236,8 @@ describe('Phone', () => {
     });
     renderPhone();
 
-    expect(screen.getByRole('heading', { name: 'Order laboratory tests' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Zleć badania laboratoryjne' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('Punch Biopsy')).toBeInTheDocument());
-    expect(screen.queryByText(/Patient:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Pacjent:/)).not.toBeInTheDocument();
   });
 });

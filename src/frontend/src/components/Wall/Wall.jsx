@@ -7,14 +7,14 @@ import { ExaminationsProvider } from '../Phone/providers/Examinations';
 import { WallInventoryProvider, useWallInventory } from './providers/WallInventory';
 
 const PREVENTION_TIPS = [
-  'SPF daily',
-  'Reapply SPF',
-  'No tanning',
-  'Avoid noon sun',
-  'Cover skin',
-  'Check moles',
-  'Watch ABCDE',
-  'See derm',
+  'SPF każdego dnia',
+  'Powtarzaj SPF',
+  'Unikaj solarium',
+  'Unikaj słońca w południe',
+  'Zakrywaj skórę',
+  'Sprawdzaj znamiona',
+  'Zasada ABCDE',
+  'Idź do dermatologa',
 ];
 
 const BOARD_COLUMNS = 3;
@@ -103,19 +103,19 @@ export function WallContent() {
   const toggleDermatoscope = () => setDermatoscopeOn((on) => !on);
 
   return (
-    <section className={styles.wall} aria-label="Doctor office wall">
+    <section className={styles.wall} aria-label="Ściana gabinetu lekarskiego">
       <div className={styles.panel}>
         <div className={styles.header}>
           <div
             className={styles.corkboard}
             role="button"
             tabIndex={0}
-            aria-label="Pin new prevention note"
-            title="Click to pin a new prevention note"
+            aria-label="Przypnij nową notatkę profilaktyczną"
+            title="Kliknij, aby przypiąć nową notatkę profilaktyczną"
             onClick={pinNewNote}
             onKeyDown={handleBoardKeyDown}
           >
-            <div className={styles.corkboardNotes} role="list" aria-label="Pinned prevention notes" aria-live="polite">
+            <div className={styles.corkboardNotes} role="list" aria-label="Przypięte notatki profilaktyczne" aria-live="polite">
               {pinnedNotes.map((note) => (
                 <div
                   key={note.id}
@@ -146,8 +146,8 @@ export function WallContent() {
           <button
             type="button"
             className={styles.settingsButton}
-            aria-label="Open test orders"
-            title="Order tests"
+            aria-label="Otwórz zlecenia badań"
+            title="Zleć badania"
             onClick={openSettings}
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" width="1.76rem" height="1.76rem" fill="#ffffff">
@@ -156,13 +156,13 @@ export function WallContent() {
           </button>
         </div>
 
-        <div className={styles.shelf} aria-label="Medical handbooks shelf">
+        <div className={styles.shelf} aria-label="Półka z podręcznikami medycznymi">
           <span className={styles.shelfBookend} aria-hidden="true" />
 
           {items.length === 0 ? (
             <div className={styles.emptyShelf}>
-              <p>No handbooks bought yet.</p>
-              <p>Visit the night shop to unlock medical handbooks.</p>
+              <p>Brak zakupionych podręczników.</p>
+              <p>Odwiedź nocny sklep, aby odblokować podręczniki medyczne.</p>
             </div>
           ) : (
             items.map((item) => {
@@ -185,28 +185,28 @@ export function WallContent() {
           <button
             type="button"
             className={withModifierClass(styles.shelfDermatoscope, styles.shelfDermatoscopeOn, dermatoscopeOn)}
-            aria-label="Toggle dermatoscope"
+            aria-label="Przełącz dermatoskop"
             aria-pressed={dermatoscopeOn}
-            title="Toggle dermatoscope"
+            title="Przełącz dermatoskop"
             onClick={toggleDermatoscope}
           >
             <span className={styles.dermatoscopeLens} aria-hidden="true">
               <span className={styles.dermatoscopeGlint} aria-hidden="true" />
             </span>
             <span className={styles.dermatoscopeHandle} aria-hidden="true" />
-            {dermatoscopeOn && <span className={styles.dermatoscopeLabel}>Dermatoscope ready</span>}
+            {dermatoscopeOn && <span className={styles.dermatoscopeLabel}>Dermatoskop gotowy</span>}
           </button>
 
           <span className={styles.shelfStamp} aria-hidden="true">
-            Reviewed
+            Sprawdzono
           </span>
 
           <button
             type="button"
             className={withModifierClass(styles.shelfLamp, styles.shelfLampOn, lampOn)}
-            aria-label="Toggle desk lamp"
+            aria-label="Przełącz lampkę biurkową"
             aria-pressed={lampOn}
-            title="Toggle desk lamp"
+            title="Przełącz lampkę biurkową"
             onClick={toggleLamp}
           >
             <span className={styles.lampShade} aria-hidden="true" />
@@ -227,15 +227,15 @@ export function WallContent() {
             className={styles.bookPopup}
             role="dialog"
             aria-modal="true"
-            aria-label={`${selectedItem.title} details`}
+            aria-label={`${selectedItem.title} – szczegóły`}
             onClick={(event) => event.stopPropagation()}
           >
-            <p className={styles.detailsLabel}>Selected handbook</p>
+            <p className={styles.detailsLabel}>Wybrany podręcznik</p>
             <h3 className={styles.detailsTitle}>{selectedItem.title}</h3>
             <p className={styles.detailsCategory}>{selectedItem.category}</p>
             <p className={styles.detailsDescription}>{selectedItem.description}</p>
             <button type="button" className={styles.closeButton} onClick={closeItemPopup}>
-              Close
+              Zamknij
             </button>
           </div>
         </OverlayPortal>
@@ -248,7 +248,7 @@ export function WallContent() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Order tests"
+            aria-label="Zleć badania"
             onClick={(event) => event.stopPropagation()}
           >
             <ExaminationsProvider>
