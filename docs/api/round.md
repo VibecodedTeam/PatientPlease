@@ -137,6 +137,13 @@ document-selection step decides that document is relevant to the conversation. `
 remains always visible regardless of reveal state, since `PatientScene`'s 3D-model attention
 points consume it directly as part of the physical exam, not as something Chat reveals.
 
+A `documents` entry of type `DISEASE_HISTORY`, `UV_EXPOSURE_HISTORY`, `CLINICAL_SYMPTOMS`,
+`FAMILY_HISTORY`, or `WEATHER_HISTORY` is only included once a `CaseDocumentReveal` row exists
+for `(this session, this case, this document)` — written by `POST /api/v1/chat` when its
+document-selection step decides that document is relevant to the conversation. `SKIN_IMAGE`
+remains always visible regardless of reveal state, since `PatientScene`'s 3D-model attention
+points consume it directly as part of the physical exam, not as something Chat reveals.
+
 ## Orchestration
 
 On each call, the backend:
