@@ -6,7 +6,7 @@ const SAMPLE_ITEMS = [
   {
     id: 'shop-item-uuid-1',
     sku: 'EQ-UVMETER-01',
-    name: 'UV Exposure Meter',
+    name: 'Miernik ekspozycji UV',
     itemType: 'EQUIPMENT',
     price: 200,
     unlockDay: 2,
@@ -16,7 +16,7 @@ const SAMPLE_ITEMS = [
   {
     id: 'shop-item-uuid-2',
     sku: 'HB-DERM-01',
-    name: 'Dermatology Handbook',
+    name: 'Podręcznik dermatologii',
     itemType: 'HANDBOOK',
     price: 400,
     unlockDay: 1,
@@ -26,7 +26,7 @@ const SAMPLE_ITEMS = [
   {
     id: 'shop-item-uuid-3',
     sku: 'EQ-DERMASCOPE-01',
-    name: 'Dermatoscope',
+    name: 'Dermatoskop',
     itemType: 'EQUIPMENT',
     price: 600,
     unlockDay: 3,
@@ -91,7 +91,7 @@ export function Shop({ items = SAMPLE_ITEMS }) {
           disabled={selectedIds.size === 0}
           onClick={handleBuy}
         >
-          Buy
+          Kup
         </button>
       </div>
     </div>

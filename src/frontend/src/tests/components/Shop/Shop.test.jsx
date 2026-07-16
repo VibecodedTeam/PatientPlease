@@ -37,7 +37,7 @@ describe('Shop', () => {
 
   it('disables the Buy button until an item is selected', () => {
     render(<Shop items={items} />);
-    expect(screen.getByRole('button', { name: 'Buy' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Kup' })).toBeDisabled();
   });
 
   it('selects an affordable item via its toggle and enables Buy', async () => {
@@ -46,7 +46,7 @@ describe('Shop', () => {
 
     await user.click(screen.getByRole('button', { name: 'Select UV Exposure Meter' }));
 
-    expect(screen.getByRole('button', { name: 'Buy' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Kup' })).toBeEnabled();
   });
 
   it('does not allow selecting an unaffordable item', async () => {
@@ -55,7 +55,7 @@ describe('Shop', () => {
 
     await user.click(screen.getByRole('button', { name: 'Select Dermatology Handbook' }));
 
-    expect(screen.getByRole('button', { name: 'Buy' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Kup' })).toBeDisabled();
   });
 
   it('logs the selected item ids when Buy is clicked', async () => {
@@ -64,7 +64,7 @@ describe('Shop', () => {
     render(<Shop items={items} />);
 
     await user.click(screen.getByRole('button', { name: 'Select UV Exposure Meter' }));
-    await user.click(screen.getByRole('button', { name: 'Buy' }));
+    await user.click(screen.getByRole('button', { name: 'Kup' }));
 
     expect(logSpy).toHaveBeenCalledWith(['shop-item-1']);
     logSpy.mockRestore();
