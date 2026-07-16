@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthGate } from './components/AuthGate';
 import { RoundProvider } from './providers/Round';
 import { MainView } from './views/MainView';
+import { MinigameView } from './views/MinigameView';
 import { NightView } from './views/NightView';
 import { StartView } from './views/StartView';
 
@@ -19,6 +20,7 @@ export function AppRoutes({ googleClientId }) {
               <Routes>
                 <Route index element={<Navigate to="main" replace />} />
                 <Route path="main" element={<MainView />} />
+                <Route path="main/minigame" element={<MinigameView />} />
                 <Route path="night" element={<NightView />} />
               </Routes>
             </RoundProvider>
