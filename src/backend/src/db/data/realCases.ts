@@ -911,18 +911,33 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
+        title: 'Karnacja i tolerancja słońca',
+        content: {
+          history: 'Jasna karnacja, łatwo ulega oparzeniom słonecznym, słabo się opala.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Historia korzystania z solarium',
         content: {
           history:
-            'Jasna karnacja, łatwo ulega oparzeniom słonecznym, słabo się opala. Przez 40 lat korzystała z solarium co najmniej raz w tygodniu, ale zaprzestała 7 lat temu i od tego czasu unika ekspozycji na słońce.',
+            'Przez 40 lat korzystała z solarium co najmniej raz w tygodniu, ale zaprzestała 7 lat temu i od tego czasu unika ekspozycji na słońce.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zgłoszenie z powodu zmiany na kostce',
         content: {
           description:
-            'Zgłosiła się do kliniki chirurgii onkologicznej z bolesną, szybko powiększającą się, owrzodziałą zmianą na lewej kostce, obecnie o średnicy 3 cm, z nieregularnymi, uniesionymi brzegami krwawiącymi przy niewielkim urazie.',
+            'Zgłosiła się do kliniki chirurgii onkologicznej z bolesną, szybko powiększającą się, owrzodziałą zmianą na lewej kostce, obecnie o średnicy 3 cm.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wygląd brzegów zmiany',
+        content: {
+          description:
+            'Zmiana ma nieregularne, uniesione brzegi, które krwawią przy niewielkim urazie.',
         },
       },
     ],
@@ -946,25 +961,53 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Wcześniejszy czerniak skóry twarzy',
         content: {
-          history:
-            'Wcześniej leczona z powodu czerniaka skóry twarzy. Brak rodzinnej historii raka skóry.',
+          history: 'Wcześniej leczona z powodu czerniaka skóry twarzy.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Wywiad rodzinny w kierunku raka skóry',
+        content: {
+          history: 'Brak rodzinnej historii raka skóry.',
         },
       },
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
+        title: 'Karnacja',
         content: {
-          history: 'Jasna karnacja; przez 40 lat korzystała z solarium co najmniej raz w tygodniu.',
+          history: 'Jasna karnacja.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Historia korzystania z solarium',
+        content: {
+          history: 'Przez 40 lat korzystała z solarium co najmniej raz w tygodniu.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zgłoszenie z powodu zmian skórnych',
         content: {
           description:
-            'Zgłosiła się na pełne badanie skóry z powodu niezliczonych małych, różowych grudek i łuszczących się blaszek na ramionach, nogach i plecach. Zmiany mają płaski wierzchołek i są lekko uniesione, o suchej, szorstkiej powierzchni przypominającej papier ścierny, w kolorze od jasnoróżowego do czerwonawego. Nie uległy owrzodzeniu, ale niektóre mają tendencję do zlewania się.',
+            'Zgłosiła się na pełne badanie skóry z powodu niezliczonych małych, różowych grudek i łuszczących się blaszek na ramionach, nogach i plecach.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wygląd i powierzchnia zmian',
+        content: {
+          description:
+            'Zmiany mają płaski wierzchołek i są lekko uniesione, o suchej, szorstkiej powierzchni przypominającej papier ścierny, w kolorze od jasnoróżowego do czerwonawego.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Brak owrzodzenia, tendencja do zlewania się',
+        content: {
+          description: 'Nie uległy owrzodzeniu, ale niektóre mają tendencję do zlewania się.',
         },
       },
     ],
@@ -988,17 +1031,31 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Brak wcześniejszych chorób ginekologicznych',
         content: {
-          history: 'Bez wcześniejszych chorób ginekologicznych; regularnie zgłaszała się na badania cytologiczne.',
+          history: 'Bez wcześniejszych chorób ginekologicznych.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Regularne badania cytologiczne',
+        content: {
+          history: 'Regularnie zgłaszała się na badania cytologiczne.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zgłoszenie z powodu krwawienia',
+        content: {
+          description: 'Zgłosiła się z krwawieniem z pochwy i uczuciem dyskomfortu.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wynik badania ginekologicznego',
         content: {
           description:
-            'Zgłosiła się z krwawieniem z pochwy i uczuciem dyskomfortu. Badanie ginekologiczne ujawniło ciemną, nieregularną zmianę na ścianie pochwy.',
+            'Badanie ginekologiczne ujawniło ciemną, nieregularną zmianę na ścianie pochwy.',
         },
       },
     ],
@@ -1022,18 +1079,48 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Choroby przewlekłe',
         content: {
-          history:
-            'Przewlekłe nadciśnienie tętnicze i choroba niedokrwienna serca. Brak rodzinnej historii raka skóry.',
+          history: 'Przewlekłe nadciśnienie tętnicze i choroba niedokrwienna serca.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Wywiad rodzinny w kierunku raka skóry',
+        content: {
+          history: 'Brak rodzinnej historii raka skóry.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Pojawienie się plamki pod paznokciem',
         content: {
           description:
-            'Około 3 miesiące wcześniej zauważyła małą czarną plamkę pod paznokciem prawego dużego palca u nogi, bez historii urazu tej okolicy. Plamka stopniowo się powiększała, ale nie przesuwała się wraz ze wzrostem paznokcia, i jest całkowicie niebolesna. Sama płytka paznokcia jest zdeformowana przez długotrwałą przewlekłą grzybicę, ale bezpośrednio pod chorą płytką znajduje się wyraźna, ciemnoczarna plamka o średnicy około 5 mm. Węzły chłonne pachwinowe nie są powiększone w badaniu palpacyjnym ani w USG.',
+            'Około 3 miesiące wcześniej zauważyła małą czarną plamkę pod paznokciem prawego dużego palca u nogi, bez historii urazu tej okolicy.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Przebieg zmiany',
+        content: {
+          description:
+            'Plamka stopniowo się powiększała, ale nie przesuwała się wraz ze wzrostem paznokcia, i jest całkowicie niebolesna.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Stan płytki paznokcia i wygląd plamki',
+        content: {
+          description:
+            'Sama płytka paznokcia jest zdeformowana przez długotrwałą przewlekłą grzybicę, ale bezpośrednio pod chorą płytką znajduje się wyraźna, ciemnoczarna plamka o średnicy około 5 mm.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Węzły chłonne pachwinowe',
+        content: {
+          description:
+            'Węzły chłonne pachwinowe nie są powiększone w badaniu palpacyjnym ani w USG.',
         },
       },
     ],
@@ -1064,10 +1151,18 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Powód skierowania do okulisty',
         content: {
           description:
-            'Skierowana do okulisty z powodu stopniowo powiększającej się ciemnej zmiany na spojówce prawego oka, zlokalizowanej skroniowo, z charakterystycznymi naczyniami odżywiającymi, które zaniepokoiły lekarzy. Badania obrazowe potwierdziły, że zmiana ogranicza się do powierzchownych warstw spojówki.',
+            'Skierowana do okulisty z powodu stopniowo powiększającej się ciemnej zmiany na spojówce prawego oka, zlokalizowanej skroniowo, z charakterystycznymi naczyniami odżywiającymi, które zaniepokoiły lekarzy.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wynik badań obrazowych',
+        content: {
+          description:
+            'Badania obrazowe potwierdziły, że zmiana ogranicza się do powierzchownych warstw spojówki.',
         },
       },
     ],
@@ -1091,18 +1186,40 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'FAMILY_HISTORY',
-        title: 'Historia rodzinna',
+        title: 'Wywiad rodzinny w kierunku nowotworów skóry',
         content: {
-          history:
-            'Brak historii nowotworów skóry w rodzinie; rodzice zaniepokojeni, ponieważ zmiana utrzymuje się od dzieciństwa.',
+          history: 'Brak historii nowotworów skóry w rodzinie.',
+        },
+      },
+      {
+        type: 'FAMILY_HISTORY',
+        title: 'Zaniepokojenie rodziców',
+        content: {
+          history: 'Rodzice zaniepokojeni, ponieważ zmiana utrzymuje się od dzieciństwa.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Powód zgłoszenia',
         content: {
           description:
-            'Zgłosił się w celu oceny ciemnego prążka na paznokciu piątego palca prawej dłoni, obecnego od 7. roku życia i całkowicie bezobjawowego. Lekarz zauważył niezwykle szerokie, ciemne pasmo zajmujące około połowy szerokości całej płytki paznokcia, obok którego widoczne były dwa mniejsze, węższe, brązowawe prążki. Ciemny pigment wyraźnie rozprzestrzenia się poza sam paznokieć na sąsiednie i bliższe wały paznokciowe.',
+            'Zgłosił się w celu oceny ciemnego prążka na paznokciu piątego palca prawej dłoni, obecnego od 7. roku życia i całkowicie bezobjawowego.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wygląd prążków na paznokciu',
+        content: {
+          description:
+            'Lekarz zauważył niezwykle szerokie, ciemne pasmo zajmujące około połowy szerokości całej płytki paznokcia, obok którego widoczne były dwa mniejsze, węższe, brązowawe prążki.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Rozprzestrzenienie pigmentu na wał paznokciowy',
+        content: {
+          description:
+            'Ciemny pigment wyraźnie rozprzestrzenia się poza sam paznokieć na sąsiednie i bliższe wały paznokciowe.',
         },
       },
     ],
@@ -1126,23 +1243,39 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Długotrwała borelioza',
         content: {
           history:
-            'Długotrwała borelioza od ponad 10 lat, leczona licznymi naturopatycznymi środkami zaleconymi przez naturopatę. Brak wcześniejszych oparzeń, urazów lub raka skóry.',
+            'Długotrwała borelioza od ponad 10 lat, leczona licznymi naturopatycznymi środkami zaleconymi przez naturopatę.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Brak wcześniejszych oparzeń, urazów i raka skóry',
+        content: {
+          history: 'Brak wcześniejszych oparzeń, urazów lub raka skóry.',
         },
       },
       {
         type: 'UV_EXPOSURE_HISTORY',
         title: 'Historia ekspozycji na promieniowanie UV',
-        content: { history: 'Sporadyczne korzystanie z solarium w ciągu ostatnich sześciu miesięcy.' },
+        content: {
+          history: 'Sporadyczne korzystanie z solarium w ciągu ostatnich sześciu miesięcy.',
+        },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Pojawienie się guzka na dłoni',
         content: {
           description:
-            'Nagłe pojawienie się dużego, twardego, czerwonego guzka na wewnętrznej powierzchni prawej dłoni. Zmiana powodowała zarówno dyskomfort estetyczny, jak i znaczne swędzenie.',
+            'Nagłe pojawienie się dużego, twardego, czerwonego guzka na wewnętrznej powierzchni prawej dłoni.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Dyskomfort i swędzenie',
+        content: {
+          description: 'Zmiana powodowała zarówno dyskomfort estetyczny, jak i znaczne swędzenie.',
         },
       },
     ],
@@ -1169,15 +1302,22 @@ export const REAL_CASES: RealCaseSeed[] = [
         type: 'FAMILY_HISTORY',
         title: 'Historia rodzinna',
         content: {
-          history: 'Wywiad rodzinny w kierunku nowotworów w trakcie ustalania po wykryciu mutacji CHEK2.',
+          history:
+            'Wywiad rodzinny w kierunku nowotworów w trakcie ustalania po wykryciu mutacji CHEK2.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zgłoszenie z powodu zmiany na udzie',
         content: {
-          description:
-            'Zgłosiła się ze szybko rosnącą, guzkowatą zmianą na udzie, którą wycięto.',
+          description: 'Zgłosiła się ze szybko rosnącą, guzkowatą zmianą na udzie.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wycięcie zmiany',
+        content: {
+          description: 'Zmianę wycięto.',
         },
       },
     ],
@@ -1201,17 +1341,48 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Nadciśnienie tętnicze',
         content: {
-          history: 'Nadciśnienie tętnicze dobrze kontrolowane lekami; bez innych istotnych schorzeń.',
+          history: 'Nadciśnienie tętnicze dobrze kontrolowane lekami.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Brak innych istotnych schorzeń',
+        content: {
+          history: 'Bez innych istotnych schorzeń.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zgłoszenie z powodu zmiany u paznokcia',
         content: {
           description:
-            'Poza tym zdrowa, zgłasza się ze zmianą u podstawy paznokcia prawego dużego palca u nogi, obecną od 18 miesięcy, bez historii urazu mechanicznego. Całkowicie niebolesna i bardzo wolno rosnąca, okresowo owrzodziała i lekko krwawiąca (na przykład przy tarciu skarpetką). Zmiana mierzy 1,5 cm x 2 cm wokół aparatu paznokciowego, z perłowo-białymi, uniesionymi brzegami i stwardniałym, owrzodziałym środkiem. Węzły chłonne pachwinowe nie są wyczuwalne palpacyjnie, a tętno na stopach jest dobrze wyczuwalne (4/4).',
+            'Poza tym zdrowa, zgłasza się ze zmianą u podstawy paznokcia prawego dużego palca u nogi, obecną od 18 miesięcy, bez historii urazu mechanicznego.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Przebieg zmiany',
+        content: {
+          description:
+            'Całkowicie niebolesna i bardzo wolno rosnąca, okresowo owrzodziała i lekko krwawiąca (na przykład przy tarciu skarpetką).',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Rozmiar i wygląd zmiany',
+        content: {
+          description:
+            'Zmiana mierzy 1,5 cm x 2 cm wokół aparatu paznokciowego, z perłowo-białymi, uniesionymi brzegami i stwardniałym, owrzodziałym środkiem.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Węzły chłonne i tętno na stopach',
+        content: {
+          description:
+            'Węzły chłonne pachwinowe nie są wyczuwalne palpacyjnie, a tętno na stopach jest dobrze wyczuwalne (4/4).',
         },
       },
     ],
@@ -1237,15 +1408,24 @@ export const REAL_CASES: RealCaseSeed[] = [
         type: 'UV_EXPOSURE_HISTORY',
         title: 'Historia ekspozycji na promieniowanie UV',
         content: {
-          history: 'Wieloletnia instruktorka żeglarstwa, spędzająca niemal każdy sezon w pełnym słońcu.',
+          history:
+            'Wieloletnia instruktorka żeglarstwa, spędzająca niemal każdy sezon w pełnym słońcu.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Ewolucja zmiany na uchu',
         content: {
           description:
-            'Od kilku miesięcy niewielka zmiana na górnym brzegu ucha, która początkowo wyglądała jak drobne otarcie, ale stopniowo przekształciła się w twardy, różowy guzek pokryty grubą, zrogowaciałą skórą. Guzek jest niebolesny, nie swędzi i nie przeszkadza jej nawet podczas snu, chociaż jest widoczny dla innych.',
+            'Od kilku miesięcy niewielka zmiana na górnym brzegu ucha, która początkowo wyglądała jak drobne otarcie, ale stopniowo przekształciła się w twardy, różowy guzek pokryty grubą, zrogowaciałą skórą.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Charakter guzka',
+        content: {
+          description:
+            'Guzek jest niebolesny, nie swędzi i nie przeszkadza jej nawet podczas snu, chociaż jest widoczny dla innych.',
         },
       },
     ],
@@ -1270,18 +1450,55 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Wywiad rodzinny w kierunku raka skóry',
         content: {
-          history:
-            'Brak rodzinnej historii raka skóry oraz brak historii ekspozycji na promieniowanie lub arsen.',
+          history: 'Brak rodzinnej historii raka skóry.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Brak ekspozycji na promieniowanie i arsen',
+        content: {
+          history: 'Brak historii ekspozycji na promieniowanie lub arsen.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Praca w ciężkim obuwiu ochronnym',
         content: {
           description:
-            'Od 20 lat pracuje fizycznie na budowach, nosząc przez cały dzień ciężkie, ciasne buty robocze, co powoduje przewlekłe tarcie i zatrzymywanie wilgoci na stopach. Po raz pierwszy zauważyła zmianę na podeszwie lewej stopy około 20. roku życia; z biegiem lat powoli się powiększała i stawała się coraz bardziej swędząca. Wielokrotnie rozpoznawana przez lekarzy pierwszego kontaktu jako grzybica stóp i leczona powtarzanymi maściami przeciwgrzybiczymi bez poprawy. Badanie wykazało dobrze odgraniczoną, asymetryczną, silnie zrogowaciałą blaszkę o wymiarach 3,3 cm x 2 cm. Węzły chłonne bez zmian.',
+            'Od 20 lat pracuje fizycznie na budowach, nosząc przez cały dzień ciężkie, ciasne buty robocze, co powoduje przewlekłe tarcie i zatrzymywanie wilgoci na stopach.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Początek i przebieg zmiany',
+        content: {
+          description:
+            'Po raz pierwszy zauważyła zmianę na podeszwie lewej stopy około 20. roku życia; z biegiem lat powoli się powiększała i stawała się coraz bardziej swędząca.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wcześniejsze błędne rozpoznanie',
+        content: {
+          description:
+            'Wielokrotnie rozpoznawana przez lekarzy pierwszego kontaktu jako grzybica stóp i leczona powtarzanymi maściami przeciwgrzybiczymi bez poprawy.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wynik badania blaszki',
+        content: {
+          description:
+            'Badanie wykazało dobrze odgraniczoną, asymetryczną, silnie zrogowaciałą blaszkę o wymiarach 3,3 cm x 2 cm.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Węzły chłonne',
+        content: {
+          description: 'Węzły chłonne bez zmian.',
         },
       },
     ],
@@ -1305,17 +1522,47 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Cukrzyca typu II',
         content: {
-          history: 'Cukrzyca typu II oraz łagodna niewydolność żylna kończyn dolnych.',
+          history: 'Cukrzyca typu II.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Niewydolność żylna kończyn dolnych',
+        content: {
+          history: 'Łagodna niewydolność żylna kończyn dolnych.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Pojawienie się zmiany na podeszwie',
         content: {
           description:
-            'Niegojąca się zmiana na podeszwie stopy, po raz pierwszy pojawiła się około 1,5 roku temu. Początkowo uznana za odcisk i leczona plastrami na odciski oraz pumeksem, co powodowało krwawienie i ból. Zmiana zaczęła ciemnieć, powiększać się i okresowo krwawić bez wyraźnej przyczyny. Ma nieregularne brzegi.',
+            'Niegojąca się zmiana na podeszwie stopy, po raz pierwszy pojawiła się około 1,5 roku temu.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wcześniejsze leczenie jako odcisk',
+        content: {
+          description:
+            'Początkowo uznana za odcisk i leczona plastrami na odciski oraz pumeksem, co powodowało krwawienie i ból.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Ciemnienie i powiększanie się zmiany',
+        content: {
+          description:
+            'Zmiana zaczęła ciemnieć, powiększać się i okresowo krwawić bez wyraźnej przyczyny.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Brzegi zmiany',
+        content: {
+          description: 'Ma nieregularne brzegi.',
         },
       },
     ],
@@ -1345,10 +1592,31 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Nowe napady drgawkowe',
+        content: {
+          description: 'Ostatnio wystąpiły u niej nowe napady drgawkowe po lewej stronie.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Powiększone węzły chłonne pod pachą',
         content: {
           description:
-            'Ostatnio wystąpiły u niej nowe napady drgawkowe po lewej stronie. Mniej więcej w tym samym czasie zauważyła znacznie powiększone węzły chłonne pod pachą — twarde, ale niebolesne. Miała także ostatnio utratę wagi i epizody gorączki, i jest bardzo zaniepokojona ryzykiem dla nienarodzonego dziecka.',
+            'Mniej więcej w tym samym czasie zauważyła znacznie powiększone węzły chłonne pod pachą — twarde, ale niebolesne.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Utrata wagi i gorączka',
+        content: {
+          description: 'Miała także ostatnio utratę wagi i epizody gorączki.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Obawy o nienarodzone dziecko',
+        content: {
+          description: 'Jest bardzo zaniepokojona ryzykiem dla nienarodzonego dziecka.',
         },
       },
     ],
@@ -1373,18 +1641,55 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
+        title: 'Wieloletnia praca na zewnątrz',
         content: {
           history:
-            'Całe życie pracował fizycznie na roli na zewnątrz, z przewlekłą ekspozycją na słońce. Brak wcześniejszego urazu lub radioterapii. Niepalący, sporadycznie spożywa alkohol.',
+            'Całe życie pracował fizycznie na roli na zewnątrz, z przewlekłą ekspozycją na słońce.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Brak wcześniejszego urazu lub radioterapii',
+        content: {
+          history: 'Brak wcześniejszego urazu lub radioterapii.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Nawyki: palenie i alkohol',
+        content: {
+          history: 'Niepalący, sporadycznie spożywa alkohol.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Powód zgłoszenia do laryngologa',
         content: {
           description:
-            'Zgłosił się do poradni laryngologicznej z powodu trwających 6 miesięcy dolegliwości w prawym uchu: uporczywego dyskomfortu, narastającego swędzenia i okresowej krwawej wydzieliny, wraz z uczuciem niewielkiej masy wewnątrz przewodu słuchowego oraz okresowym bólem ucha. Zaprzecza utracie słuchu, zawrotom głowy czy osłabieniu twarzy. Przewód słuchowy zewnętrzny wykazuje nieregularną, nieowrzodziałą zmianę o wymiarach 2,1 cm x 1,3 cm, z uniesionymi, perłowymi brzegami, centralnym strupem i minimalnym krwawieniem przy dotyku. Błona bębenkowa jest nienaruszona, a węzły chłonne szyi nie są powiększone.',
+            'Zgłosił się do poradni laryngologicznej z powodu trwających 6 miesięcy dolegliwości w prawym uchu: uporczywego dyskomfortu, narastającego swędzenia i okresowej krwawej wydzieliny, wraz z uczuciem niewielkiej masy wewnątrz przewodu słuchowego oraz okresowym bólem ucha.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Zaprzeczenie innym objawom otologicznym',
+        content: {
+          description: 'Zaprzecza utracie słuchu, zawrotom głowy czy osłabieniu twarzy.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wynik badania przewodu słuchowego',
+        content: {
+          description:
+            'Przewód słuchowy zewnętrzny wykazuje nieregularną, nieowrzodziałą zmianę o wymiarach 2,1 cm x 1,3 cm, z uniesionymi, perłowymi brzegami, centralnym strupem i minimalnym krwawieniem przy dotyku.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Błona bębenkowa i węzły chłonne szyi',
+        content: {
+          description:
+            'Błona bębenkowa jest nienaruszona, a węzły chłonne szyi nie są powiększone.',
         },
       },
     ],
@@ -1408,17 +1713,39 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
+        title: 'Karnacja',
         content: {
-          history: 'Jasna karnacja; w młodości często opalała się bez ochrony przeciwsłonecznej.',
+          history: 'Jasna karnacja.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Opalanie w młodości',
+        content: {
+          history: 'W młodości często opalała się bez ochrony przeciwsłonecznej.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Utrzymująca się rana nad wargą',
+        content: {
+          description: 'Przez trzy i pół roku żyła z łuszczącą się, suchą raną nad wargą.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Nieskuteczne leczenie miejscowe',
         content: {
           description:
-            'Przez trzy i pół roku żyła z łuszczącą się, suchą raną nad wargą. Jej lekarz pierwszego kontaktu wielokrotnie leczył ją kremami na wyprysk i wysypkę, bez poprawy. Jako wykwalifikowana pielęgniarka nabrała podejrzeń i sama poprosiła o biopsję skóry, aby wykluczyć nowotwór.',
+            'Jej lekarz pierwszego kontaktu wielokrotnie leczył ją kremami na wyprysk i wysypkę, bez poprawy.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Prośba o biopsję',
+        content: {
+          description:
+            'Jako wykwalifikowana pielęgniarka nabrała podejrzeń i sama poprosiła o biopsję skóry, aby wykluczyć nowotwór.',
         },
       },
     ],
