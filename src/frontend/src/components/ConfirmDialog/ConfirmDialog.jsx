@@ -18,14 +18,14 @@ export function ConfirmDialog({ message, onConfirm, onCancel }) {
             className={`${styles.button} ${styles.confirm}`}
             onClick={onConfirm}
           >
-            Confirm
+            Potwierdź
           </button>
           <button
             type="button"
             className={`${styles.button} ${styles.cancel}`}
             onClick={onCancel}
           >
-            Cancel
+            Anuluj
           </button>
         </div>
       </div>
