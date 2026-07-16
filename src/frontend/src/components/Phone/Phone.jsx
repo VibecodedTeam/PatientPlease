@@ -20,20 +20,20 @@ export function Phone({ onCancel }) {
           </svg>
         </div>
         <div className={styles.headerText}>
-          <h3 className={styles.title}>Order laboratory tests</h3>
+          <h3 className={styles.title}>Zleć badania laboratoryjne</h3>
           {patient && (
             <p className={styles.patientLine}>
-              Patient: <strong>{patient.name}</strong> · {patient.age}
+              Pacjent: <strong>{patient.name}</strong> · {patient.age}
             </p>
           )}
         </div>
-        <button type="button" className={styles.closeButton} aria-label="Close" onClick={onCancel}>
+        <button type="button" className={styles.closeButton} aria-label="Zamknij" onClick={onCancel}>
           ✕
         </button>
       </div>
 
-      {isLoading && <p className={styles.patientLine}>Loading examinations…</p>}
-      {error && <p className={styles.patientLine}>Could not load the examinations list.</p>}
+      {isLoading && <p className={styles.patientLine}>Ładowanie badań…</p>}
+      {error && <p className={styles.patientLine}>Nie udało się wczytać listy badań.</p>}
 
       {!isLoading && !error && (
         <>
@@ -51,13 +51,13 @@ export function Phone({ onCancel }) {
                       <span className={`${styles.rowName}${unavailable ? ` ${styles.rowNameUnavailable}` : ''}`}>
                         {exam.name}
                       </span>
-                      {unavailable && <span className={styles.unavailableBadge}>Unavailable</span>}
+                      {unavailable && <span className={styles.unavailableBadge}>Niedostępne</span>}
                     </span>
                     <span className={`${styles.rowDesc}${unavailable ? ` ${styles.rowDescUnavailable}` : ''}`}>
                       {exam.description}
                     </span>
                     {unavailable ? (
-                      <span className={styles.rowHint}>Buy at the night shop to unlock</span>
+                      <span className={styles.rowHint}>Kup w nocnym sklepie, aby odblokować</span>
                     ) : (
                       <span className={styles.rowPrice}>${exam.price}</span>
                     )}
@@ -76,7 +76,7 @@ export function Phone({ onCancel }) {
                         disabled={isOrdering}
                         onClick={() => order(exam.id)}
                       >
-                        {isOrdering ? 'Ordering…' : 'Order'}
+                        {isOrdering ? 'Zlecanie…' : 'Zleć'}
                       </button>
                     )}
                   </span>
@@ -86,7 +86,7 @@ export function Phone({ onCancel }) {
           </div>
 
           {orderError && (
-            <p className={styles.errorText}>Could not order this test. It may already be ordered.</p>
+            <p className={styles.errorText}>Nie udało się zlecić badania. Mogło już zostać zlecone.</p>
           )}
         </>
       )}

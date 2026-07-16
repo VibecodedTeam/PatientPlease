@@ -80,7 +80,7 @@ describe('Wall', () => {
   it('renders the doctor office wall', async () => {
     mockRoundFetch(OWNED_ITEMS);
     renderWithProviders(<Wall />);
-    expect(await screen.findByRole('region', { name: /doctor office wall/i })).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: /ściana gabinetu/i })).toBeInTheDocument();
   });
 
   it('shows the hardcoded ABCDE mole-check board on the wall', async () => {
@@ -110,12 +110,12 @@ describe('Wall', () => {
     const popup = screen.getByRole('dialog', { name: /dermatology handbook/i });
     expect(popup).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dermatology Handbook' })).toBeInTheDocument();
-    expect(screen.getByText('Handbook')).toBeInTheDocument();
+    expect(screen.getByText('Podręcznik')).toBeInTheDocument();
     expect(screen.getByText('A guide to common skin conditions.')).toBeInTheDocument();
     expect(screen.queryByText(/medical hint/i)).not.toBeInTheDocument();
     expect(bookButton).toHaveAttribute('aria-pressed', 'true');
 
-    await user.click(screen.getByRole('button', { name: /close/i }));
+    await user.click(screen.getByRole('button', { name: /zamknij/i }));
     expect(screen.queryByRole('dialog', { name: /dermatology handbook/i })).not.toBeInTheDocument();
     expect(bookButton).toHaveAttribute('aria-pressed', 'false');
   });
@@ -124,17 +124,17 @@ describe('Wall', () => {
     mockRoundFetch([]);
     renderWithProviders(<Wall />);
 
-    expect(await screen.findByText(/no handbooks bought yet/i)).toBeInTheDocument();
-    expect(screen.getByText(/visit the night shop/i)).toBeInTheDocument();
+    expect(await screen.findByText(/nie kupiono jeszcze żadnych podręczników/i)).toBeInTheDocument();
+    expect(screen.getByText(/odwiedź nocny sklep/i)).toBeInTheDocument();
   });
 
   it('still shows the desk lamp and dermatoscope wall fixtures when there are no owned items', async () => {
     mockRoundFetch([]);
     renderWithProviders(<Wall />);
 
-    await screen.findByText(/no handbooks bought yet/i);
-    expect(screen.getByRole('button', { name: /toggle desk lamp/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /toggle dermatoscope/i })).toBeInTheDocument();
+    await screen.findByText(/nie kupiono jeszcze żadnych podręczników/i);
+    expect(screen.getByRole('button', { name: /przełącz lampkę biurkową/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /przełącz dermatoskop/i })).toBeInTheDocument();
   });
 
   it('opens and closes the order-tests popup from the gear button', async () => {
@@ -143,15 +143,15 @@ describe('Wall', () => {
     renderWithProviders(<Wall />);
 
     await screen.findByRole('button', { name: 'Dermatology Handbook' });
-    expect(screen.queryByRole('dialog', { name: /order tests/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: /zleć badania/i })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /open test orders/i }));
-    expect(screen.getByRole('dialog', { name: /order tests/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Order laboratory tests' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /otwórz zlecenia badań/i }));
+    expect(screen.getByRole('dialog', { name: /zleć badania/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Zleć badania laboratoryjne' })).toBeInTheDocument();
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /^close$/i })).toBeInTheDocument());
-    await user.click(screen.getByRole('button', { name: /^close$/i }));
-    expect(screen.queryByRole('dialog', { name: /order tests/i })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: /^zamknij$/i })).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /^zamknij$/i }));
+    expect(screen.queryByRole('dialog', { name: /zleć badania/i })).not.toBeInTheDocument();
   });
 
   it('toggles the shelf lamp and dermatoscope decorations on and off', async () => {
@@ -162,18 +162,18 @@ describe('Wall', () => {
     await screen.findByRole('button', { name: 'Dermatology Handbook' });
 
     // The desk lamp starts OFF by default; clicking it turns it on, then off again.
-    const lamp = screen.getByRole('button', { name: /toggle desk lamp/i });
+    const lamp = screen.getByRole('button', { name: /przełącz lampkę biurkową/i });
     expect(lamp).toHaveAttribute('aria-pressed', 'false');
     await user.click(lamp);
     expect(lamp).toHaveAttribute('aria-pressed', 'true');
     await user.click(lamp);
     expect(lamp).toHaveAttribute('aria-pressed', 'false');
 
-    const dermatoscope = screen.getByRole('button', { name: /toggle dermatoscope/i });
+    const dermatoscope = screen.getByRole('button', { name: /przełącz dermatoskop/i });
     expect(dermatoscope).toHaveAttribute('aria-pressed', 'false');
     await user.click(dermatoscope);
     expect(dermatoscope).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('Dermatoscope ready')).toBeInTheDocument();
+    expect(screen.getByText('Dermatoskop gotowy')).toBeInTheDocument();
   });
 
   it('pins a new prevention note to the corkboard when clicked, up to the 6-note max', async () => {
@@ -183,7 +183,7 @@ describe('Wall', () => {
 
     await screen.findByRole('button', { name: 'Dermatology Handbook' });
 
-    const corkboard = screen.getByRole('button', { name: /pin new prevention note/i });
+    const corkboard = screen.getByRole('button', { name: /przypnij nową notatkę profilaktyczną/i });
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
 
     for (let i = 0; i < 8; i += 1) {
@@ -197,7 +197,7 @@ describe('Wall', () => {
     mockRoundFetch(OWNED_ITEMS);
     renderWithProviders(<Wall />);
 
-    const orderTestsButton = await screen.findByRole('button', { name: /open test orders/i });
+    const orderTestsButton = await screen.findByRole('button', { name: /otwórz zlecenia badań/i });
     const abcdeButton = screen.getByRole('button', { name: /open the abcde mole self-check/i });
 
     // Order-tests (phone) button must come after the ABCDE board in DOM order, so it renders

@@ -91,8 +91,8 @@ describe('WallInventoryProvider', () => {
       </ApiProvider>,
     );
 
-    expect(await screen.findByText('Dermatology Handbook - Handbook - A guide to common skin conditions.')).toBeInTheDocument();
-    expect(screen.getByText('Dermatoscope - Equipment - Magnifies lesions for closer inspection.')).toBeInTheDocument();
+    expect(await screen.findByText('Dermatology Handbook - Podręcznik - A guide to common skin conditions.')).toBeInTheDocument();
+    expect(screen.getByText('Dermatoscope - Sprzęt - Magnifies lesions for closer inspection.')).toBeInTheDocument();
     expect(screen.queryByText(/Biopsy/)).not.toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
