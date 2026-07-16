@@ -60,6 +60,7 @@
 }
 
 .floatingLayer {
+  z-index: 1001;
   background: transparent;
   pointer-events: none;
 }
