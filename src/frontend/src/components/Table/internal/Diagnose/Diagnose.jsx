@@ -3,21 +3,21 @@ import PropTypes from 'prop-types';
 import styles from './Diagnose.module.css';
 
 const DEFAULT_OPTIONS = [
-  { id: 'no-condition', label: 'No Skin Condition' },
-  { id: 'minor-irritation', label: 'Minor Skin Irritation' },
-  { id: 'skin-cancer', label: 'Skin Cancer' },
+  { id: 'no-condition', label: 'Brak zmian skórnych' },
+  { id: 'minor-irritation', label: 'Łagodne podrażnienie skóry' },
+  { id: 'skin-cancer', label: 'Rak skóry' },
 ];
 
 /**
  * @param {object} props
- * @param {string} props.title - Panel heading, e.g. "Diagnosis".
+ * @param {string} props.title - Panel heading, e.g. "Diagnoza".
  * @param {{id: string, label: string}[]} props.options - Selectable diagnosis options.
  * @param {function({id: string, label: string}): void} [props.onSubmit] - Called with the selected option when the player submits.
  * @param {string} [props.errorMessage] - Shown near the submit button when the last submission failed.
  * @param {boolean} [props.disabled] - Blocks submission, e.g. while the real diagnosis catalog is still loading and `options` is showing DEFAULT_OPTIONS placeholders that don't exist in the backend.
  */
 export function Diagnose({
-  title = 'Diagnosis',
+  title = 'Diagnoza',
   options = DEFAULT_OPTIONS,
   onSubmit,
   errorMessage,
@@ -72,7 +72,7 @@ export function Diagnose({
           disabled={!selectedOption || isSubmitting || disabled}
           onClick={handleSubmit}
         >
-          Submit Diagnosis
+          Zatwierdź diagnozę
         </button>
         {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
       </div>
