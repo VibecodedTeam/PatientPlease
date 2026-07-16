@@ -621,6 +621,7 @@ export async function seed(options: { force?: boolean } = {}): Promise<void> {
   await prisma.chatMessage.deleteMany();
   await prisma.gameplayLog.deleteMany();
   await prisma.caseHint.deleteMany();
+  await prisma.caseDocumentReveal.deleteMany();
   await prisma.caseDocument.deleteMany();
   await prisma.case.deleteMany();
   await prisma.patient.deleteMany();

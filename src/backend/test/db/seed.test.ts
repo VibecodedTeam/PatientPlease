@@ -129,12 +129,37 @@ describe('seed', () => {
 
     const documentTypes = patient!.case!.documents.map((d) => d.type).sort();
     expect(documentTypes).toEqual(
-      ['CLINICAL_SYMPTOMS', 'EXAMINATION_RESULTS', 'SKIN_IMAGE', 'UV_EXPOSURE_HISTORY'].sort(),
+      [
+        'CLINICAL_SYMPTOMS',
+        'CLINICAL_SYMPTOMS',
+        'EXAMINATION_RESULTS',
+        'SKIN_IMAGE',
+        'UV_EXPOSURE_HISTORY',
+      ].sort(),
     );
 
     const skinImage = patient!.case!.documents.find((d) => d.type === 'SKIN_IMAGE')!;
     expect(skinImage.attentionPointRegion).toBe('CHEST');
-    expect(skinImage.imageUrl).toBe('/cases/case-08.png');
+    expect(skinImage.imageUrl).toBe('/cases/case-02.png');
+  });
+
+  it('gives every case at least 3 reveal-gated documents, so chat reveal can be progressive', async () => {
+    await seed();
+
+    const cases = await prisma.case.findMany({ include: { documents: true, patient: true } });
+    const REVEAL_GATED_TYPES = new Set([
+      'DISEASE_HISTORY',
+      'UV_EXPOSURE_HISTORY',
+      'CLINICAL_SYMPTOMS',
+      'FAMILY_HISTORY',
+      'WEATHER_HISTORY',
+    ]);
+
+    const casesWithTooFewGatedDocuments = cases.filter(
+      (c) => c.documents.filter((d) => REVEAL_GATED_TYPES.has(d.type)).length < 3,
+    );
+
+    expect(casesWithTooFewGatedDocuments.map((c) => c.patient.name)).toEqual([]);
   });
 
   it('seeds the catalog and generated case labels in Polish', async () => {
@@ -166,7 +191,7 @@ describe('seed', () => {
       orderBy: { featuredOrder: 'asc' },
       include: { patient: true },
     });
-    expect(featured).toHaveLength(15);
+    expect(featured).toHaveLength(13);
     featured.forEach((caseRecord, idx) => {
       expect(caseRecord.featuredOrder).toBe(idx + 1);
       expect(caseRecord.patient.portraitImageUrl).toBe(

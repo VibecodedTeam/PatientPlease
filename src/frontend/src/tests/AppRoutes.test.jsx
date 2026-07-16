@@ -57,6 +57,16 @@ function renderAt(path) {
 }
 
 describe('AppRoutes', () => {
+  // The Excisio minigame's tutorial modal renders into #overlay-root on mount (via
+  // OverlayPortal), which index.html provides in the real app but jsdom starts without.
+  beforeEach(() => {
+    if (!document.getElementById('overlay-root')) {
+      const overlayRoot = document.createElement('div');
+      overlayRoot.id = 'overlay-root';
+      document.body.appendChild(overlayRoot);
+    }
+  });
+
   it('renders the public StartView at / without requiring auth', async () => {
     mockAuth(false);
     renderAt('/');
@@ -88,5 +98,22 @@ describe('AppRoutes', () => {
     await waitFor(() =>
       expect(screen.getByTestId('location')).toHaveTextContent('/game/main'),
     );
+  });
+
+  it('renders the Excisio minigame at /game/main/minigame when authenticated', async () => {
+    mockAuth(true);
+    renderAt('/game/main/minigame');
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: /technika biopsji wycinającej/i })).toBeInTheDocument(),
+    );
+  });
+
+  it('blocks /game/main/minigame behind the auth gate when unauthenticated', async () => {
+    mockAuth(false);
+    renderAt('/game/main/minigame');
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument(),
+    );
+    expect(screen.queryByRole('heading', { name: /technika biopsji wycinającej/i })).not.toBeInTheDocument();
   });
 });
