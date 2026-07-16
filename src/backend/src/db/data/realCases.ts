@@ -71,10 +71,16 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd zmian',
         content: {
-          description:
-            'Dwa maleńkie, ciemne znamiona na ramieniu, jedno nie większe niż ukłucie igłą. Nie wyglądają dramatycznie i nie bolą, ale oba są symetryczne i wielobarwne.',
+          description: 'Dwa maleńkie, ciemne znamiona na ramieniu, jedno nie większe niż ukłucie igłą.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Dodatkowe obserwacje',
+        content: {
+          description: 'Nie wyglądają dramatycznie i nie bolą, ale oba są symetryczne i wielobarwne.',
         },
       },
     ],
@@ -104,10 +110,25 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd zgrubienia',
         content: {
           description:
-            'Postępujące, niebolesne, twarde zgrubienie po lewej dolnej stronie twarzy w okolicy żuchwy, stopniowo powiększające się przez kilka tygodni. Brak dolegliwości podczas jedzenia czy mówienia, bez wcześniejszego urazu lub infekcji w tej okolicy. Twarz stała się widocznie asymetryczna z powodu obrzęku.',
+            'Postępujące, niebolesne, twarde zgrubienie po lewej dolnej stronie twarzy w okolicy żuchwy, stopniowo powiększające się przez kilka tygodni.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Brak dodatkowych dolegliwości',
+        content: {
+          description:
+            'Brak dolegliwości podczas jedzenia czy mówienia, bez wcześniejszego urazu lub infekcji w tej okolicy.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Asymetria twarzy',
+        content: {
+          description: 'Twarz stała się widocznie asymetryczna z powodu obrzęku.',
         },
       },
     ],
@@ -140,10 +161,24 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd narośli',
+        content: {
+          description: 'Chropowata, brązowa narośl na plecach, obecna od lat, jakby "przyklejona" do skóry.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Krwawienie po podrażnieniu',
         content: {
           description:
-            'Chropowata, brązowa narośl na plecach, obecna od lat, jakby "przyklejona" do skóry. Zaczęła krwawić po prysznicu i wycieraniu się ręcznikiem — partnerka zauważyła, że skóra wokół niej się podrażniła od ubrania. Sama narośl nie zmienia kształtu ani wielkości, czasem tylko swędzi po podrażnieniu.',
+            'Zaczęła krwawić po prysznicu i wycieraniu się ręcznikiem — partnerka zauważyła, że skóra wokół niej się podrażniła od ubrania.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Stabilność zmiany',
+        content: {
+          description: 'Sama narośl nie zmienia kształtu ani wielkości, czasem tylko swędzi po podrażnieniu.',
         },
       },
     ],
@@ -176,10 +211,25 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zmiana w obrębie tatuażu',
         content: {
           description:
-            'Fragment starego tatuażu na lewym ramieniu — wcześniej jednolity, ciemny i wyraźnie odgraniczony — rozwinął nieregularną, ciemniejszą plamę, w miejscu której pigment wydaje się rozprzestrzeniać. Obszar stopniowo się powiększał i lekko uniósł, jakby coś gromadziło się pod skórą. Bez bólu i swędzenia, ale obszar wyraźnie różni się wyglądem od reszty tatuażu i wyraźnie się powiększa.',
+            'Fragment starego tatuażu na lewym ramieniu — wcześniej jednolity, ciemny i wyraźnie odgraniczony — rozwinął nieregularną, ciemniejszą plamę, w miejscu której pigment wydaje się rozprzestrzeniać.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Powiększanie i uniesienie',
+        content: {
+          description: 'Obszar stopniowo się powiększał i lekko uniósł, jakby coś gromadziło się pod skórą.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Brak bólu, ale widoczna różnica',
+        content: {
+          description:
+            'Bez bólu i swędzenia, ale obszar wyraźnie różni się wyglądem od reszty tatuażu i wyraźnie się powiększa.',
         },
       },
     ],
@@ -204,18 +254,39 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Znamiona i ogólny stan zdrowia',
         content: {
           history:
-            'Ma liczne znamiona odkąd pamięta, ale nigdy nie sprawiały problemów, a poza tym zawsze była zdrowa. Przy pracy z igłami i szpilkami zdarzają jej się drobne ukłucia i skaleczenia.',
+            'Ma liczne znamiona odkąd pamięta, ale nigdy nie sprawiały problemów, a poza tym zawsze była zdrowa.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Drobne urazy przy pracy',
+        content: {
+          history: 'Przy pracy z igłami i szpilkami zdarzają jej się drobne ukłucia i skaleczenia.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd guzka',
         content: {
           description:
-            'Twardy, brązowawy guzek po prawej stronie brzucha, obecny od dzieciństwa po drobnym skaleczeniu przy pracy. Charakterystycznie wciąga się do wewnątrz przy ściśnięciu z boków. Nie powiększa się, nie boli, węzły chłonne pachwinowe są niewyczuwalne.',
+            'Twardy, brązowawy guzek po prawej stronie brzucha, obecny od dzieciństwa po drobnym skaleczeniu przy pracy.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Charakterystyczny objaw wciągania',
+        content: {
+          description: 'Charakterystycznie wciąga się do wewnątrz przy ściśnięciu z boków.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Stabilność i badanie węzłów',
+        content: {
+          description: 'Nie powiększa się, nie boli, węzły chłonne pachwinowe są niewyczuwalne.',
         },
       },
     ],
@@ -248,10 +319,40 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zgłoszenie do laryngologa',
         content: {
           description:
-            'Zgłosiła się do laryngologa z powodu przewlekłego dyskomfortu w nosie i wodnistej wydzieliny, początkowo uznawanych za zwykłe podrażnienie. Lekarz zauważył niewielką zmianę w przedsionku nosa. Biopsja ujawniła komórki barwnikowe dodatnie pod względem markera SOX-10. Po skierowaniu do ośrodka specjalistycznego w miejscu wcześniejszej biopsji pojawiła się niebieskawa plamka. Mimo braku innych objawów zmianę usunięto z powodu stopniowego powiększania się i wynikającej z tego asymetrii nosa.',
+            'Zgłosiła się do laryngologa z powodu przewlekłego dyskomfortu w nosie i wodnistej wydzieliny, początkowo uznawanych za zwykłe podrażnienie.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Zmiana w przedsionku nosa',
+        content: {
+          description: 'Lekarz zauważył niewielką zmianę w przedsionku nosa.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wynik biopsji',
+        content: {
+          description: 'Biopsja ujawniła komórki barwnikowe dodatnie pod względem markera SOX-10.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Niebieskawa plamka po biopsji',
+        content: {
+          description:
+            'Po skierowaniu do ośrodka specjalistycznego w miejscu wcześniejszej biopsji pojawiła się niebieskawa plamka.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Powiększanie się i usunięcie zmiany',
+        content: {
+          description:
+            'Mimo braku innych objawów zmianę usunięto z powodu stopniowego powiększania się i wynikającej z tego asymetrii nosa.',
         },
       },
     ],
@@ -276,18 +377,39 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Choroby przewlekłe',
         content: {
-          history:
-            'Długa historia cukrzycy typu II, nadciśnienia tętniczego i miażdżycy. Ojciec pacjenta chorował na łuszczycę przez całe dorosłe życie.',
+          history: 'Długa historia cukrzycy typu II, nadciśnienia tętniczego i miażdżycy.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Wywiad rodzinny w zakresie łuszczycy',
+        content: {
+          history: 'Ojciec pacjenta chorował na łuszczycę przez całe dorosłe życie.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd zmian skórnych',
         content: {
           description:
-            'Na lewym ramieniu i łokciu od kilku lat nawracają grube, srebrzyście łuszczące się, czerwone blaszki. Objawy nasilają się zimą i w okresach stresu, a niedawny zabieg kardiologiczny zaostrzył ich przebieg. Żadne znamiona pacjenta nie zmieniły kształtu ani koloru.',
+            'Na lewym ramieniu i łokciu od kilku lat nawracają grube, srebrzyście łuszczące się, czerwone blaszki.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Czynniki zaostrzające',
+        content: {
+          description:
+            'Objawy nasilają się zimą i w okresach stresu, a niedawny zabieg kardiologiczny zaostrzył ich przebieg.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Stan znamion',
+        content: {
+          description: 'Żadne znamiona pacjenta nie zmieniły kształtu ani koloru.',
         },
       },
     ],
@@ -320,10 +442,18 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Nowo zauważone znamię',
         content: {
           description:
-            'Po powrocie z urlopu na Maderze zauważyła znamię nad lewym obojczykiem, którego wcześniej nie zauważyła. Ma równe brzegi, jednolity brązowy kolor i nie zmieniła się w ciągu miesiąca obserwacji — dermoskopia nie wykazuje żadnej ewolucji.',
+            'Po powrocie z urlopu na Maderze zauważyła znamię nad lewym obojczykiem, którego wcześniej nie zauważyła.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Cechy i stabilność znamienia',
+        content: {
+          description:
+            'Ma równe brzegi, jednolity brązowy kolor i nie zmieniła się w ciągu miesiąca obserwacji — dermoskopia nie wykazuje żadnej ewolucji.',
         },
       },
     ],
@@ -349,18 +479,40 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
+        title: 'Stosowanie ochrony przeciwsłonecznej',
         content: {
           history:
-            'Rzadko stosuje krem z filtrem, tłumacząc to przyzwyczajeniem oraz praktycznymi wymogami pracy budowlanej na zewnątrz. W dzieciństwie miał liczne poważne oparzenia słoneczne. Ma wiele pigmentowanych znamion.',
+            'Rzadko stosuje krem z filtrem, tłumacząc to przyzwyczajeniem oraz praktycznymi wymogami pracy budowlanej na zewnątrz.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Oparzenia słoneczne w dzieciństwie',
+        content: {
+          history: 'W dzieciństwie miał liczne poważne oparzenia słoneczne.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Liczne znamiona',
+        content: {
+          history: 'Ma wiele pigmentowanych znamion.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zmiana znamienia w czasie',
         content: {
           description:
-            'Znamię z tyłu szyi zmieniło kształt, powiększyło się i zmieniło kolor w ciągu około 6 miesięcy. Badanie skóry wykazało zmianę o wymiarach 9 mm x 7 mm spełniającą kryteria ABCDE: asymetryczna, postrzępione brzegi, niejednorodny kolor (brąz zmieszany z czerwono-różowym), średnica ponad 9 mm oraz ewolucja trwająca ponad 6 miesięcy.',
+            'Znamię z tyłu szyi zmieniło kształt, powiększyło się i zmieniło kolor w ciągu około 6 miesięcy.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Kryteria ABCDE',
+        content: {
+          description:
+            'Badanie skóry wykazało zmianę o wymiarach 9 mm x 7 mm spełniającą kryteria ABCDE: asymetryczna, postrzępione brzegi, niejednorodny kolor (brąz zmieszany z czerwono-różowym), średnica ponad 9 mm oraz ewolucja trwająca ponad 6 miesięcy.',
         },
       },
     ],
@@ -393,10 +545,25 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wygląd zmiany',
         content: {
           description:
-            'Półprzezroczysta, perłowa zmiana o średnicy ponad 6 mm i owalnym kształcie od lat obecna na prawym policzku. Wygląda błyszcząco, czasem krwawi, ale nigdy go to nie niepokoiło. Ostatnio zaczęła się powiększać i swędzieć, co skłoniło go do wizyty za namową córki.',
+            'Półprzezroczysta, perłowa zmiana o średnicy ponad 6 mm i owalnym kształcie od lat obecna na prawym policzku.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Błyszczący wygląd i krwawienie',
+        content: {
+          description: 'Wygląda błyszcząco, czasem krwawi, ale nigdy go to nie niepokoiło.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Powiększanie i swędzenie',
+        content: {
+          description:
+            'Ostatnio zaczęła się powiększać i swędzieć, co skłoniło go do wizyty za namową córki.',
         },
       },
     ],
@@ -426,10 +593,26 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zmiany skórne na szyi',
         content: {
           description:
-            'Szorstkie, łuszczące się plamy oraz twarde guzki z owrzodzeniem centralnym na szyi, obecne od lat. Z czasem zmiany zaczęły boleć pod naciskiem, guzki się powiększyły, a pobliskie węzły chłonne szyi uległy powiększeniu. W ostatnich miesiącach doświadczyła niekontrolowanego spadku wagi i zaczęła utykać na prawą nogę.',
+            'Szorstkie, łuszczące się plamy oraz twarde guzki z owrzodzeniem centralnym na szyi, obecne od lat.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Progresja miejscowa',
+        content: {
+          description:
+            'Z czasem zmiany zaczęły boleć pod naciskiem, guzki się powiększyły, a pobliskie węzły chłonne szyi uległy powiększeniu.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Objawy ogólnoustrojowe',
+        content: {
+          description:
+            'W ostatnich miesiącach doświadczyła niekontrolowanego spadku wagi i zaczęła utykać na prawą nogę.',
         },
       },
     ],
@@ -454,17 +637,38 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'DISEASE_HISTORY',
-        title: 'Historia choroby',
+        title: 'Ogólny stan zdrowia',
         content: {
-          history: 'Niepalący, bez istotnych chorób przewlekłych; regularnie odwiedza dentystę.',
+          history: 'Niepalący, bez istotnych chorób przewlekłych.',
+        },
+      },
+      {
+        type: 'DISEASE_HISTORY',
+        title: 'Regularne wizyty u dentysty',
+        content: {
+          history: 'Regularnie odwiedza dentystę.',
         },
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zauważenie zmiany',
+        content: {
+          description: 'Zauważył ciemną, pigmentowaną zmianę na górnej dziąśle.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Brak objawów i zwłoka',
+        content: {
+          description: 'Początkowo niebolesna i bezobjawowa, więc długo była ignorowana.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Charakterystyka i progresja zmiany',
         content: {
           description:
-            'Zauważył ciemną, pigmentowaną zmianę na górnej dziąśle. Początkowo niebolesna i bezobjawowa, więc długo była ignorowana. Zmiana była dobrze odgraniczona, ciemniejsza niż otaczająca błona śluzowa i stopniowo się powiększała.',
+            'Zmiana była dobrze odgraniczona, ciemniejsza niż otaczająca błona śluzowa i stopniowo się powiększała.',
         },
       },
     ],
@@ -497,10 +701,24 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Objawy ogólnoustrojowe',
         content: {
           description:
-            'Od kilku miesięcy narastający ból w nadbrzuszu, rozwijająca się niedokrwistość i niezamierzona utrata masy ciała. Badania obrazowe ujawniły duży naciek w żołądku; podczas operacji stwierdzono ciemny, naciekający guz obejmujący dno żołądka.',
+            'Od kilku miesięcy narastający ból w nadbrzuszu, rozwijająca się niedokrwistość i niezamierzona utrata masy ciała.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wynik badań obrazowych',
+        content: {
+          description: 'Badania obrazowe ujawniły duży naciek w żołądku.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wynik operacji',
+        content: {
+          description: 'Podczas operacji stwierdzono ciemny, naciekający guz obejmujący dno żołądka.',
         },
       },
     ],
@@ -525,10 +743,18 @@ export const REAL_CASES: RealCaseSeed[] = [
     documents: [
       {
         type: 'UV_EXPOSURE_HISTORY',
-        title: 'Historia ekspozycji na promieniowanie UV',
+        title: 'Wcześniejsza ekspozycja na Bermudach',
         content: {
           history:
-            'Przez wiele lat mieszkała na Bermudach, gdzie była silnie eksponowana na promieniowanie UV, nie zdając sobie wówczas sprawy z wagi ochrony przeciwsłonecznej. Od 20. roku życia jest bardziej ostrożna — stosuje kremy z filtrem SPF i unika słońca w gorące, słoneczne dni.',
+            'Przez wiele lat mieszkała na Bermudach, gdzie była silnie eksponowana na promieniowanie UV, nie zdając sobie wówczas sprawy z wagi ochrony przeciwsłonecznej.',
+        },
+      },
+      {
+        type: 'UV_EXPOSURE_HISTORY',
+        title: 'Obecna ostrożność',
+        content: {
+          history:
+            'Od 20. roku życia jest bardziej ostrożna — stosuje kremy z filtrem SPF i unika słońca w gorące, słoneczne dni.',
         },
       },
       {
@@ -541,10 +767,24 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Wysypka po bransoletce',
         content: {
           description:
-            'Zgłosiła się z powodu swędzącej, zaczerwienionej wysypki na prawym ramieniu, która pojawiła się po założeniu nowej bransoletki. Dobrze zna swoje znamiona i żadne z nich nie wygląda nietypowo — wysypka ustępuje po zdjęciu biżuterii, ale nawraca po ponownym założeniu.',
+            'Zgłosiła się z powodu swędzącej, zaczerwienionej wysypki na prawym ramieniu, która pojawiła się po założeniu nowej bransoletki.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Stan znamion',
+        content: {
+          description: 'Dobrze zna swoje znamiona i żadne z nich nie wygląda nietypowo.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Związek z biżuterią',
+        content: {
+          description: 'Wysypka ustępuje po zdjęciu biżuterii, ale nawraca po ponownym założeniu.',
         },
       },
     ],
@@ -578,10 +818,25 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Nowa zmiana',
+        content: {
+          description: 'Zauważył nową, szybko rosnącą zmianę na plecach.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wygląd guzka',
         content: {
           description:
-            'Zauważył nową, szybko rosnącą zmianę na plecach. W przeciwieństwie do swoich typowych znamion, prezentowała się jako ciemnoniebieski, twardy, wyraźnie uniesiony guzek. W ciągu zaledwie dwóch miesięcy podwoiła rozmiar, zaczęła swędzieć i czasami krwawiła podczas wycierania się ręcznikiem.',
+            'W przeciwieństwie do swoich typowych znamion, prezentowała się jako ciemnoniebieski, twardy, wyraźnie uniesiony guzek.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Szybka progresja',
+        content: {
+          description:
+            'W ciągu zaledwie dwóch miesięcy podwoiła rozmiar, zaczęła swędzieć i czasami krwawiła podczas wycierania się ręcznikiem.',
         },
       },
     ],
@@ -613,10 +868,25 @@ export const REAL_CASES: RealCaseSeed[] = [
       },
       {
         type: 'CLINICAL_SYMPTOMS',
-        title: 'Objawy kliniczne',
+        title: 'Zauważenie zmiany przez kolegę',
+        content: {
+          description: 'Podczas obozu sportowego kolega zauważył nietypową zmianę na jego głowie.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Wygląd znamienia',
         content: {
           description:
-            'Podczas obozu sportowego kolega zauważył nietypową zmianę na jego głowie. Następnego ranka zauważył nieregularne znamię, ciemne i przypominające krwiaka podnaskórkowego. Nie pamięta żadnego niedawnego urazu głowy, co właśnie zwróciło jego uwagę na tę zmianę.',
+            'Następnego ranka zauważył nieregularne znamię, ciemne i przypominające krwiaka podnaskórkowego.',
+        },
+      },
+      {
+        type: 'CLINICAL_SYMPTOMS',
+        title: 'Brak urazu',
+        content: {
+          description:
+            'Nie pamięta żadnego niedawnego urazu głowy, co właśnie zwróciło jego uwagę na tę zmianę.',
         },
       },
     ],

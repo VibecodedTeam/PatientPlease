@@ -128,9 +128,8 @@ describe('seed', () => {
     expect(patient!.case!.correctTreatment).toBeNull();
 
     const documentTypes = patient!.case!.documents.map((d) => d.type).sort();
-    // NOTE: this exact type list must be revisited once Task 2 splits this case's documents into more entries.
     expect(documentTypes).toEqual(
-      ['CLINICAL_SYMPTOMS', 'EXAMINATION_RESULTS', 'SKIN_IMAGE', 'UV_EXPOSURE_HISTORY'].sort(),
+      ['CLINICAL_SYMPTOMS', 'CLINICAL_SYMPTOMS', 'EXAMINATION_RESULTS', 'SKIN_IMAGE', 'UV_EXPOSURE_HISTORY'].sort(),
     );
 
     const skinImage = patient!.case!.documents.find((d) => d.type === 'SKIN_IMAGE')!;
