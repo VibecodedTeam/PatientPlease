@@ -15,23 +15,34 @@ was the closest available option. If you get category-specific stock
 photos later, swap those files in — no code change needed, just replace
 the file at the same filename.
 
+**Update (case-01 through case-15):** these 15 diagnosis-matched photos
+were replaced with real dermatology photos from the ISIC "Skin Cancer"
+dataset (`~/Downloads/czerniaki/Skin cancer ISIC The International Skin
+Imaging Collaboration/Train/<category>/`), picked by matching each case's
+`diagnosisCode` to the dataset's category folder name. Two diagnoses
+(`psoriasis`, `contact-dermatitis`) have no matching category in that
+dataset (it's focused on skin-cancer/pigmented-lesion categories, not
+inflammatory dermatoses) — those two got an AI-generated substitute photo
+instead (via the naga.ac image API, same photorealistic-clinical-photo
+style as the real ones).
+
 | Filename | Patient | Diagnosis | Source |
 |---|---|---|---|
-| case-01.png | Irena Kwiat | Dysplastic Nevus (benign/atypical) | STOCK_CLEARMYSTERIOUS.png (multiple small pigmented spots) |
-| case-02.png | Dariusz Wilk | Melanoma | STOCK_CANCER1.png |
-| case-03.png | Robert Sadowski | Melanoma | real photo (Case 3.png) |
-| case-04.png | Kamil Zych | Melanoma | real photo (Case 4.png) |
-| case-05.png | Bogumiła Nowicka | Melanoma | real photo (Case 5.png) |
-| case-06.png | Wanda Kaczmarek | Melanoma | STOCK_CANCER2.png |
-| case-07.png | Zenon Lis | Melanoma | STOCK_CANCER3.png |
-| case-08.png | Barbara Sikora | Melanoma | STOCK_CANCER4.png |
-| case-09.png | Józef Baran | Melanoma | real photo (Case 9.png) |
-| case-10.png | Marcin Krupa | Basal Cell Carcinoma | STOCK_CANCER1.png (placeholder — no BCC-specific stock) |
-| case-11.png | Zofia Wrona | Squamous Cell Carcinoma | STOCK_CANCER2.png (placeholder — no SCC-specific stock) |
-| case-12.png | Horacjusz Duda | Melanoma | STOCK_CANCER3.png |
-| case-13.png | Hiacynta Górska | Melanoma | STOCK_CANCER4.png |
-| case-14.png | Krystyna Sroka | Melanoma | STOCK_CANCER1.png |
-| case-15.png | Tomasz Ryba | Melanoma | STOCK_CANCER2.png |
+| case-01.png | Irena Kwiat | Dysplastic Nevus (benign/atypical) | ISIC dataset, `nevus/ISIC_0000019.jpg` |
+| case-02.png | Dariusz Wilk | Melanoma | ISIC dataset, `melanoma/ISIC_0000139.jpg` |
+| case-03.png | Robert Sadowski | Seborrheic Keratosis (benign) | ISIC dataset, `seborrheic keratosis/ISIC_0010810.jpg` |
+| case-04.png | Kamil Zych | Melanoma | ISIC dataset, `melanoma/ISIC_0000141.jpg` |
+| case-05.png | Bogumiła Nowicka | Dermatofibroma (benign) | ISIC dataset, `dermatofibroma/ISIC_0025223.jpg` |
+| case-06.png | Wanda Kaczmarek | Melanoma | ISIC dataset, `melanoma/ISIC_0000142.jpg` |
+| case-07.png | Zenon Lis | Psoriasis (not cancer) | AI-generated substitute (no matching category in dataset) |
+| case-08.png | Barbara Sikora | Common Nevus (benign) | ISIC dataset, `nevus/ISIC_0000020.jpg` |
+| case-09.png | Józef Baran | Melanoma | ISIC dataset, `melanoma/ISIC_0000143.jpg` |
+| case-10.png | Marcin Krupa | Basal Cell Carcinoma | ISIC dataset, `basal cell carcinoma/ISIC_0024504.jpg` |
+| case-11.png | Zofia Wrona | Squamous Cell Carcinoma | ISIC dataset, `squamous cell carcinoma/ISIC_0024710.jpg` |
+| case-12.png | Horacjusz Duda | Melanoma | ISIC dataset, `melanoma/ISIC_0000144.jpg` |
+| case-13.png | Hiacynta Górska | Melanoma | ISIC dataset, `melanoma/ISIC_0000145.jpg` |
+| case-14.png | Krystyna Sroka | Contact Dermatitis (not cancer) | AI-generated substitute (no matching category in dataset) |
+| case-15.png | Tomasz Ryba | Melanoma | ISIC dataset, `melanoma/ISIC_0000146.jpg` |
 | case-16.png | Kacper Sobczak | Melanoma | STOCK_CANCER3.png |
 | case-17.png | Halina Wilczek | Squamous Cell Carcinoma | STOCK_CANCER4.png (placeholder — no SCC-specific stock) |
 | case-18.png | Grażyna Sowa | Actinic Keratosis (not cancer) | STOCK_PRZEBARWIENIE.png (patchy discoloration) |
