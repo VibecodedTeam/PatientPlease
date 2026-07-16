@@ -50,29 +50,29 @@ export function StatisticsPopup({ statistics, onClose }) {
     // happen via the explicit Continue button, never a backdrop click or Escape.
     <OverlayPortal>
       <div className={styles.panel} onClick={(event) => event.stopPropagation()}>
-        <h2 className={styles.title}>Daily Statistics</h2>
+        <h2 className={styles.title}>Statystyki dnia</h2>
         <div className={styles.moneyRow}>
           <div className={styles.moneyBox}>
-            <span className={styles.moneyLabel}>Correct Diagnoses</span>
+            <span className={styles.moneyLabel}>Poprawne diagnozy</span>
             <span className={styles.endingValue}>
               {casesCorrect} / {casesAttempted}
             </span>
           </div>
           <div className={styles.moneyBox}>
-            <span className={styles.moneyLabel}>Day Time</span>
+            <span className={styles.moneyLabel}>Czas dnia</span>
             <span className={styles.endingValue}>{formatMMSS(elapsedMs)}</span>
           </div>
         </div>
         <div className={styles.endingBox}>
-          <span className={styles.moneyLabel}>Money Earned</span>
+          <span className={styles.moneyLabel}>Zarobione pieniądze</span>
           <span className={moneyClassName}>{formattedMoney}</span>
         </div>
         <div className={styles.endingBox}>
-          <span className={styles.moneyLabel}>Ending Money</span>
+          <span className={styles.moneyLabel}>Saldo końcowe</span>
           <span className={styles.endingValue}>${endingMoney}</span>
         </div>
         <button type="button" className={`${styles.button} ${styles.primary}`} onClick={onClose}>
-          Continue
+          Dalej
         </button>
       </div>
     </OverlayPortal>
