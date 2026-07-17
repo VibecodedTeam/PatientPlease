@@ -1,3 +1,4 @@
+import { toDisplayDocumentContent } from './caseDocumentContent.js';
 import type { GeminiContent } from './llm.js';
 
 export interface CasePromptPatient {
@@ -50,9 +51,8 @@ export interface CasePrompt {
 }
 
 function formatDocument(document: CasePromptDocument): string {
-  const detail = document.content
-    ? JSON.stringify(document.content)
-    : (document.imageAltText ?? '');
+  const displayContent = toDisplayDocumentContent(document);
+  const detail = displayContent ? JSON.stringify(displayContent) : (document.imageAltText ?? '');
   return `- [${document.type}] ${document.title}: ${detail}`;
 }
 
@@ -94,9 +94,8 @@ export interface DocumentSelectionDocument {
 }
 
 function formatSelectionDocument(document: DocumentSelectionDocument): string {
-  const detail = document.content
-    ? JSON.stringify(document.content)
-    : (document.imageAltText ?? '');
+  const displayContent = toDisplayDocumentContent(document);
+  const detail = displayContent ? JSON.stringify(displayContent) : (document.imageAltText ?? '');
   return `- id=${document.id} [${document.type}] ${document.title}: ${detail}`;
 }
 

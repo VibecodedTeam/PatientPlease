@@ -106,6 +106,27 @@ describe('buildCasePrompt', () => {
     expect(lower).toContain('danych przypadku');
   });
 
+  it("never includes an EXAMINATION_RESULTS document's internal shopItemId in the prompt", () => {
+    const caseWithExamResult: CasePromptCase = {
+      ...CASE,
+      documents: [
+        ...CASE.documents,
+        {
+          type: 'EXAMINATION_RESULTS',
+          title: 'Biopsy results',
+          content: { shopItemId: 'exam-shop-item-uuid', findings: 'Biopsy findings text' },
+          imageAltText: null,
+        },
+      ],
+    };
+
+    const prompt = buildCasePrompt(PATIENT, caseWithExamResult, []);
+
+    expect(prompt.systemInstruction).not.toContain('exam-shop-item-uuid');
+    expect(prompt.systemInstruction).not.toContain('shopItemId');
+    expect(prompt.systemInstruction).toContain('Biopsy findings text');
+  });
+
   it('never includes doctor-only facts (diagnosis, result explanation, treatment) in the prompt', () => {
     const caseWithDoctorOnlyFacts: CasePromptCase = {
       ...CASE,
@@ -165,5 +186,26 @@ describe('buildDocumentSelectionPrompt', () => {
     const prompt = buildDocumentSelectionPrompt(documents, 'reply', 'question');
     expect(prompt.systemInstruction.toLowerCase()).not.toContain('diagnosis');
     expect(prompt.systemInstruction.toLowerCase()).not.toContain('treatment');
+  });
+
+  it("never includes an EXAMINATION_RESULTS document's internal shopItemId in the selection prompt", () => {
+    const prompt = buildDocumentSelectionPrompt(
+      [
+        ...documents,
+        {
+          id: 'doc-3',
+          type: 'EXAMINATION_RESULTS',
+          title: 'Biopsy results',
+          content: { shopItemId: 'exam-shop-item-uuid', findings: 'Biopsy findings text' },
+          imageAltText: null,
+        },
+      ],
+      'reply',
+      'question',
+    );
+
+    expect(prompt.systemInstruction).not.toContain('exam-shop-item-uuid');
+    expect(prompt.systemInstruction).not.toContain('shopItemId');
+    expect(prompt.systemInstruction).toContain('Biopsy findings text');
   });
 });

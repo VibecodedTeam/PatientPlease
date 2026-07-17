@@ -365,5 +365,25 @@ describe('sendChatMessage', () => {
       expect(result.patientMessage.content).toBeDefined();
       expect(result.revealedDocuments).toEqual([]);
     });
+
+    it('strips shopItemId from a revealed EXAMINATION_RESULTS document, keeping only findings', async () => {
+      const { prisma, deps, input } = setUpRevealCase({
+        documents: [
+          makeDocument({
+            id: 'exam-doc-uuid',
+            type: 'EXAMINATION_RESULTS',
+            title: 'Biopsy results',
+            content: { shopItemId: 'exam-shop-item-uuid', findings: 'Biopsy findings text' },
+          }),
+        ],
+        selectedIds: ['exam-doc-uuid'],
+      });
+
+      const result = await sendChatMessage(prisma, deps, input);
+
+      expect(result.revealedDocuments.map((d) => d.content)).toEqual([
+        { findings: 'Biopsy findings text' },
+      ]);
+    });
   });
 });

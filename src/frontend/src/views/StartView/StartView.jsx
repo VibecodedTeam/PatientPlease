@@ -51,9 +51,9 @@ export function StartView() {
         </div>
 
         <h1 className={styles.title}>
-          Pacjent
+          Patient,
           <br />
-          Proszę
+          Please
         </h1>
 
         {showLogin && status !== 'authenticated' ? (

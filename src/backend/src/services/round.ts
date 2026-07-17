@@ -1,4 +1,5 @@
 import { computeEffectiveElapsedMs } from './dayElapsed.js';
+import { toDisplayDocumentContent } from './caseDocumentContent.js';
 
 export type GameSessionStatusValue = 'ACTIVE' | 'PAUSED' | 'GAME_OVER' | 'COMPLETED';
 
@@ -437,11 +438,7 @@ function isVisibleDocument(
 }
 
 function toDisplayContent(document: CaseDocumentRecord): CaseDocumentRecord['content'] {
-  if (document.type === 'EXAMINATION_RESULTS') {
-    const findings = (document.content as { findings?: string } | null)?.findings;
-    return findings !== undefined ? { findings } : document.content;
-  }
-  return document.content;
+  return toDisplayDocumentContent(document);
 }
 
 function toCaseResponse(
