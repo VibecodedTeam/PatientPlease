@@ -75,19 +75,23 @@ into a non-200 response.
    — no windowing or truncation.
 6. Persist the player's message as a new `ChatMessage` (`sender: PLAYER`).
 7. Build a Gemini prompt from the patient's identity, the case's documents (disease history, UV
-   exposure, symptoms, family history, weather history), and the full chat history including the
-   just-persisted player message.
+   exposure, symptoms, family history, weather history) — excluding any `EXAMINATION_RESULTS`
+   document (the patient never "knows" their own lab findings, and this call must never leak
+   them) — and the full chat history including the just-persisted player message.
 8. Call Gemini for a reply, retrying once against `GEMINI_FALLBACK_MODEL` if the primary
    `GEMINI_MODEL` request fails (network error, non-2xx, or an empty/unparseable reply)
    (`502` only if the fallback attempt also fails), and persist it as a new `ChatMessage`
    (`sender: PATIENT`).
 9. Best-effort document reveal: build a second, classifier-only Gemini prompt from the case's
-   documents plus the just-generated patient reply, and ask it which document ids the reply
-   relates to. Drop any returned id that isn't one of the case's real document ids (guards
-   against hallucination), drop any id already revealed in a prior turn of this game session
-   (dedupe), then persist a `CaseDocumentReveal` row for each surviving id and return those
-   documents as `revealedDocuments`, in the case's document order. If the classification call
-   throws for any reason, catch it and return `revealedDocuments: []` — this step never affects
+   documents (again excluding `EXAMINATION_RESULTS` documents — they can only ever become visible
+   by ordering the matching examination, see `docs/api/examinations.md`, never by chatting) plus
+   the just-generated patient reply, and ask it which document ids the reply relates to. Drop any
+   returned id that isn't one of those eligible document ids (guards against hallucination and
+   against an `EXAMINATION_RESULTS` id being revealed early), drop any id already revealed in a
+   prior turn of this game session (dedupe), then persist a `CaseDocumentReveal` row for each
+   surviving id and return those documents as `revealedDocuments`, in the case's document order.
+   If the classification call throws for any reason, catch it and return `revealedDocuments: []`
+   — this step never affects
    the `200` status or the chat messages already persisted in step 8.
 10. Return both new chat messages and `revealedDocuments`.
 

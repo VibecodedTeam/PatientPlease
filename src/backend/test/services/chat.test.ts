@@ -232,6 +232,51 @@ describe('sendChatMessage', () => {
     expect(promptArg.systemInstruction).not.toContain('Melanoma');
   });
 
+  it('never forwards an EXAMINATION_RESULTS document into the patient roleplay prompt', async () => {
+    const prisma = createMockPrisma();
+    prisma.gameSession.findUnique.mockResolvedValue(makeGameSession());
+    prisma.case.findUnique.mockResolvedValue(
+      makeCase({
+        documents: [
+          makeDocument({
+            id: 'exam-doc-uuid',
+            type: 'EXAMINATION_RESULTS',
+            title: 'Biopsy results',
+            content: { shopItemId: 'exam-shop-item-uuid', findings: 'Biopsy findings text' },
+          }),
+        ],
+      }),
+    );
+    prisma.chatMessage.findMany.mockResolvedValue([]);
+    prisma.chatMessage.create
+      .mockResolvedValueOnce(makeMessage({ id: 'player-msg', sortOrder: 1 }))
+      .mockResolvedValueOnce(makeMessage({ id: 'patient-msg', sender: 'PATIENT', sortOrder: 2 }));
+    prisma.caseDocumentReveal.findMany.mockResolvedValue([]);
+    const generateReply = jest
+      .fn<(input: GenerateReplyInput) => Promise<string>>()
+      .mockResolvedValue('I do not know.');
+    const selectDocumentIds = makeSelectDocumentIds();
+
+    await sendChatMessage(
+      prisma,
+      { generateReply, selectDocumentIds },
+      {
+        userId: 'user-uuid',
+        gameSessionId: 'session-uuid',
+        caseId: 'case-uuid',
+        playerText: 'What did the biopsy show?',
+      },
+    );
+
+    const roleplayPrompt = generateReply.mock.calls[0]?.[0] as { systemInstruction: string };
+    expect(roleplayPrompt.systemInstruction).not.toContain('Biopsy results');
+    expect(roleplayPrompt.systemInstruction).not.toContain('Biopsy findings text');
+
+    const selectionPrompt = selectDocumentIds.mock.calls[0]?.[0] as { systemInstruction: string };
+    expect(selectionPrompt.systemInstruction).not.toContain('exam-doc-uuid');
+    expect(selectionPrompt.systemInstruction).not.toContain('Biopsy results');
+  });
+
   it('starts sortOrder at 1 when there is no prior history', async () => {
     const prisma = createMockPrisma();
     prisma.gameSession.findUnique.mockResolvedValue(makeGameSession());
@@ -366,9 +411,10 @@ describe('sendChatMessage', () => {
       expect(result.revealedDocuments).toEqual([]);
     });
 
-    it('strips shopItemId from a revealed EXAMINATION_RESULTS document, keeping only findings', async () => {
-      const { prisma, deps, input } = setUpRevealCase({
+    it('never reveals an EXAMINATION_RESULTS document even if the classifier returns its id', async () => {
+      const { prisma, deps, input, createdReveals } = setUpRevealCase({
         documents: [
+          makeDocument({ id: 'doc-1' }),
           makeDocument({
             id: 'exam-doc-uuid',
             type: 'EXAMINATION_RESULTS',
@@ -376,13 +422,14 @@ describe('sendChatMessage', () => {
             content: { shopItemId: 'exam-shop-item-uuid', findings: 'Biopsy findings text' },
           }),
         ],
-        selectedIds: ['exam-doc-uuid'],
+        selectedIds: ['doc-1', 'exam-doc-uuid'],
       });
 
       const result = await sendChatMessage(prisma, deps, input);
 
-      expect(result.revealedDocuments.map((d) => d.content)).toEqual([
-        { findings: 'Biopsy findings text' },
+      expect(result.revealedDocuments.map((d) => d.id)).toEqual(['doc-1']);
+      expect(createdReveals).toEqual([
+        { gameSessionId: input.gameSessionId, caseId: input.caseId, caseDocumentId: 'doc-1' },
       ]);
     });
   });

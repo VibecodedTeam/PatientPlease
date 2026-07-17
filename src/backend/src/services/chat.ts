@@ -157,9 +157,17 @@ export async function sendChatMessage(
     },
   });
 
+  // EXAMINATION_RESULTS documents only become visible once the player orders the matching
+  // examination (services/round.ts, services/examination.ts) — the patient never "knows" their
+  // own lab findings, and chatting must never reveal them early. Excluded from both Gemini calls
+  // below entirely, not just filtered out of the reveal result, so the model never sees them.
+  const chatEligibleDocuments = gameCase.documents.filter(
+    (document) => document.type !== 'EXAMINATION_RESULTS',
+  );
+
   const prompt = buildCasePrompt(
     gameCase.patient,
-    { difficulty: gameCase.difficulty, documents: gameCase.documents },
+    { difficulty: gameCase.difficulty, documents: chatEligibleDocuments },
     toPromptHistory([...history, playerMessage]),
   );
 
@@ -178,7 +186,7 @@ export async function sendChatMessage(
   let revealedDocuments: RevealedDocumentRecord[];
   try {
     const selectionPrompt = buildDocumentSelectionPrompt(
-      gameCase.documents.map((d) => ({
+      chatEligibleDocuments.map((d) => ({
         id: d.id,
         type: d.type,
         title: d.title,
@@ -190,7 +198,7 @@ export async function sendChatMessage(
     );
     const selectedIds = await deps.selectDocumentIds(selectionPrompt);
 
-    const validIds = new Set(gameCase.documents.map((d) => d.id));
+    const validIds = new Set(chatEligibleDocuments.map((d) => d.id));
     const alreadyRevealed = new Set(
       (
         await prisma.caseDocumentReveal.findMany({
@@ -208,7 +216,7 @@ export async function sendChatMessage(
       });
     }
     const revealSet = new Set(toReveal);
-    revealedDocuments = gameCase.documents
+    revealedDocuments = chatEligibleDocuments
       .filter((d) => revealSet.has(d.id))
       .map(toRevealedDocument);
   } catch {
