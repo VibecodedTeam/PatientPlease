@@ -26,7 +26,7 @@ describe('seed', () => {
 
     expect(diagnoses).toBeGreaterThanOrEqual(20);
     expect(treatments).toBeGreaterThanOrEqual(20);
-    expect(shopItems).toBeGreaterThanOrEqual(20);
+    expect(shopItems).toBeGreaterThanOrEqual(6);
     expect(patients).toBeGreaterThanOrEqual(20);
     expect(cases).toBeGreaterThanOrEqual(20);
     expect(documents).toBeGreaterThanOrEqual(20);
@@ -168,8 +168,8 @@ describe('seed', () => {
     const melanoma = await prisma.diagnosis.findUnique({ where: { code: 'melanoma' } });
     expect(melanoma?.name).toBe('Czerniak');
 
-    const dermatoscope = await prisma.shopItem.findUnique({ where: { sku: 'equip-dermatoscope' } });
-    expect(dermatoscope?.name).toBe('Dermatoskop');
+    const atlas = await prisma.shopItem.findUnique({ where: { sku: 'book-atlas-derm-1' } });
+    expect(atlas?.name).toBe('Atlas dermatologii, tom 1');
 
     const skinImage = await prisma.caseDocument.findFirst({ where: { type: 'SKIN_IMAGE' } });
     expect(skinImage?.title).toBe('Zbliżenie zmiany skórnej');

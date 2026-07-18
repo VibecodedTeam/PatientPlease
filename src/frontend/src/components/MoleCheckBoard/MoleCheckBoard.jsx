@@ -71,7 +71,13 @@ export function MoleCheckBoard({
         <span className={styles.frame}>
           <span className={styles.lettersRow}>
             {criteria.map((c) => (
-              <span key={c.letter} className={styles.letter}>
+              <span
+                key={c.letter}
+                data-testid={`board-letter-${c.letter}`}
+                className={
+                  selected.has(c.letter) ? `${styles.letter} ${styles.letterLit}` : styles.letter
+                }
+              >
                 {c.letter}
               </span>
             ))}
@@ -102,7 +108,15 @@ export function MoleCheckBoard({
 
             <div className={styles.expandedLettersRow} aria-hidden="true">
               {criteria.map((c) => (
-                <span key={c.letter} className={styles.expandedLetter}>
+                <span
+                  key={c.letter}
+                  data-testid={`expanded-header-letter-${c.letter}`}
+                  className={
+                    selected.has(c.letter)
+                      ? `${styles.expandedLetter} ${styles.expandedLetterLit}`
+                      : styles.expandedLetter
+                  }
+                >
                   {c.letter}
                 </span>
               ))}

@@ -59,6 +59,16 @@
   font-size: clamp(1.5rem, 3.2vw, 2.1rem);
 }
 
+.letterLit,
+.expandedLetterLit {
+  color: var(--color-accent);
+  text-shadow:
+    0 0 6px var(--color-accent),
+    0 0 12px var(--color-accent-hover),
+    1px 1px 0 rgba(0, 0, 0, 0.25);
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+}
+
 .floatingLayer {
   background: transparent;
   pointer-events: none;

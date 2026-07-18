@@ -185,6 +185,27 @@ describe('MoleCheckBoard', () => {
     expect(dialog.style.transform).toBe('translate(60px, 40px)');
   });
 
+  it('lights up a letter on the collapsed board and the expanded header as soon as its feature is toggled on', async () => {
+    const user = userEvent.setup();
+    render(<MoleCheckBoard />);
+
+    await user.click(screen.getByRole('button', { name: /otwórz samobadanie znamion abcde/i }));
+
+    expect(screen.getByTestId('board-letter-A')).not.toHaveClass('letterLit');
+    expect(screen.getByTestId('expanded-header-letter-A')).not.toHaveClass('expandedLetterLit');
+
+    await user.click(screen.getByRole('switch', { name: /zaznacz cechę: asymetria/i }));
+
+    expect(screen.getByTestId('board-letter-A')).toHaveClass('letterLit');
+    expect(screen.getByTestId('expanded-header-letter-A')).toHaveClass('expandedLetterLit');
+    expect(screen.getByTestId('board-letter-B')).not.toHaveClass('letterLit');
+
+    await user.click(screen.getByRole('switch', { name: /zaznacz cechę: asymetria/i }));
+
+    expect(screen.getByTestId('board-letter-A')).not.toHaveClass('letterLit');
+    expect(screen.getByTestId('expanded-header-letter-A')).not.toHaveClass('expandedLetterLit');
+  });
+
   it('calls onExpandedChange with true on open and false on close', async () => {
     const user = userEvent.setup();
     const onExpandedChange = jest.fn();

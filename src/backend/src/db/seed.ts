@@ -346,78 +346,6 @@ export const TREATMENTS: Prisma.TreatmentCreateManyInput[] = [
 
 export const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
   {
-    sku: 'equip-dermatoscope',
-    name: 'Dermatoskop',
-    itemType: 'EQUIPMENT',
-    price: 150,
-    description: 'Ręczny powiększalnik ze spolaryzowanym światłem do dokładnej oceny zmian.',
-  },
-  {
-    sku: 'equip-woods-lamp',
-    name: 'Lampa Wooda (UV)',
-    itemType: 'EQUIPMENT',
-    price: 120,
-    description:
-      'Lampa ultrafioletowa ujawniająca zmiany grzybicze i barwnikowe niewidoczne w zwykłym świetle.',
-  },
-  {
-    sku: 'equip-macro-camera',
-    name: 'Cyfrowy aparat makro',
-    itemType: 'EQUIPMENT',
-    price: 200,
-    description:
-      'Nasadka aparatu do fotografowania z bliska, do szczegółowego dokumentowania zmian.',
-  },
-  {
-    sku: 'equip-loupe',
-    name: 'Lupa',
-    itemType: 'EQUIPMENT',
-    price: 60,
-    description: 'Prosty ręczny powiększalnik do szybkiej oceny wzrokowej.',
-  },
-  {
-    sku: 'equip-biopsy-kit',
-    name: 'Zestaw do biopsji sztancowej',
-    itemType: 'EQUIPMENT',
-    price: 180,
-    description: 'Jałowy zestaw sztancowy do pobierania małych wycinków tkanki.',
-  },
-  {
-    sku: 'equip-dermo-light',
-    name: 'Przenośne światło dermoskopowe',
-    itemType: 'EQUIPMENT',
-    price: 90,
-    description: 'Doczepiane źródło światła poprawiające widoczność w dermoskopie.',
-  },
-  {
-    sku: 'equip-skin-scanner',
-    name: 'Cyfrowy skaner skóry',
-    itemType: 'EQUIPMENT',
-    price: 300,
-    description: 'Urządzenie skanujące, które automatycznie mapuje brzegi i asymetrię zmiany.',
-  },
-  {
-    sku: 'equip-uv-meter',
-    name: 'Ręczny miernik UV',
-    itemType: 'EQUIPMENT',
-    price: 75,
-    description: 'Miernik do oceny zarejestrowanej ekspozycji pacjenta na promieniowanie UV.',
-  },
-  {
-    sku: 'equip-instrument-tray',
-    name: 'Jałowa taca na narzędzia',
-    itemType: 'EQUIPMENT',
-    price: 50,
-    description: 'Taca z jałowymi narzędziami do drobnych zabiegów w gabinecie.',
-  },
-  {
-    sku: 'equip-ultrasound',
-    name: 'Przenośna głowica USG',
-    itemType: 'EQUIPMENT',
-    price: 350,
-    description: 'Kompaktowa głowica ultrasonograficzna do obrazowania głębszych struktur skóry.',
-  },
-  {
     sku: 'book-atlas-derm-1',
     name: 'Atlas dermatologii, tom 1',
     itemType: 'HANDBOOK',
@@ -432,69 +360,13 @@ export const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
     description: 'Drugi tom atlasu dermatologii, obejmujący rzadsze prezentacje.',
   },
   {
-    sku: 'book-pigmented-lesions',
-    name: 'Przewodnik po zmianach barwnikowych',
-    itemType: 'HANDBOOK',
-    price: 80,
-    description: 'Kieszonkowy przewodnik skupiony na odróżnianiu łagodnych znamion od czerniaka.',
-  },
-  {
-    sku: 'book-pediatric-derm',
-    name: 'Podręcznik dermatoz dziecięcych',
-    itemType: 'HANDBOOK',
-    price: 90,
-    description: 'Opracowanie dotyczące chorób skóry typowych dla niemowląt i dzieci.',
-  },
-  {
-    sku: 'book-infectious-manual',
-    name: 'Poradnik zakaźnych chorób skóry',
-    itemType: 'HANDBOOK',
-    price: 85,
-    description: 'Poradnik obejmujący bakteryjne, grzybicze i wirusowe zakażenia skóry.',
-  },
-  {
-    sku: 'book-inflammatory-ref',
-    name: 'Kompendium dermatoz zapalnych',
-    itemType: 'HANDBOOK',
-    price: 85,
-    description: 'Opracowanie dotyczące przewlekłych zapalnych chorób skóry i ich leczenia.',
-  },
-  {
-    sku: 'book-onco-derm',
-    name: 'Podstawy onkodermatologii',
-    itemType: 'HANDBOOK',
-    price: 130,
-    description: 'Przewodnik po podstawach diagnozowania i stopniowania nowotworów skóry.',
-  },
-  {
-    sku: 'book-diff-diagnosis',
-    name: 'Kieszonkowy przewodnik diagnostyki różnicowej',
-    itemType: 'HANDBOOK',
-    price: 70,
-    description: 'Podręczny przewodnik do zawężania podobnie wyglądających chorób skóry.',
-  },
-  {
-    sku: 'book-treatment-protocols',
-    name: 'Kompendium protokołów leczenia',
-    itemType: 'HANDBOOK',
-    price: 95,
-    description: 'Kompendium standardowych protokołów leczenia według schorzeń.',
-  },
-  {
-    sku: 'book-clinical-photo',
-    name: 'Fotografia kliniczna w dermatologii',
-    itemType: 'HANDBOOK',
-    price: 60,
-    description: 'Przewodnik po wykonywaniu spójnych zdjęć klinicznych o jakości diagnostycznej.',
-  },
-  {
     sku: 'exam-punch-biopsy',
     name: 'Biopsja sztancowa',
     itemType: 'EXAMINATION',
     price: 140,
     description:
       'Mały wycinek tkanki wysyłany do patomorfologii w celu ostatecznego badania histologicznego.',
-    content: { timeCostMs: 90_000 },
+    content: { timeCostMs: 15_000 },
   },
   {
     sku: 'exam-dermoscopy',
@@ -531,42 +403,6 @@ export const SHOP_ITEMS: Prisma.ShopItemCreateManyInput[] = [
     description:
       'Panel alergenów nakładanych na skórę w celu zidentyfikowania alergenu kontaktowego.',
     content: { timeCostMs: 60_000 },
-  },
-  {
-    sku: 'plot-loan-notice',
-    name: 'Wezwanie do spłaty zaległej pożyczki',
-    itemType: 'PLOT_ITEM',
-    price: 0,
-    description:
-      'Surowe wezwanie przypominające lekarzowi o niespłaconym saldzie pożyczki studenckiej.',
-  },
-  {
-    sku: 'plot-family-photo',
-    name: 'Zdjęcie rodzinne',
-    itemType: 'PLOT_ITEM',
-    price: 0,
-    description: 'Zniszczone zdjęcie, które lekarz trzyma na biurku dla motywacji.',
-  },
-  {
-    sku: 'plot-diploma',
-    name: 'Stary dyplom lekarski',
-    itemType: 'PLOT_ITEM',
-    price: 0,
-    description: 'Oprawiony dyplom lekarza, przypomnienie o tym, po co zaczął.',
-  },
-  {
-    sku: 'plot-eviction-warning',
-    name: 'Ostrzeżenie o eksmisji od właściciela',
-    itemType: 'PLOT_ITEM',
-    price: 0,
-    description: 'List ostrzegawczy dotyczący zaległego czynszu lekarza.',
-  },
-  {
-    sku: 'plot-thank-you-note',
-    name: 'Odręczny list z podziękowaniem od pacjenta',
-    itemType: 'PLOT_ITEM',
-    price: 0,
-    description: 'Wdzięczny list od pacjenta, którego lekarz kiedyś leczył.',
   },
 ];
 
